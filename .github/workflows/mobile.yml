@@ -1,0 +1,31 @@
+# CI skeleton (phases.md S0.3, TEST-012). Placeholder job that always passes;
+# the owner replaces the step with real checks in the task that adds code.
+#
+# Path filtering (TEST-012): this workflow covers mobile/.
+# The trigger is deliberately NOT path-filtered, because a required check
+# that never reports blocks merges. When real steps arrive, filter inside
+# the job (skip expensive steps when no covered path changed) and keep the
+# job name stable, since branch protection requires it by name.
+name: mobile
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile:
+    name: mobile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Placeholder
+        run: echo "mobile - no checks yet (CI skeleton, S0.3)"

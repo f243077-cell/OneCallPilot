@@ -1,0 +1,31 @@
+# Informational only (phases.md S0.2). Branch protection does NOT require
+# code-owner review: the author merges their own PR once CI is green
+# (CLAUDE.md §8.1). Ownership follows CLAUDE.md §1.
+#
+# TODO: replace @usman-github-handle with Usman's real GitHub username.
+# Until then the Usman lines stay commented out so GitHub does not flag
+# an unknown user.
+
+# --- Tanzeel (Stream A) ---
+/mobile/                                 @f243077-cell
+/chaos-shop/                             @f243077-cell
+/runner/                                 @f243077-cell
+/infrastructure/compose/testbed.yml      @f243077-cell
+/infrastructure/compose/runner.yml       @f243077-cell
+
+# --- Usman (Stream B) ---
+# /backend/                                   @usman-github-handle
+# /supabase/                                  @usman-github-handle
+# /infrastructure/observability/              @usman-github-handle
+# /infrastructure/redis/                      @usman-github-handle
+# /infrastructure/compose/observability.yml   @usman-github-handle
+# /infrastructure/compose/copilot.yml         @usman-github-handle
+# /infrastructure/compose/test.yml            @usman-github-handle
+# /benchmark/                                 @usman-github-handle
+# /tests/integration/                         @usman-github-handle
+# /tests/agent_regression/                    @usman-github-handle
+# /tests/db/                                  @usman-github-handle
+
+# --- Shared (both) ---
+# /contracts/  /runbooks/  /compose.yaml  /.env.example  /tools/ocp/
+# /.github/  /docs/  /tests/security/  /tests/e2e/
