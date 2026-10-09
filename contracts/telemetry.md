@@ -98,7 +98,7 @@ The other default `process_*` series (`process_virtual_memory_bytes`, `process_o
 | `upstream` | `payments` |
 | `type` (`worker_*`) | `fulfil_order`, `send_receipt`, `refresh_catalog` |
 | `result` (`worker_jobs_total`) | `success`, `error` |
-| `commit` | 12-character lower-case hex commit SHA of the release (from `chaos-shop/releases.yaml`) |
+| `commit` | First 12 characters of the release's 40-character lower-case hex `commit_sha` (C6 deploy ledger, `chaos-shop/releases.yaml`) |
 
 New label values need a contract change, because tool templates and the detector depend on bounded cardinality.
 
