@@ -44,13 +44,13 @@ def test_thousand_api_lines_match_the_contract(api: ApiHarness) -> None:
     assert problems == {}
     records = [json.loads(line) for line in lines]
     assert any("stacktrace" in r for r in records), "the sample has no exception lines"
-    assert any(r["logger"] == "chaosshop.access" and r["level"] == "ERROR" for r in records)
-    assert any(r["logger"] == "chaosshop.access" and r["level"] == "INFO" for r in records)
+    assert any(r["logger"] == "shop.access" and r["level"] == "ERROR" for r in records)
+    assert any(r["logger"] == "shop.access" and r["level"] == "INFO" for r in records)
 
 
 def make_record(msg: str, exc: BaseException | None = None) -> logging.LogRecord:
     exc_info = (type(exc), exc, exc.__traceback__) if exc is not None else None
-    return logging.LogRecord("chaosshop.test", logging.ERROR, __file__, 1, msg, None, exc_info)
+    return logging.LogRecord("shop.test", logging.ERROR, __file__, 1, msg, None, exc_info)
 
 
 def test_long_lines_are_truncated_to_16_kib() -> None:

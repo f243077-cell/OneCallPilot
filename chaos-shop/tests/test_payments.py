@@ -74,7 +74,7 @@ def test_access_lines_match_the_contract_and_skip_internal(payments: Harness) ->
         headers={"X-Request-ID": "d" * 32},
     )
     payments.client.put("/internal/delay", json={"delay_ms": 0}, headers=AUTH)
-    lines = [line for line in payments.logs.lines if '"logger":"chaosshop.' in line]
+    lines = [line for line in payments.logs.lines if '"logger":"shop.' in line]
     records = [json.loads(line) for line in lines]
     assert len(records) == 1
     assert records[0]["request_id"] == "d" * 32

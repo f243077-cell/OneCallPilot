@@ -109,6 +109,8 @@ def metric_problems(
 # --- Logs (contracts/telemetry.md §3) ---
 
 LEVELS = frozenset({"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"})
+# TB-010: agent-visible fields such as `logger` never name a fault or the injector.
+BANNED_WORDS = re.compile(r"bad|leak|broken|chaos|fault|inject", re.IGNORECASE)
 TS = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
 REQUEST_ID = re.compile(r"^[0-9a-f]{32}$")
 ALWAYS: dict[str, type] = {
@@ -153,6 +155,8 @@ def log_problems(line: str, base: dict[str, str] | None = None) -> list[str]:
         problems.append(f"ts {record['ts']!r} is not RFC 3339 UTC with milliseconds")
     if record.get("level") not in LEVELS:
         problems.append(f"level {record.get('level')!r}")
+    if isinstance(record.get("logger"), str) and BANNED_WORDS.search(record["logger"]):
+        problems.append(f"logger {record['logger']!r} is not neutral (TB-010)")
     for key, value in (base or {}).items():
         if record.get(key) != value:
             problems.append(f"{key}={record.get(key)!r}, expected {value!r}")

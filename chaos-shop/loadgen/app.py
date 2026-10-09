@@ -23,7 +23,7 @@ from common.identity import Identity
 from common.state import load_state, save_state, state_dir
 from loadgen.traffic import Mode, TrafficGenerator
 
-log = logging.getLogger("chaosshop.loadgen")
+log = logging.getLogger("shop.loadgen")
 
 
 class ModeIn(BaseModel):

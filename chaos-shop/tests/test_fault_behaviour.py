@@ -100,7 +100,7 @@ def test_slow_query_switch_needs_the_chaos_token(api: ApiHarness) -> None:
     assert api.client.get(url, headers=AUTH).json() == {"enabled": True}
     # Not counted, not access-logged.
     assert "slow-queries" not in api.client.get("/metrics").text
-    app_lines = [line for line in api.logs.lines if '"logger":"chaosshop.' in line]
+    app_lines = [line for line in api.logs.lines if '"logger":"shop.' in line]
     assert not any("/internal" in line or "slow-queries" in line for line in app_lines)
 
 

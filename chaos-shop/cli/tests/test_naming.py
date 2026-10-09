@@ -99,5 +99,24 @@ def test_slots_run_the_configuration_their_ledger_hash_describes() -> None:
             assert "QUEUE_BATCH_SIZE" in config, name
 
 
+def test_logger_names_are_neutral() -> None:
+    """The C7 `logger` field is agent-visible: every logger name in the services is neutral."""
+    shop = REPO_ROOT / "chaos-shop"
+    names = []
+    for path in shop.rglob("*.py"):
+        if ".venv" in path.parts or "tests" in path.parts or "cli" in path.parts:
+            continue
+        names += re.findall(r'getLogger\("([^"]+)"\)', path.read_text(encoding="utf-8"))
+    names += re.findall(
+        r'"logger":"([^"]+)"', (shop / "lb" / "nginx.conf").read_text(encoding="utf-8")
+    )
+    assert names, "no logger names found"
+    assert [n for n in names if BANNED.search(n)] == []
+    # Third-party loggers that common/jsonlog.py configures by name.
+    third_party = {"uvicorn", "uvicorn.error", "uvicorn.access", "httpx", "httpcore"}
+    own = [n for n in names if n not in third_party]
+    assert all(n.startswith("shop.") or n == "nginx.access" for n in own), own
+
+
 def test_paths_exist() -> None:
     assert Path(RELEASES_FILE).exists() and TESTBED.exists()

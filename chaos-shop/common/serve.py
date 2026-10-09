@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from common.identity import Identity, load_identity
 from common.jsonlog import configure_logging
 
-log = logging.getLogger("chaosshop.main")
+log = logging.getLogger("shop.main")
 
 
 def serve(

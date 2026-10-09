@@ -27,8 +27,8 @@ REQUEST_ID = re.compile(r"^[0-9a-f]{32}$")
 BASE_LATENCY_SECONDS = (0.02, 0.06)
 MAX_DELAY_MS = 10_000
 
-log_access = logging.getLogger("chaosshop.access")
-log_admin = logging.getLogger("chaosshop.admin")
+log_access = logging.getLogger("shop.access")
+log_admin = logging.getLogger("shop.admin")
 
 
 class ChargeIn(BaseModel):

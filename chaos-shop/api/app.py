@@ -1,7 +1,7 @@
 """cs-api routes: /products, /cart, /checkout, /orders, /healthz, /metrics, /internal/*.
 
 Every request except /metrics and /internal/* is counted in the C7 http metrics
-and gets one access line (logger ``chaosshop.access``): INFO below 500, ERROR
+and gets one access line (logger ``shop.access``): INFO below 500, ERROR
 from 500 up. Internal endpoints are neither counted nor access-logged.
 """
 
@@ -38,13 +38,13 @@ from common.metrics import CONTENT_TYPE
 
 REQUEST_ID = re.compile(r"^[0-9a-f]{32}$")
 
-log_access = logging.getLogger("chaosshop.access")
-log_app = logging.getLogger("chaosshop.app")
-log_catalog = logging.getLogger("chaosshop.catalog")
-log_cart = logging.getLogger("chaosshop.cart")
-log_checkout = logging.getLogger("chaosshop.checkout")
-log_orders = logging.getLogger("chaosshop.orders")
-log_admin = logging.getLogger("chaosshop.admin")
+log_access = logging.getLogger("shop.access")
+log_app = logging.getLogger("shop.app")
+log_catalog = logging.getLogger("shop.catalog")
+log_cart = logging.getLogger("shop.cart")
+log_checkout = logging.getLogger("shop.checkout")
+log_orders = logging.getLogger("shop.orders")
+log_admin = logging.getLogger("shop.admin")
 
 
 class _Strict(BaseModel):

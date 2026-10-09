@@ -16,7 +16,7 @@ from prometheus_client import Counter, Histogram
 from common.identity import ConfigError, Identity
 from common.metrics import WORKER_JOB_BUCKETS, Telemetry
 
-log = logging.getLogger("chaosshop.jobs")
+log = logging.getLogger("shop.jobs")
 
 REFRESH_CATALOG_SECONDS = 30.0
 RETRY_SECONDS = 1.0

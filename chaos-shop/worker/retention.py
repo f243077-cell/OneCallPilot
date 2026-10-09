@@ -15,7 +15,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 
-log = logging.getLogger("chaosshop.worker")
+log = logging.getLogger("shop.worker")
 
 CHUNK_BYTES = 1 << 20
 INTERVAL_SECONDS = 1.0

@@ -15,7 +15,7 @@ from typing import Literal
 
 import httpx
 
-log = logging.getLogger("chaosshop.loadgen")
+log = logging.getLogger("shop.loadgen")
 
 Mode = Literal["baseline", "spike"]
 

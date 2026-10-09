@@ -19,7 +19,7 @@ from common.metrics import CONTENT_TYPE
 from worker.jobs import JobRunner, JobSource, WorkerMetrics, WorkerStore
 from worker.retention import ResultRetention
 
-log = logging.getLogger("chaosshop.worker")
+log = logging.getLogger("shop.worker")
 
 
 class SwitchIn(BaseModel):

@@ -25,7 +25,7 @@ def sample_value(api: ApiHarness, name: str, **labels: str) -> float:
 
 def access_lines(api: ApiHarness) -> list[dict[str, Any]]:
     records = [json.loads(line) for line in api.logs.lines]
-    return [r for r in records if r["logger"] == "chaosshop.access"]
+    return [r for r in records if r["logger"] == "shop.access"]
 
 
 def new_cart(api: ApiHarness) -> str:
@@ -57,7 +57,7 @@ def test_products_fall_back_to_database_when_cache_is_down(api: ApiHarness) -> N
     assert response.status_code == 200
     assert sample_value(api, "cache_operations_total", cache="catalog", result="error") == 1
     errors = [json.loads(line) for line in api.logs.lines if '"level":"ERROR"' in line]
-    assert errors and errors[0]["logger"] == "chaosshop.catalog"
+    assert errors and errors[0]["logger"] == "shop.catalog"
     assert errors[0]["exc_type"] == "CacheUnavailable"
     assert errors[0]["route"] == "/products"
 
