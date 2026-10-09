@@ -16,6 +16,21 @@
 | S0.7 (a) socket-proxy-rw part | done | 2026-10-09 | `docs/checks/proxy.md` — TEST-015 rw part 12/12 against the real proxy |
 | S0.7 (b) nginx upstream `resolve` | **passed** | 2026-10-09 | `docs/checks/proxy.md` — nginx 1.30.5 picks up a started replica in 3 s and drops a stopped one in 5 s, no reload |
 
+## Phase 0 progress — Stream B (Usman)
+
+| Task | Status | Date | Evidence |
+|---|---|---|---|
+| B0.2 Contracts C1, C2, C3, C5, C8, C9 | drafted (on `usman`) | 2026-10-09 | Models in `contracts/python/oncallpilot_contracts/` (`domain`, `enums`, `api`, `ws`, `runner`, `signing`, `approval`, `push`), all registered in `SCHEMAS`, with 40 generated schemas in `contracts/schemas/`. Plus `openapi.yaml`, `ws-protocol.md`, `approval-protocol.md`, `push.md`. Contract gate green: ruff, `mypy --strict`, 246 tests (36 existing + 210 new), schemas regenerate with no diff, `openapi-spec-validator` passes. Reader: Tanzeel. |
+| S0.4 Phase 0 fixtures | drafted (on `usman`) | 2026-10-09 | `contracts/fixtures/timelines/` (`bad_deploy_success`, `slow_dependency_escalated`, `scale_failed_rollback`), `fixtures/ws/` (14, one per message), `fixtures/signing/vectors.json` (7 vectors, both keys). Ready for the 30-minute fixture walkthrough. |
+| C4, C6, C7 (reader) | read | 2026-10-09 | No blocking issue. C5 adds `captured` to `execution_result`, because C4's `rollback_step` reads `captured.*`. Notes in `handoff.md`. |
+| socket-proxy-ro compose service | committed (on `usman`), not run yet | 2026-10-09 | `infrastructure/compose/observability.yml`: GET-only with `LIBPOD_PING=0` and `LIBPOD_VERSION=0`, internal `ro_proxy_net`, no ports; included from `compose.yaml`. YAML and settings checked by script; `docker compose config` waits for S0.6. |
+| S0.6 Docker Desktop (Usman's laptop) | not started | — | Docker is not installed on Usman's laptop yet. |
+| B0.1 Supabase `ocp-dev`, `ocp-bench` | not started | — | Usman, by hand (steps in `handoff.md`). |
+| B0.3 LLM and embedding API keys | not started | — | Usman, by hand. |
+| S0.7 (a) socket-proxy-ro + Alloy | pending | — | Needs S0.6. |
+| S0.7 (c) `gemini-embedding-001` at 768 dimensions | pending | — | Needs B0.3. |
+| S0.7 (d) Supabase login and JWKS | pending | — | Needs B0.1. |
+
 ## S0.6 — Docker Desktop (Tanzeel's laptop)
 
 | Item | Value |
