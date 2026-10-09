@@ -23,6 +23,8 @@ class FakeDocker:
         self.plans: list[list[dict[str, Any]]] = []
         self.ledger = ""
         self.responses: dict[str, Any] = {}
+        # Bodies returned one after another for a URL (two scrapes of /metrics).
+        self.sequences: dict[str, list[Any]] = {}
         self.created_slots = False
 
     def state(self, name: str) -> ContainerState:
@@ -69,7 +71,10 @@ class FakeDocker:
                 self.ledger = "".join(line + "\n" for line in step["lines"])
                 results.append(None)
             elif step["op"] == "http":
-                body = self.responses.get(step["url"], {"enabled": False})
+                queue = self.sequences.get(step["url"])
+                body = (
+                    queue.pop(0) if queue else self.responses.get(step["url"], {"enabled": False})
+                )
                 results.append({"status": 200, "body": json.loads(json.dumps(body)), "ms": 1})
             else:
                 results.append(None)

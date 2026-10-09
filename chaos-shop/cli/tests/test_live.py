@@ -93,6 +93,17 @@ def test_live_ledger_is_valid_and_neutral(testbed: Testbed) -> None:
         assert chaos("reset").returncode == 0
 
 
+def test_baseline_traffic_is_5_rps(testbed: Testbed) -> None:
+    """TB-005 acceptance: after reset the api serves 5 ± 1 rps, measured from its C7
+    counters over one minute (the rate Prometheus computes), without 5xx."""
+    assert chaos("reset").returncode == 0
+    time.sleep(30)  # requests still queued from an earlier spike drain first
+    apis, window, loadgen = testbed.api_window(60)
+    assert loadgen.get("mode") == "baseline" and apis == ["cs-api-140-1"]
+    assert 4 <= window.rps <= 6, window
+    assert window.error_share == 0, window
+
+
 @pytest.mark.parametrize("number", sorted(SCENARIOS))
 def test_verify(number: int) -> None:
     """TB-008: broken after the hold; 1-6 recover after the fix within 120 s."""

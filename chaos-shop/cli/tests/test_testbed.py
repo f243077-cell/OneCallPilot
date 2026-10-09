@@ -15,7 +15,15 @@ from chaos_cli.config import (
     load_secrets,
     read_env_file,
 )
-from chaos_cli.testbed import SCENARIOS, ScenarioError, Testbed, metric_value, scenario_number
+from chaos_cli.testbed import (
+    SCENARIOS,
+    ScenarioError,
+    Testbed,
+    histogram_quantile,
+    metric_value,
+    request_window,
+    scenario_number,
+)
 from tests.fakes import FakeDocker
 
 
@@ -185,6 +193,101 @@ def test_fixes_mirror_the_expected_actions(testbed: Testbed, docker: FakeDocker)
     for number in (7, 8):
         with pytest.raises(ScenarioError, match="escalated"):
             testbed.fix(number)
+
+
+# --- scenario 5 checks: the api's C7 metrics over a window (A1.4) ---
+
+BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, float("inf"))
+LOADGEN_STATUS = "http://cs-loadgen:8003/internal/status"
+
+
+def api_metrics(slot: str, statuses: dict[str, int], seconds: list[float], healthz: int = 0) -> str:
+    """A cs-api /metrics body: request counts by status and the duration histogram."""
+    base = f'instance="{slot}",release="1.4.0",service="api"'
+    lines = [
+        f'http_requests_total{{{base},method="POST",route="/checkout",status="{status}"}} {n}.0'
+        for status, n in statuses.items()
+    ]
+    lines.append(
+        f'http_requests_total{{{base},method="GET",route="/healthz",status="200"}} {healthz}.0'
+    )
+    for le in BUCKETS:
+        label = "+Inf" if le == float("inf") else str(le)
+        count = sum(1 for s in seconds if s <= le)
+        lines.append(
+            f'http_request_duration_seconds_bucket{{{base},le="{label}",method="POST",'
+            f'route="/checkout"}} {count}.0'
+        )
+        lines.append(
+            f'http_request_duration_seconds_bucket{{{base},le="{label}",method="GET",'
+            f'route="/healthz"}} {healthz}.0'
+        )
+    return "\n".join(lines) + "\n"
+
+
+def test_histogram_quantile_interpolates_like_prometheus() -> None:
+    cumulative = {0.1: 50.0, 0.25: 90.0, 0.5: 100.0, float("inf"): 100.0}
+    assert histogram_quantile(0.95, cumulative) == pytest.approx(0.375)
+    assert histogram_quantile(0.95, {1.0: 10.0, float("inf"): 100.0}) == 1.0  # top bucket
+    assert histogram_quantile(0.95, {}) is None
+    assert histogram_quantile(0.95, {float("inf"): 0.0}) is None
+
+
+def test_request_window_sums_slots_and_leaves_out_healthz() -> None:
+    before = api_metrics("a", {"201": 100}, [0.05] * 100, healthz=3)
+    after = api_metrics("a", {"201": 190, "503": 10}, [0.05] * 190 + [2.0] * 10, healthz=9)
+    window = request_window([(before, after)], 10.0)
+    assert window.rps == 10.0 and window.error_share == pytest.approx(0.1)
+    assert window.p95_seconds == pytest.approx(1.75)  # 1 + 1.5 * (95 - 90) / 10
+    # A slot that restarted in the window counts from zero, as Prometheus does.
+    long_ago = api_metrics("b", {"201": 500}, [0.05] * 500)
+    restarted = request_window([(long_ago, api_metrics("b", {"201": 20}, [0.05] * 20))], 10.0)
+    assert restarted.rps == 2.0 and restarted.error_share == 0.0
+
+
+def scrape_pair(docker: FakeDocker, slot: str, served: int, errors: int, latency: float) -> None:
+    """Two scrapes of a slot 15 s apart, with ``served`` requests between them."""
+    ok = served - errors
+    docker.sequences[f"http://{slot}:8000/metrics"] = [
+        api_metrics(slot, {"201": 1000}, [0.05] * 1000),
+        api_metrics(slot, {"201": 1000 + ok, "503": errors}, [0.05] * 1000 + [latency] * served),
+    ]
+
+
+def test_spike_check_sees_one_saturated_slot(testbed: Testbed, docker: FakeDocker) -> None:
+    docker.responses[LOADGEN_STATUS] = {"mode": "spike", "spike_rps": 100}
+    scrape_pair(docker, "cs-api-140-1", served=1350, errors=0, latency=8.0)  # 90 rps, slow
+    check = testbed.broken(5, {})
+    assert check.ok, check.detail
+    assert "90 rps" in check.detail and "loadgen spike 100 rps" in check.detail
+    scrape_pair(docker, "cs-api-140-1", served=1350, errors=80, latency=0.2)  # 5.9 % errors
+    assert testbed.broken(5, {}).ok
+    scrape_pair(docker, "cs-api-140-1", served=1350, errors=0, latency=0.2)  # keeps up
+    assert not testbed.broken(5, {}).ok
+
+
+def test_spike_recovers_only_with_three_slots_under_the_spike_load(
+    testbed: Testbed, docker: FakeDocker
+) -> None:
+    docker.responses[LOADGEN_STATUS] = {"mode": "spike", "spike_rps": 100}
+    scrape_pair(docker, "cs-api-140-1", served=1350, errors=0, latency=0.08)
+    assert not testbed.recovered(5, {}).ok  # fast, but one slot is not the fix
+    testbed.fix(5)
+    slots = ("cs-api-140-1", "cs-api-140-2", "cs-api-140-3")
+    for slot in slots:
+        scrape_pair(docker, slot, served=480, errors=0, latency=0.08)  # 96 rps in all
+    check = testbed.recovered(5, {})
+    assert check.ok, check.detail
+    for slot in slots:
+        scrape_pair(docker, slot, served=480, errors=0, latency=0.4)  # p95 over 300 ms
+    assert not testbed.recovered(5, {}).ok
+    for slot in slots:
+        scrape_pair(docker, slot, served=20, errors=0, latency=0.08)  # the load stopped
+    assert not testbed.recovered(5, {}).ok
+    docker.responses[LOADGEN_STATUS] = {"mode": "baseline", "spike_rps": 100}
+    for slot in slots:
+        scrape_pair(docker, slot, served=480, errors=0, latency=0.08)
+    assert not testbed.recovered(5, {}).ok
 
 
 # --- small parts ---

@@ -56,6 +56,15 @@ SCENARIOS = {
 FIXABLE = (1, 2, 3, 4, 5, 6)
 SLOW_DEPENDENCY_MS = 2500
 SPIKE_REPLICAS = 3
+# Scenario 5 checks, against the detector's api rules (architecture §6.8: p95 >= 300 ms,
+# 5xx share >= 2 %). Broken is well past them; recovered is below both, while the
+# api still serves most of the spike rate (so the load did not just stop).
+SPIKE_WINDOW_SECONDS = 15.0
+SPIKE_BROKEN_P95_SECONDS = 1.0
+SPIKE_BROKEN_ERRORS = 0.05
+RECOVERED_P95_SECONDS = 0.3
+RECOVERED_ERRORS = 0.02
+SPIKE_SERVED_SHARE = 0.7
 HEALTH_TIMEOUT = 60.0
 
 
@@ -89,6 +98,84 @@ def metric_value(text: str, name: str, **labels: str) -> float | None:
         if all(found.get(key) == value for key, value in labels.items()):
             return float(match.group("value"))
     return None
+
+
+_HTTP_SAMPLE = re.compile(
+    r"^(?P<name>http_requests_total|http_request_duration_seconds_bucket)"
+    r"\{(?P<labels>[^}]*)\} (?P<value>\S+)$",
+    re.M,
+)
+
+
+@dataclass(frozen=True)
+class RequestWindow:
+    """cs-api traffic over a window, as the detector's PromQL sees it (architecture §6.8):
+    request rate, 5xx share and histogram p95 over every route except /healthz."""
+
+    rps: float
+    error_share: float
+    p95_seconds: float | None
+
+
+def _http_samples(text: str) -> tuple[dict[str, float], dict[float, float]]:
+    """One slot's C7 http counters: requests by status, cumulative buckets by ``le``."""
+    by_status: dict[str, float] = {}
+    buckets: dict[float, float] = {}
+    for match in _HTTP_SAMPLE.finditer(text):
+        labels = dict(re.findall(r'(\w+)="([^"]*)"', match.group("labels")))
+        if labels.get("route") == "/healthz":
+            continue
+        value = float(match.group("value"))
+        if match.group("name") == "http_requests_total":
+            by_status[labels["status"]] = by_status.get(labels["status"], 0.0) + value
+        else:
+            le = float(labels["le"])  # "+Inf" parses as infinity
+            buckets[le] = buckets.get(le, 0.0) + value
+    return by_status, buckets
+
+
+def _increase[K](before: dict[K, float], after: dict[K, float]) -> dict[K, float]:
+    """Counter increase per key; a smaller value means the slot restarted (as Prometheus)."""
+    return {
+        key: value - before.get(key, 0.0) if value >= before.get(key, 0.0) else value
+        for key, value in after.items()
+    }
+
+
+def histogram_quantile(q: float, buckets: dict[float, float]) -> float | None:
+    """Prometheus ``histogram_quantile`` over cumulative bucket counts."""
+    ordered = sorted(buckets.items())
+    if not ordered or ordered[-1][1] <= 0:
+        return None
+    rank = q * ordered[-1][1]
+    lower, below = 0.0, 0.0
+    for upper, count in ordered:
+        if count >= rank:
+            if upper == float("inf"):
+                return lower
+            return lower + (upper - lower) * (rank - below) / (count - below)
+        lower, below = upper, count
+    return lower
+
+
+def request_window(pairs: list[tuple[str, str]], seconds: float) -> RequestWindow:
+    """Traffic between two /metrics scrapes of each api slot, summed over the slots."""
+    by_status: dict[str, float] = {}
+    buckets: dict[float, float] = {}
+    for before, after in pairs:
+        status_0, buckets_0 = _http_samples(before)
+        status_1, buckets_1 = _http_samples(after)
+        for status, value in _increase(status_0, status_1).items():
+            by_status[status] = by_status.get(status, 0.0) + value
+        for le, value in _increase(buckets_0, buckets_1).items():
+            buckets[le] = buckets.get(le, 0.0) + value
+    total = sum(by_status.values())
+    errors = sum(value for status, value in by_status.items() if status.startswith("5"))
+    return RequestWindow(
+        rps=total / seconds,
+        error_share=errors / total if total else 0.0,
+        p95_seconds=histogram_quantile(0.95, buckets),
+    )
 
 
 def statuses(results: list[list[float]]) -> list[int]:
@@ -550,16 +637,7 @@ class Testbed:
                 return Check(not redis.running and all(c == 503 for c in codes), detail)
             return Check(redis.health == "healthy" and all(c == 201 for c in codes), detail)
         if number == 5:
-            results = self._probe("get", 20, "/products")
-            codes, ms = statuses(results), sorted(latencies(results))
-            p95 = ms[int(len(ms) * 0.95) - 1]
-            detail = (
-                f"api slots {self.running_api()}, "
-                f"GET /products p95 {p95:.0f} ms, statuses {set(codes)}"
-            )
-            if want_broken:
-                return Check(p95 > 1000 or any(c >= 500 for c in codes), detail)
-            return Check(p95 < 500 and all(c == 200 for c in codes), detail)
+            return self._spike_check(want_broken)
         if number == 6:
             new, old = self.docker.state("cs-worker-220"), self.docker.state("cs-worker-210")
             detail = (
@@ -587,6 +665,48 @@ class Testbed:
             detail = f"coupon stream {b.get('coupon_stream')}, 500s in 10 s: {failures}"
             return Check(b.get("coupon_stream") is True and failures >= 10, detail)
         raise ScenarioError(f"unknown scenario {number}")
+
+    def api_window(self, seconds: float) -> tuple[list[str], RequestWindow, dict[str, Any]]:
+        """Running api slots, their traffic over ``seconds`` from the C7 metrics (the
+        rate Prometheus shows, TB-005), and the loadgen status at the end."""
+        apis = self.running_api()
+        plan: list[dict[str, Any]] = [self._get(api_url(n, "/metrics")) for n in apis]
+        plan.append({"op": "sleep", "seconds": seconds})
+        plan += [self._get(api_url(n, "/metrics")) for n in apis]
+        plan.append(self._get(f"{LOADGEN_URL}/internal/status"))
+        results = self.helper(plan)
+        first, second = results[: len(apis)], results[len(apis) + 1 : -1]
+        pairs = [
+            (str(a["body"]), str(b["body"]))
+            for a, b in zip(first, second, strict=True)
+            if a["status"] == b["status"] == 200
+        ]
+        return apis, request_window(pairs, seconds), _body(results[-1])
+
+    def _spike_check(self, want_broken: bool) -> Check:
+        """Scenario 5 from the api's own C7 metrics over a window, not from a probe:
+        /products is served from the cache and stays fast while checkout queues."""
+        apis, window, loadgen = self.api_window(SPIKE_WINDOW_SECONDS)
+        spike_rps = float(loadgen.get("spike_rps") or 0)
+        p95 = window.p95_seconds
+        detail = (
+            f"api slots {apis}, {window.rps:.0f} rps, 5xx {window.error_share:.1%}, "
+            f"p95 {'-' if p95 is None else f'{p95 * 1000:.0f} ms'} over "
+            f"{SPIKE_WINDOW_SECONDS:.0f} s; loadgen {loadgen.get('mode')} {spike_rps:.0f} rps"
+        )
+        spiking = loadgen.get("mode") == "spike"
+        if want_broken:
+            slow = p95 is not None and p95 >= SPIKE_BROKEN_P95_SECONDS
+            return Check(spiking and (slow or window.error_share >= SPIKE_BROKEN_ERRORS), detail)
+        return Check(
+            spiking
+            and len(apis) >= SPIKE_REPLICAS
+            and window.rps >= SPIKE_SERVED_SHARE * spike_rps
+            and p95 is not None
+            and p95 < RECOVERED_P95_SECONDS
+            and window.error_share < RECOVERED_ERRORS,
+            detail,
+        )
 
     @staticmethod
     def _get(url: str) -> dict[str, Any]:
