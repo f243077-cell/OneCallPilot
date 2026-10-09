@@ -12,7 +12,7 @@
 | Laptop LAN IP | `192.168.0.100/24` (interface `Wi-Fi 2`; DHCP, so it can change) |
 | Python / uv | Python 3.12.10, uv 0.12.7 |
 | Spike server | fastapi 0.143.0, uvicorn 0.54.0 (ephemeral `uv run --with`, nothing installed in the repo) |
-| Phone | _fill in: model, Android version_ |
+| Phone | Model not given yet; IP `192.168.0.105` on `SPARTACUS` |
 
 ## Steps (run by hand)
 
@@ -54,9 +54,17 @@ If step 5 fails but step 4 works:
 
 | Check | Result | Date | Notes |
 |---|---|---|---|
-| Firewall rule created (TCP 8000, Private only) | _pending_ | | |
-| Laptop self-test via LAN IP | _pending_ | | |
-| Phone reaches `/healthz` over Wi-Fi | _pending_ | | Phase 0 definition of done |
+| Firewall rule created (TCP 8000, Private only) | **passed** | 2026-10-09 | Rule `OnCallPilot backend-api TCP 8000`, Private profile only |
+| Laptop self-test via LAN IP | not reported | | Not needed: the phone test below passed |
+| Phone reaches `/healthz` over Wi-Fi | **passed** | 2026-10-09 | Phone `192.168.0.105` got `200 OK` from `http://192.168.0.100:8000/healthz` on `SPARTACUS` (Private). Phase 0 definition of done item met. |
+
+**S0.5: PASSED (2026-10-09).**
+
+Notes:
+- Uvicorn logged four `Invalid HTTP request received` warnings before the successful request. Most likely the phone browser tried `https://` first against a plain HTTP port. They are harmless.
+- **Always use `http://`** for the laptop URL (in the browser, in `API_BASE_URL`, and `ws://` for `WS_URL`). There is no TLS on the LAN in debug and profile builds (ADR-16).
+- **Keep the Wi-Fi network profile Private.** The firewall rule applies to the Private profile only. If Windows switches `SPARTACUS` to Public, the phone can no longer reach port 8000. Check with `Get-NetConnectionProfile`.
+- The laptop IP comes from DHCP. If it changes, update `API_BASE_URL` and `WS_URL` and rebuild the app (the cleartext host is fixed at build time, MOB-018).
 
 ## Follow-up for MOB-018 (not part of S0.5)
 
