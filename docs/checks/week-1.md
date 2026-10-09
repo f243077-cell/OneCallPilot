@@ -36,6 +36,7 @@
 |---|---|---|---|
 | A1.1 Chaos Shop services + C7 telemetry | done (on `tanzeel`) | 2026-10-09 | Below |
 | A1.2 `cs-lb` and slots, releases 1.4.0/1.5.0/2.1.0/2.2.0 | done (on `tanzeel`) | 2026-10-09 | Below |
+| A1.3 chaos CLI, seeded ledger, 8 faults | done (on `tanzeel`); scenario 5 waits for A1.4 | 2026-10-09 | Below |
 
 ### A1.1 — Chaos Shop baseline services
 
@@ -88,8 +89,62 @@ Within the §12.4 estimate (Chaos Shop baseline ≈ 0.6 GB); A1.2 adds `cs-lb` a
 - **TB-011 scale 1 → 3 → 1**, measured on the containers' own clocks, 5 runs:
   - **Scale-up:** `cs-lb` served each new slot 0.3–3.0 s after its app was ready, and 30 requests split about 10/10/10 across the three slots. Before that, app start-up took 6.1–8.9 s at `cpus: 0.5` with two slots starting at once (one earlier run took 11 s while the host had only 1.2 GB free).
   - **Scale-down:** after the 10 s window, 20/20 requests went to `cs-api-140-1` and nginx logged no connect errors. Inside the window, 0–1 of about 900 requests per run got a 504. nginx does not retry a connect timeout to the IP of a just-stopped slot.
+- **Rerun from container start (2026-10-09, `bioguard-*` stopped, no other containers running), 5 runs, 10 slot starts:**
+
+  | Run | Slot | App ready after start | Served by `cs-lb` after ready | **Start → served** |
+  |---|---|---|---|---|
+  | 1 | 140-2 / 140-3 | 5.4 / 5.7 s | 2.4 / 2.4 s | 7.8 / 8.1 s |
+  | 2 | 140-2 / 140-3 | 5.7 / 6.0 s | 1.5 / 1.4 s | 7.2 / 7.4 s |
+  | 3 | 140-2 / 140-3 | 6.6 / 7.0 s | 0.8 / 3.3 s | 7.4 / **10.3 s** |
+  | 4 | 140-2 / 140-3 | 7.0 / 6.6 s | 1.0 / 1.1 s | 8.0 / 7.7 s |
+  | 5 | 140-2 / 140-3 | 7.5 / 8.2 s | 1.0 / 3.0 s | 8.5 / **11.2 s** |
+
+  TB-011 (accepted ruling: measured from app-ready) passes in every run: 0.8–3.3 s. **Flag:** measured from container start, 2 of 10 starts took longer than 10 s (10.3 and 11.2 s). Windows reported only 0.5–0.9 GB free of 15.9 GB during these runs (Docker's WSL VM holds up to 10 GB; desktop apps use the rest). App start-up at `cpus: 0.5` is the variable part. CPU limits and architecture §12.4 are unchanged, as ruled.
 
 **Memory (`docker stats`, baseline, 2026-10-09):** running containers use about **222 MiB**; their limits total **1,088 MiB**, the same as A1.1, because `cs-payments` went from 128 MiB to 96 MiB to make room for `cs-lb` (32 MiB, uses 3 MiB). Stopped slots use no memory. Each extra running api slot adds about 50 MiB (limit 256 MiB), so scale-to-3 adds about 100 MiB. Docker has 9.72 GiB; the Windows host showed 1.2 GB free of 15.9 GB during the test, and other projects' containers (`bioguard-*`, about 145 MiB) were running again.
+
+### A1.3 — chaos CLI, seeded ledger, fault mechanics
+
+**How to run** (repository root, testbed up): `uv run --project chaos-shop/cli chaos reset | status [--json] | inject <1-8 or name> | verify <1-8 or name> [--hold 180] [--recover 120]`.
+
+**What exists now:**
+- `chaos-shop/cli/`: the `chaos` CLI, its own uv project (Docker SDK, pyyaml, `oncallpilot-contracts` as a path dependency). It reads `CHAOS_TOKEN` from the environment or the git-ignored root `.env` and never prints it.
+- **Networking (approved option C):** every command batches its calls into one short-lived helper container, `python:3.12.15-slim` on `chaos_net`, named `ocp-ops-<hex>`. The helper gets the token as an env var, addresses slots by container name, runs `chaos_cli/helper.py` (standard library only) and is removed afterwards. Nothing is published and nothing execs into a monitored container. The helper also mounts the ledger volume and is the only writer of the CLI's ledger lines.
+- **Ledger (C6, TB-009):** `chaos reset` atomically replaces `deploys.jsonl` with the seeded history from `releases.yaml` (5 deploys of 1.2.0, 2.0.0, 1.3.0, 2.1.0, 1.4.0), followed by one `kind=reset` record per service. `inject 2` and `inject 6` append `kind=deploy` with `deployed_by=ci`; `verify`'s direct fixes append `rollback` or `scale` with `deployed_by=setup`. Every line is built and validated with `DeployRecord`. `config_hash` = SHA-256 of the release's `config` in `releases.yaml`, and a test checks that each slot runs exactly that configuration.
+- **Releases behave differently now:**
+  - **1.5.0:** checkout rounds totals with a step table that is off by one, so orders of 50.00 or more raise `IndexError` and return 500.
+  - **2.2.0:** the slot runs `QUEUE_BATCH_SIZE=250`, above the worker's limit of 100. The worker logs one CRITICAL line with a stack trace and exits 1, and `restart: on-failure` keeps restarting it.
+- **Fault switches** are `/internal/chaos/*` on cs-api and cs-worker, `/internal/delay` on cs-payments and `/internal/mode` and `/internal/coupon-stream` on cs-loadgen. All need `CHAOS_TOKEN` and none are logged.
+- **Faults survive restarts (ADR-19):**
+  - The worker's retention marker lives in the container's writable layer: an OOM kill (SIGKILL) keeps it and a graceful stop removes it.
+  - The payments delay and the loadgen mode and coupon stream sit in state files under `/var/lib/shop`, so they survive `docker restart` (checked live).
+  - Scenario 3's switch is in process memory on purpose, because a restart is its fix.
+  - `chaos reset` clears everything: graceful restart of the baseline slots, explicit switch-off calls, and a reseeded ledger.
+- **Scenario 8:** the loadgen sends 2 checkouts per second with crafted coupon codes. They carry the planted texts from architecture §11.3. The parser in both releases raises `ValueError` whose message repeats the code, so the text lands in `msg` and `exc_message`. They are test data for TEST-003.
+- **Worker slots** now have `memswap_limit: 256m` (no swap). With swap, the leaking worker paged out and was OOM-killed only once in 15 minutes. Without swap it is killed and restarted about every 210 s, with retention still on afterwards (observed 2 restarts in 8 minutes).
+- **Health checks** use `start_interval: 2s`, so slots report healthy soon after their app listens.
+
+**Checks (2026-10-09):**
+- Unit tests: chaos-shop 75 passed; CLI 30 passed. The CLI tests cover ledger validity (TB-009), the TB-010 grep (releases.yaml, runbooks/, names, labels and aliases, and a sample ledger written by the CLI), reset, status, every inject and fix against a fake Docker, the token, and the helper's ledger writes. ruff and `mypy --strict` report no errors in both projects.
+- Live, service checks (`chaos-shop`, `pytest -m live`): 11 passed.
+- Live, CLI (`chaos-shop/cli`, `pytest -m live -k "not verify"`): 10 passed. Reset is within 90 s and `status` then shows the baseline (TB-002, TB-007). Each of the 8 injects finishes within 30 s and shows up in `status` (TB-006). The live ledger is valid and neutral after injecting 2 and 6 (TB-009, TB-010).
+- **`chaos verify` with the real 180 s hold and 120 s recovery limit (TB-008):**
+
+  | # | Scenario | Inject | Broken after 180 s | Fix | Recovered after fix |
+  |---|---|---|---|---|---|
+  | 1 | memory-leak | 2.1 s | rss 234 MiB, retention on | graceful restart of the worker | 18 s (rss 60 MiB) |
+  | 2 | bad-deploy | 13.7 s | 10/10 checkouts 500 | 140 slots started, 150 stopped, ledger `rollback` | 3 s (10/10 201) |
+  | 3 | db-pool | 2.3 s | 13 pool timeouts in 10 s, pool 5/5 in use | restart of the api slot | 12 s (0 timeouts) |
+  | 4 | cache-outage | 0.3 s | cs-redis exited, checkouts 503 | start cs-redis | 9 s |
+  | 5 | traffic-spike | 1.4 s | **not broken**: p95 8 ms at 40 rps | — | — |
+  | 6 | config-crash | 2.8 s | cs-worker-220 restarting, 11 restarts | 210 started, 220 stopped, ledger `rollback` | 10 s |
+  | 7 | slow-dependency | 1.4 s | checkouts 201 in 2.55–2.62 s | none (escalate) | — |
+  | 8 | log-injection | 1.4 s | 20 checkout 500s in 10 s | none (escalate) | — |
+
+  Reset takes 10–21 s per run. **Scenario 5 fails until A1.4:** the spike rate is still the placeholder (40 rps, which the loadgen reaches), and one api slot handles it with p95 8 ms. A1.4 calibrates `CS_LOADGEN_SPIKE_RPS`.
+- **15-minute persistence** (`verify 1 --hold 900`): still broken after 900 s and fixed 17 s after a graceful restart. The other 7 scenarios still need their 15-minute run before Gate G1.
+
+**Memory (baseline after reset, 2026-10-09):** about **227 MiB** used, limits unchanged at **1,088 MiB**. During scenario 1 the worker climbs to its 256 MiB limit and is killed. The helper container (limit 64 MiB) lives about 1–2 s per command. The Windows host had 1.7 GB free of 15.9 GB, with no other containers running.
 
 ## C7 deviations (accepted for now, 2026-10-09)
 
@@ -103,6 +158,16 @@ Both are in the implementation; `contracts/telemetry.md` is unchanged. Usman dec
 `chaos_net` is declared in `infrastructure/compose/testbed.yml`; the network is `oncallpilot_chaos_net`. Tested on 2026-10-09 with a scratch project that includes `testbed.yml` plus a second file, as `compose.yaml` does:
 - Second file declares `chaos_net` with `external: true`: Compose merges it as external, so nobody creates it, and a fresh `up` fails with `network ... declared as external, but could not be found`.
 - Second file uses `chaos_net` and declares it plainly (`chaos_net: {}`), or not at all: one shared network, created on the first `up`. **This is the form that works** for files included by `compose.yaml`. `external: true` only fits a compose project started separately, after the testbed.
+
+## Compose profiles
+
+Architecture §12.1 lists four profiles (`testbed`, `obs`, `copilot`, `runner`). The testbed now has a fifth, **`testbed-slots`** (accepted 2026-10-09): the ten non-baseline slots, created but never started by Compose. **`ocp up` (S1.1) must create them**: run `docker compose --profile testbed-slots create` after `up`, or rely on `chaos reset`, which `ocp up` runs and which creates any missing slot itself.
+
+## Deploy ledger location (agreed 2026-10-09)
+
+- Docker volume **`deploy_ledger`** (`oncallpilot_deploy_ledger`). The chaos CLI's helper container creates it on the first `chaos reset`; `runner.yml` (rw, task A2.1) and Usman's `copilot.yml` (ro) declare `deploy_ledger: {}` and mount it. Compose adopts a volume that already exists (tested 2026-10-09). A declared volume that no service mounts is not created by `up`.
+- **`LEDGER_PATH=/ledger/deploys.jsonl`** in every container that mounts it.
+- The file and the directory belong to **uid 10001** (mode 0644), so the runner must run as uid 10001, the same non-root user as the Chaos Shop images.
 
 ## Friday checkpoint (W1)
 
