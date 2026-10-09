@@ -5,4 +5,5 @@
 #   runner.yml (Tanzeel), test.yml (Usman).
 name: oncallpilot
 
-services: {}
+include:
+  - infrastructure/compose/runner.yml
