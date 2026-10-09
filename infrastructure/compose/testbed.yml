@@ -410,8 +410,11 @@ services:
       CHAOS_TOKEN: ${CHAOS_TOKEN:?set CHAOS_TOKEN in .env}
       CS_LOADGEN_TARGET_URL: http://cs-lb
       CS_LOADGEN_BASELINE_RPS: "5"
-      # Placeholder until task A1.4 calibrates it on the integration host.
-      CS_LOADGEN_SPIKE_RPS: "40"
+      # Scenario 5, calibrated in A1.4 on the integration host (docs/checks/week-1.md):
+      # one api slot (cpus 0.5) serves about 75-90 rps of this mix, so 100 rps
+      # saturates it, and three slots carry it at about a third of their capacity.
+      # cs-loadgen itself tops out near 100 rps at cpus 1.0; do not raise it further.
+      CS_LOADGEN_SPIKE_RPS: "100"
       CS_LOADGEN_RAMP_SECONDS: "30"
     networks: [chaos_net]
     cpus: 1.0
