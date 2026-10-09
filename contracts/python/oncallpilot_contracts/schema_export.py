@@ -11,7 +11,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from oncallpilot_contracts import approval, domain, runner
+from oncallpilot_contracts import approval, domain, push, runner
 from oncallpilot_contracts.ledger import DeployRecord
 
 # Schema file name (without .json) -> model. Add new contract models here.
@@ -45,6 +45,8 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "approve_accepted": approval.ApproveAccepted,
     "reject_request": approval.RejectRequest,
     "reject_response": approval.RejectResponse,
+    # C9 push payload
+    "push_payload": push.PushPayload,
 }
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"

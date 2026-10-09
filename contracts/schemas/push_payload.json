@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "description": "The data part of every FCM message (§9.7).",
+  "properties": {
+    "incident_id": {
+      "format": "uuid",
+      "title": "Incident Id",
+      "type": "string"
+    },
+    "service": {
+      "enum": [
+        "api",
+        "worker",
+        "lb",
+        "payments",
+        "redis",
+        "postgres"
+      ],
+      "title": "Service",
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "sev1",
+        "sev2",
+        "sev3"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "type": {
+      "enum": [
+        "incident.opened",
+        "proposal.created",
+        "incident.escalated",
+        "incident.action_failed",
+        "incident.resolved"
+      ],
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "incident_id",
+    "severity",
+    "service",
+    "title"
+  ],
+  "title": "PushPayload",
+  "type": "object"
+}
