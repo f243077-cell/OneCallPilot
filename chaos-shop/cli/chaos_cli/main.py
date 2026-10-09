@@ -89,8 +89,28 @@ def cmd_inject(testbed: Testbed, args: argparse.Namespace) -> int:
 
 
 def cmd_verify(testbed: Testbed, args: argparse.Namespace) -> int:
-    """TB-008: inject, hold, assert still broken, fix through Docker, assert recovery."""
-    number = scenario_number(args.scenario)
+    """TB-008 for one scenario, or for all 8 in a row with ``--all`` (unattended run)."""
+    if args.all == (args.scenario is not None):
+        raise ScenarioError("give one scenario, or --all")
+    if not args.all:
+        return verify_one(testbed, args, scenario_number(args.scenario))
+    started = time.monotonic()
+    results: dict[int, int] = {}
+    for number in SCENARIOS:
+        try:
+            results[number] = verify_one(testbed, args, number)
+        except (ScenarioError, DockerOpsError) as exc:
+            print(f"[{number} {SCENARIOS[number]}] ERROR: {exc}")
+            results[number] = 2
+    minutes = (time.monotonic() - started) / 60
+    print(f"\nverify --all, hold {args.hold:.0f} s, {minutes:.0f} min:")
+    for number, code in results.items():
+        print(f"  {number} {SCENARIOS[number]:<16} {'PASS' if code == 0 else 'FAIL'}")
+    return 0 if all(code == 0 for code in results.values()) else 1
+
+
+def verify_one(testbed: Testbed, args: argparse.Namespace, number: int) -> int:
+    """Inject, hold, assert still broken, fix through Docker, assert recovery."""
     name = f"{number} {SCENARIOS[number]}"
     try:
         if not args.no_reset:
@@ -138,7 +158,10 @@ def parser() -> argparse.ArgumentParser:
     inject = sub.add_parser("inject", help=f"inject one scenario ({scenarios})")
     inject.add_argument("scenario")
     verify = sub.add_parser("verify", help="inject, hold, check, fix, check recovery (TB-008)")
-    verify.add_argument("scenario")
+    verify.add_argument("scenario", nargs="?")
+    verify.add_argument(
+        "--all", action="store_true", help="every scenario in a row, e.g. overnight --hold 900"
+    )
     verify.add_argument("--hold", type=float, default=180.0, help="seconds to stay broken")
     verify.add_argument("--recover", type=float, default=120.0, help="seconds allowed to recover")
     verify.add_argument("--no-reset", action="store_true", help="skip the reset before inject")
@@ -150,6 +173,9 @@ COMMANDS = {"reset": cmd_reset, "status": cmd_status, "inject": cmd_inject, "ver
 
 
 def main(argv: list[str] | None = None) -> None:
+    # Line-buffered, so a long unattended run writes its progress to a log file as it goes.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
     args = parser().parse_args(argv)
     try:
         code = COMMANDS[args.command](build_testbed(), args)

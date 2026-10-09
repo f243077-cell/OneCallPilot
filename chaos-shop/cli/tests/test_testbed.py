@@ -1,5 +1,6 @@
 """chaos reset, status, inject and verify fixes against an in-memory Docker (TB-006..TB-009)."""
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -223,3 +224,25 @@ def test_helper_ledger_append_and_replace(tmp_path: Path, monkeypatch: pytest.Mo
     assert helper.run([{"op": "ledger_read"}], "") == ["a\nb\nc\n"]
     with pytest.raises(ValueError):
         helper.run([{"op": "rm -rf"}], "")
+
+
+def test_verify_all_runs_every_scenario_and_summarises(
+    docker: FakeDocker, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from chaos_cli import main as cli
+
+    seen: list[int] = []
+
+    def fake_verify_one(_: Testbed, __: Any, number: int) -> int:
+        seen.append(number)
+        return 1 if number == 5 else 0
+
+    monkeypatch.setattr(cli, "verify_one", fake_verify_one)
+    testbed = Testbed(docker, Secrets("t" * 32), ledger.Releases.load())  # type: ignore[arg-type]
+    args = cli.parser().parse_args(["verify", "--all", "--hold", "900"])
+    assert cli.cmd_verify(testbed, args) == 1
+    assert seen == list(SCENARIOS)
+    out = capsys.readouterr().out
+    assert re.search(r"5 traffic-spike\s+FAIL", out) and re.search(r"1 memory-leak\s+PASS", out)
+    with pytest.raises(ScenarioError):
+        cli.cmd_verify(testbed, cli.parser().parse_args(["verify", "2", "--all"]))
