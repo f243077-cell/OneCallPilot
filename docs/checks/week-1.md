@@ -22,11 +22,12 @@
 | Docker Desktop engine | 29.8.1, WSL2 backend (kernel 6.18.40.1-microsoft-standard-WSL2) |
 | Docker API version | 1.56 (min 1.40) |
 | Docker Compose | v5.5.1 (`include:` needs ≥ 2.20) |
-| CPUs / memory visible to Docker | 4 / 7.69 GiB (WSL default: half of host RAM; no `.wslconfig`) |
-| Host RAM | 15.9 GB reported by Windows |
+| CPUs / memory visible to Docker | 4 / **9.72 GiB** after `.wslconfig` `memory=10GB` (was 7.69 GiB, the WSL default of half the host RAM) |
+| Host RAM | 16 GB installed (15.9 GB usable reported by Windows) |
+| `.wslconfig` | `%USERPROFILE%\.wslconfig` with `[wsl2]` `memory=10GB`; applied 2026-10-09 with `wsl --shutdown` and a Docker Desktop restart |
 | Disk image | `%LOCALAPPDATA%\Docker\wsl\disk\docker_data.vhdx` on C: (15.3 GB; C: has 136 GB free, so it was not moved) |
 
-**Open point:** the docs plan the integration and benchmark host as a 20 GB laptop (ADR-03), and §12.3 asks for at least 8 GB for Docker. This laptop reports 15.9 GB and gives Docker 7.69 GiB. Before the benchmark, either confirm the RAM figure or raise Docker's memory with a `.wslconfig` (for example `memory=10GB`) and record the change here.
+**Resolved (2026-10-09):** the docs said 20 GB; the laptop has 16 GB. `CLAUDE.md`, `architecture.md` (v1.5) and `phases.md` now say 16 GB. Docker gets 10 GB, which meets §12.3 (at least 8 GB). Other projects' containers on this laptop (`bioguard-*`, restart policy on) must be stopped during benchmark runs (§12.3: no other heavy workloads).
 
 ## Friday checkpoint (W1)
 
