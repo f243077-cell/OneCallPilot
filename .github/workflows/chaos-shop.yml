@@ -1,6 +1,7 @@
-# Chaos Shop checks (TB-001, TB-003, TB-004, TB-005, TEST-012): lint, type-check
-# and unit-test chaos-shop/, including the C7 metric and log contract tests, then
-# check that the testbed Compose file is valid and its images build.
+# Chaos Shop checks (TB-001..TB-010, TEST-012): lint, type-check and unit-test
+# chaos-shop/ (C7 metric and log contract tests, fault behaviour) and the chaos
+# CLI in chaos-shop/cli/ (ledger validity, TB-010 naming grep, inject and reset
+# logic), then check that the testbed Compose file is valid and its images build.
 # The live checks (tests/live, `pytest -m live`) need the running testbed and
 # run on the integration host only.
 #
@@ -52,6 +53,18 @@ jobs:
 
       - name: Pytest (unit and contract tests)
         run: uv run pytest -q
+
+      - name: chaos CLI - install (locked)
+        working-directory: chaos-shop/cli
+        run: uv sync --locked
+
+      - name: chaos CLI - ruff, mypy, pytest
+        working-directory: chaos-shop/cli
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy
+          uv run pytest -q
 
       - name: Compose file is valid (dummy values from .env.example)
         working-directory: .
