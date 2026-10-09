@@ -1,0 +1,50 @@
+{
+  "additionalProperties": false,
+  "description": "Body of ``POST /proposals/{id}/approve`` (header ``Idempotency-Key`` required).\n\n``device_id`` is optional: the app always sends it; API clients such as\n``ocp smoke`` may leave it out.",
+  "properties": {
+    "auth_method": {
+      "enum": [
+        "biometric",
+        "tap"
+      ],
+      "title": "Auth Method",
+      "type": "string"
+    },
+    "challenge_id": {
+      "format": "uuid",
+      "title": "Challenge Id",
+      "type": "string"
+    },
+    "device_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Device Id"
+    },
+    "nonce": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Nonce",
+      "type": "string"
+    },
+    "proposal_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Proposal Fingerprint",
+      "type": "string"
+    }
+  },
+  "required": [
+    "challenge_id",
+    "nonce",
+    "proposal_fingerprint",
+    "auth_method"
+  ],
+  "title": "ApproveRequest",
+  "type": "object"
+}

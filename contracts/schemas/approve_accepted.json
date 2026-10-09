@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "description": "``202`` of ``POST /proposals/{id}/approve``.",
+  "properties": {
+    "execution_id": {
+      "format": "uuid",
+      "title": "Execution Id",
+      "type": "string"
+    },
+    "status": {
+      "const": "queued",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "execution_id",
+    "status"
+  ],
+  "title": "ApproveAccepted",
+  "type": "object"
+}

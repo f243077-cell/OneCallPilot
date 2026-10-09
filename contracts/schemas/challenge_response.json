@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "description": "``200`` of ``POST /proposals/{id}/challenge``: single use, valid for 120 s.",
+  "properties": {
+    "approval_requirement": {
+      "enum": [
+        "tap",
+        "biometric"
+      ],
+      "title": "Approval Requirement",
+      "type": "string"
+    },
+    "challenge_id": {
+      "format": "uuid",
+      "title": "Challenge Id",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "nonce": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Nonce",
+      "type": "string"
+    }
+  },
+  "required": [
+    "challenge_id",
+    "nonce",
+    "expires_at",
+    "approval_requirement"
+  ],
+  "title": "ChallengeResponse",
+  "type": "object"
+}
