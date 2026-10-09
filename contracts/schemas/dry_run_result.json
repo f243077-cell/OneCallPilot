@@ -1,0 +1,203 @@
+{
+  "$defs": {
+    "ContainerState": {
+      "additionalProperties": false,
+      "description": "State of one container (dry runs and structural health checks).",
+      "properties": {
+        "health": {
+          "enum": [
+            "healthy",
+            "unhealthy",
+            "starting",
+            "none"
+          ],
+          "title": "Health",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "^cs-[a-z0-9]+(-[a-z0-9]+)*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "created",
+            "restarting",
+            "running",
+            "removing",
+            "paused",
+            "exited",
+            "dead"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "state",
+        "health"
+      ],
+      "title": "ContainerState",
+      "type": "object"
+    },
+    "DryRunCurrent": {
+      "additionalProperties": false,
+      "description": "What the runner sees now (§7.5).",
+      "properties": {
+        "active_release": {
+          "anyOf": [
+            {
+              "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null for clear_cache",
+          "title": "Active Release"
+        },
+        "cache_keys": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "clear_cache only",
+          "title": "Cache Keys"
+        },
+        "containers": {
+          "items": {
+            "$ref": "#/$defs/ContainerState"
+          },
+          "title": "Containers",
+          "type": "array"
+        },
+        "running_replicas": {
+          "anyOf": [
+            {
+              "maximum": 5,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null for clear_cache",
+          "title": "Running Replicas"
+        }
+      },
+      "required": [
+        "active_release",
+        "running_replicas",
+        "containers",
+        "cache_keys"
+      ],
+      "title": "DryRunCurrent",
+      "type": "object"
+    },
+    "DryRunPreconditions": {
+      "additionalProperties": false,
+      "properties": {
+        "cooldown_ok": {
+          "title": "Cooldown Ok",
+          "type": "boolean"
+        },
+        "rate_limit_ok": {
+          "title": "Rate Limit Ok",
+          "type": "boolean"
+        },
+        "slots_available": {
+          "title": "Slots Available",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rate_limit_ok",
+        "cooldown_ok",
+        "slots_available"
+      ],
+      "title": "DryRunPreconditions",
+      "type": "object"
+    },
+    "WouldChange": {
+      "additionalProperties": false,
+      "description": "One change an action would make: a container, or a cache for ``clear_cache``.",
+      "properties": {
+        "change": {
+          "enum": [
+            "start",
+            "stop",
+            "restart",
+            "clear"
+          ],
+          "title": "Change",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target",
+        "change"
+      ],
+      "title": "WouldChange",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The runner's preview of an action (RUN-007).",
+  "properties": {
+    "current": {
+      "$ref": "#/$defs/DryRunCurrent"
+    },
+    "preconditions": {
+      "$ref": "#/$defs/DryRunPreconditions"
+    },
+    "predicted_effect": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Predicted Effect",
+      "type": "string"
+    },
+    "state_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "State Fingerprint",
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
+    "would_change": {
+      "items": {
+        "$ref": "#/$defs/WouldChange"
+      },
+      "title": "Would Change",
+      "type": "array"
+    }
+  },
+  "required": [
+    "would_change",
+    "current",
+    "preconditions",
+    "predicted_effect",
+    "warnings",
+    "state_fingerprint"
+  ],
+  "title": "DryRunResult",
+  "type": "object"
+}

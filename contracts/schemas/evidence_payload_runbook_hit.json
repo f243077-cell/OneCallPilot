@@ -1,0 +1,63 @@
+{
+  "$defs": {
+    "RunbookChunkHit": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "maxLength": 1500,
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Heading"
+        },
+        "similarity": {
+          "maximum": 1,
+          "minimum": -1,
+          "title": "Similarity",
+          "type": "number"
+        },
+        "source": {
+          "pattern": "^runbooks/[A-Za-z0-9_.-]+\\.md$",
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "heading",
+        "content",
+        "similarity"
+      ],
+      "title": "RunbookChunkHit",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "``kind = runbook_hit``: result of ``search_runbooks`` (AI-009).",
+  "properties": {
+    "chunks": {
+      "items": {
+        "$ref": "#/$defs/RunbookChunkHit"
+      },
+      "maxItems": 3,
+      "title": "Chunks",
+      "type": "array"
+    }
+  },
+  "required": [
+    "chunks"
+  ],
+  "title": "RunbookHitPayload",
+  "type": "object"
+}

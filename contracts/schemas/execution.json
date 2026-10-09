@@ -1,0 +1,373 @@
+{
+  "$defs": {
+    "ContainerState": {
+      "additionalProperties": false,
+      "description": "State of one container (dry runs and structural health checks).",
+      "properties": {
+        "health": {
+          "enum": [
+            "healthy",
+            "unhealthy",
+            "starting",
+            "none"
+          ],
+          "title": "Health",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "^cs-[a-z0-9]+(-[a-z0-9]+)*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "created",
+            "restarting",
+            "running",
+            "removing",
+            "paused",
+            "exited",
+            "dead"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "state",
+        "health"
+      ],
+      "title": "ContainerState",
+      "type": "object"
+    },
+    "ExecutionStep": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 300,
+          "title": "Message",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "succeeded",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "step": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Step",
+          "type": "string"
+        }
+      },
+      "required": [
+        "at",
+        "step",
+        "status",
+        "message"
+      ],
+      "title": "ExecutionStep",
+      "type": "object"
+    },
+    "HealthAfter": {
+      "additionalProperties": false,
+      "description": "``executions.health_after``: both checks and the combined verdict (FR-014).",
+      "properties": {
+        "signals": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SignalHealth"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "structural": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StructuralHealth"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "verdict": {
+          "anyOf": [
+            {
+              "enum": [
+                "pass",
+                "fail"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Verdict"
+        }
+      },
+      "required": [
+        "structural",
+        "signals",
+        "verdict"
+      ],
+      "title": "HealthAfter",
+      "type": "object"
+    },
+    "ProbeResult": {
+      "additionalProperties": false,
+      "description": "An HTTP ``/healthz`` probe.",
+      "properties": {
+        "error": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Error"
+        },
+        "latency_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latency Ms"
+        },
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        },
+        "status_code": {
+          "anyOf": [
+            {
+              "maximum": 599,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Status Code"
+        },
+        "url": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "ok",
+        "status_code",
+        "latency_ms",
+        "error"
+      ],
+      "title": "ProbeResult",
+      "type": "object"
+    },
+    "SignalHealth": {
+      "additionalProperties": false,
+      "description": "The worker's signal verification (§5.10 step 7).",
+      "properties": {
+        "checked_at": {
+          "format": "date-time",
+          "title": "Checked At",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "signals": {
+          "items": {
+            "enum": [
+              "error_rate",
+              "p95_latency",
+              "job_failure_rate",
+              "restarts",
+              "stack_traces"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Signals",
+          "type": "array"
+        },
+        "window_seconds": {
+          "minimum": 1,
+          "title": "Window Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "passed",
+        "checked_at",
+        "window_seconds",
+        "signals"
+      ],
+      "title": "SignalHealth",
+      "type": "object"
+    },
+    "StructuralHealth": {
+      "additionalProperties": false,
+      "description": "The runner's structural health check (RUN-014).",
+      "properties": {
+        "checked_at": {
+          "format": "date-time",
+          "title": "Checked At",
+          "type": "string"
+        },
+        "containers": {
+          "items": {
+            "$ref": "#/$defs/ContainerState"
+          },
+          "title": "Containers",
+          "type": "array"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "probes": {
+          "items": {
+            "$ref": "#/$defs/ProbeResult"
+          },
+          "title": "Probes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "passed",
+        "checked_at",
+        "containers",
+        "probes"
+      ],
+      "title": "StructuralHealth",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One execution of an approved proposal (§5.10, §9.3; DB-007).",
+  "properties": {
+    "error_code": {
+      "anyOf": [
+        {
+          "enum": [
+            "BAD_SIGNATURE",
+            "REQUEST_EXPIRED",
+            "ACTION_NOT_ALLOWED",
+            "TARGET_NOT_ALLOWED",
+            "VALIDATION_ERROR",
+            "RATE_LIMITED",
+            "COOLDOWN_ACTIVE",
+            "STATE_DRIFT",
+            "RUNNER_TIMEOUT"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Error Code"
+    },
+    "finished_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Finished At"
+    },
+    "health_after": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HealthAfter"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "started_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Started At"
+    },
+    "status": {
+      "enum": [
+        "queued",
+        "running",
+        "succeeded",
+        "failed",
+        "aborted"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/ExecutionStep"
+      },
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "proposal_id",
+    "status",
+    "steps",
+    "error_code",
+    "health_after",
+    "started_at",
+    "finished_at"
+  ],
+  "title": "Execution",
+  "type": "object"
+}

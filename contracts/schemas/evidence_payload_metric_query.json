@@ -1,0 +1,142 @@
+{
+  "$defs": {
+    "MetricPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "ts",
+        "value"
+      ],
+      "title": "MetricPoint",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "``kind = metric_query``: result of ``query_metrics`` (AI-006).",
+  "properties": {
+    "baseline_mean": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Baseline Mean"
+    },
+    "change_point_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Change Point At"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "For example, why the series is empty",
+      "title": "Note"
+    },
+    "pct_change": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Pct Change"
+    },
+    "peak": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Peak"
+    },
+    "points": {
+      "items": {
+        "$ref": "#/$defs/MetricPoint"
+      },
+      "maxItems": 120,
+      "title": "Points",
+      "type": "array"
+    },
+    "service": {
+      "enum": [
+        "api",
+        "worker",
+        "lb",
+        "payments",
+        "redis",
+        "postgres"
+      ],
+      "title": "Service",
+      "type": "string"
+    },
+    "step_seconds": {
+      "minimum": 5,
+      "title": "Step Seconds",
+      "type": "integer"
+    },
+    "template": {
+      "enum": [
+        "error_rate",
+        "p95_latency",
+        "request_rate",
+        "memory_rss",
+        "cpu_usage",
+        "process_restarts",
+        "db_pool_in_use",
+        "db_pool_wait_p95",
+        "cache_errors",
+        "upstream_latency_p95",
+        "job_failure_rate",
+        "job_latency_p95"
+      ],
+      "title": "Template",
+      "type": "string"
+    }
+  },
+  "required": [
+    "template",
+    "service",
+    "step_seconds",
+    "points",
+    "baseline_mean",
+    "peak",
+    "pct_change",
+    "change_point_at",
+    "note"
+  ],
+  "title": "MetricQueryPayload",
+  "type": "object"
+}

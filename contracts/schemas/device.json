@@ -1,0 +1,59 @@
+{
+  "additionalProperties": false,
+  "description": "A registered phone (§8.2; DB-010). The FCM token is never returned.",
+  "properties": {
+    "app_version": {
+      "anyOf": [
+        {
+          "maxLength": 50,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "App Version"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "last_seen_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Seen At"
+    },
+    "platform": {
+      "const": "android",
+      "title": "Platform",
+      "type": "string"
+    },
+    "push_enabled": {
+      "title": "Push Enabled",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "platform",
+    "app_version",
+    "push_enabled",
+    "last_seen_at",
+    "created_at"
+  ],
+  "title": "Device",
+  "type": "object"
+}

@@ -1,0 +1,92 @@
+{
+  "$defs": {
+    "DeployListItem": {
+      "additionalProperties": false,
+      "description": "One deploy-ledger record as ``get_recent_deploys`` returns it (C6 fields).",
+      "properties": {
+        "commit_message": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Commit Message",
+          "type": "string"
+        },
+        "commit_sha": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Commit Sha",
+          "type": "string"
+        },
+        "config_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Config Hash",
+          "type": "string"
+        },
+        "deployed_at": {
+          "format": "date-time",
+          "title": "Deployed At",
+          "type": "string"
+        },
+        "deployed_by": {
+          "enum": [
+            "ci",
+            "runner",
+            "setup"
+          ],
+          "title": "Deployed By",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "deploy",
+            "rollback",
+            "scale",
+            "reset"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "release": {
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+          "title": "Release",
+          "type": "string"
+        },
+        "service": {
+          "enum": [
+            "api",
+            "worker"
+          ],
+          "title": "Service",
+          "type": "string"
+        }
+      },
+      "required": [
+        "service",
+        "release",
+        "commit_sha",
+        "commit_message",
+        "config_hash",
+        "deployed_at",
+        "deployed_by",
+        "kind"
+      ],
+      "title": "DeployListItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "``kind = deploy_list``: result of ``get_recent_deploys``, newest first (AI-007).",
+  "properties": {
+    "records": {
+      "items": {
+        "$ref": "#/$defs/DeployListItem"
+      },
+      "maxItems": 10,
+      "title": "Records",
+      "type": "array"
+    }
+  },
+  "required": [
+    "records"
+  ],
+  "title": "DeployListPayload",
+  "type": "object"
+}

@@ -11,11 +11,30 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from oncallpilot_contracts import domain
 from oncallpilot_contracts.ledger import DeployRecord
 
 # Schema file name (without .json) -> model. Add new contract models here.
 SCHEMAS: dict[str, type[BaseModel]] = {
     "deploy_record": DeployRecord,
+    # C1 domain models
+    "incident_summary": domain.IncidentSummary,
+    "incident_detail": domain.IncidentDetail,
+    "evidence": domain.Evidence,
+    "evidence_payload_detector_signal": domain.DetectorSignalPayload,
+    "evidence_payload_log_query": domain.LogQueryPayload,
+    "evidence_payload_metric_query": domain.MetricQueryPayload,
+    "evidence_payload_deploy_list": domain.DeployListPayload,
+    "evidence_payload_service_health": domain.ServiceHealthPayload,
+    "evidence_payload_runbook_hit": domain.RunbookHitPayload,
+    "hypothesis": domain.Hypothesis,
+    "proposal": domain.Proposal,
+    "dry_run_result": domain.DryRunResult,
+    "execution": domain.Execution,
+    "approval": domain.Approval,
+    "audit_entry": domain.AuditEntry,
+    "device": domain.Device,
+    "monitor_settings": domain.MonitorSettings,
 }
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"

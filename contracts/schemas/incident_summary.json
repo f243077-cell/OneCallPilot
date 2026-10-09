@@ -1,0 +1,199 @@
+{
+  "$defs": {
+    "TopHypothesis": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "root_cause_category": {
+          "enum": [
+            "bad_deploy",
+            "config_error",
+            "memory_leak",
+            "resource_saturation",
+            "traffic_surge",
+            "dependency_unavailable",
+            "dependency_slow",
+            "db_connection_exhaustion",
+            "cache_failure",
+            "application_bug",
+            "network_issue",
+            "disk_pressure",
+            "unknown"
+          ],
+          "title": "Root Cause Category",
+          "type": "string"
+        },
+        "summary": {
+          "maxLength": 400,
+          "minLength": 10,
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "summary",
+        "confidence",
+        "root_cause_category"
+      ],
+      "title": "TopHypothesis",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "An incident in the feed (§9.3; DB-002).",
+  "properties": {
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "opened_at": {
+      "format": "date-time",
+      "title": "Opened At",
+      "type": "string"
+    },
+    "pending_proposal_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Pending Proposal Id"
+    },
+    "resolution": {
+      "anyOf": [
+        {
+          "enum": [
+            "action_succeeded",
+            "auto_recovered",
+            "manual",
+            "rolled_back"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resolution"
+    },
+    "resolved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resolved At"
+    },
+    "service": {
+      "enum": [
+        "api",
+        "worker",
+        "lb",
+        "payments",
+        "redis",
+        "postgres"
+      ],
+      "title": "Service",
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "sev1",
+        "sev2",
+        "sev3"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "state_version": {
+      "minimum": 1,
+      "title": "State Version",
+      "type": "integer"
+    },
+    "status": {
+      "enum": [
+        "investigating",
+        "awaiting_approval",
+        "escalated",
+        "executing",
+        "verifying",
+        "resolved",
+        "action_failed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "status_reason": {
+      "anyOf": [
+        {
+          "enum": [
+            "low_confidence",
+            "no_catalogue_action_fits",
+            "budget_exhausted",
+            "llm_unavailable",
+            "llm_output_invalid",
+            "proposal_invalid",
+            "dry_run_unavailable",
+            "proposal_rejected",
+            "proposal_expired",
+            "rolled_back_after_failed_action",
+            "runner_refused",
+            "runner_timeout",
+            "agent_interrupted"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Status Reason"
+    },
+    "title": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "top_hypothesis": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TopHypothesis"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "service",
+    "severity",
+    "status",
+    "status_reason",
+    "title",
+    "opened_at",
+    "resolved_at",
+    "resolution",
+    "state_version",
+    "top_hypothesis",
+    "pending_proposal_id"
+  ],
+  "title": "IncidentSummary",
+  "type": "object"
+}
