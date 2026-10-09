@@ -1,0 +1,20 @@
+# Chaos Shop releases (architecture §11.1, C6 deploy ledger, C7 telemetry).
+#
+# One entry per release that has an image. The images read their own entry at
+# start-up, so `app_info{commit}` (C7) is the first 12 characters of
+# `commit_sha`, the same value the deploy ledger records for that release.
+# Task A1.2 adds releases 1.5.0 and 2.2.0; task A1.3 adds the seeded deploy
+# history that `chaos reset` writes to the ledger.
+#
+# Neutral naming (TB-010): release numbers and commit messages are visible to
+# the agent. They must never name a fault or the tool that injects one.
+
+releases:
+  api:
+    "1.4.0":
+      commit_sha: "606c2674b8e32ec226c88019db05b426594a08f6"
+      commit_message: "cart: cache price lookups"
+  worker:
+    "2.1.0":
+      commit_sha: "69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45"
+      commit_message: "jobs: batch receipt emails"
