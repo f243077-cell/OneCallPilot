@@ -429,4 +429,4 @@ When reporting back: what changed, which requirement IDs are satisfied, which te
 
 ### 10.3 Environments
 - Development: each developer's laptop, Supabase `ocp-dev`.
-- Integration and benchmark: **Tanzeel's laptop (20 GB RAM)**, Supabase `ocp-bench`. The Android phone reaches `backend-api` over the **same Wi‑Fi network** (a network the team controls, not campus Wi‑Fi). Windows Firewall allows inbound TCP 8000 on the private profile only.
+- Integration and benchmark: **Tanzeel's laptop (16 GB RAM; Docker gets 10 GB via `.wslconfig`)**, Supabase `ocp-bench`. The Android phone reaches `backend-api` over the **same Wi‑Fi network** (a network the team controls, not campus Wi‑Fi). Windows Firewall allows inbound TCP 8000 on the private profile only.

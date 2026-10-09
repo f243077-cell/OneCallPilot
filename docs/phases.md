@@ -2,7 +2,7 @@
 
 > **Developers:** **Usman** owns Stream B (backend, AI agent, database, observability, benchmark harness). **Tanzeel** owns Stream A (Flutter app, Chaos Shop testbed, chaos CLI, runner, `socket-proxy-rw`; Usman owns `socket-proxy-ro` with the observability stack).
 > **Rule of thumb:** neither developer ever waits on the other for more than a day. Every cross-stream dependency has a contract, a fixture, and a fake (§3, §4).
-> **Integration host:** Tanzeel's laptop (20 GB RAM), on a Wi‑Fi network the team controls. Each developer can also run the full stack locally.
+> **Integration host:** Tanzeel's laptop (16 GB RAM), on a Wi‑Fi network the team controls. Each developer can also run the full stack locally.
 > Requirement IDs (e.g. `RUN-011`) refer to `requirements.md`; § references point to `architecture.md`.
 
 ---
