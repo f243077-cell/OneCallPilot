@@ -1,0 +1,45 @@
+# Owner: Usman. Observability stack (architecture §2.8, §2.11, §3; TB-012, SEC-014).
+# Phase 0 (S0.7) adds socket-proxy-ro only; task B1.5 adds Prometheus, Loki,
+# Alloy and Grafana.
+#
+# SAFETY (CLAUDE.md §4.8, §6; SEC-014, TEST-015): socket-proxy-ro is GET-only.
+# It allows CONTAINERS, NETWORKS, EVENTS, PING and VERSION with POST=0 and no
+# ALLOW_* option. The image also enables the Podman twins LIBPOD_PING and
+# LIBPOD_VERSION by default (docs/checks/proxy.md), so they are switched off
+# explicitly below. NETWORKS stays until S0.7 shows whether Alloy's container
+# discovery works without it (architecture §2.11). Only this proxy and
+# socket-proxy-rw may mount the Docker socket.
+
+services:
+  socket-proxy-ro:
+    image: lscr.io/linuxserver/socket-proxy:3.4.6-r0-ls101
+    profiles: [obs]
+    environment:
+      CONTAINERS: "1"
+      NETWORKS: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      POST: "0"
+      LIBPOD_PING: "0"
+      LIBPOD_VERSION: "0"
+      LOG_LEVEL: ${SOCKET_PROXY_RO_LOG_LEVEL:-info}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [ro_proxy_net]
+    read_only: true
+    tmpfs: [/run]
+    restart: unless-stopped
+    healthcheck:
+      # Port check, as for socket-proxy-rw.
+      test: ["CMD", "nc", "-z", "127.0.0.1", "2375"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+networks:
+  ro_proxy_net:
+    # Internal: no internet egress. Members: socket-proxy-ro, and later alloy
+    # and backend-worker (architecture §3).
+    internal: true
