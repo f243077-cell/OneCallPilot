@@ -7,6 +7,7 @@ import pytest
 from oncallpilot_contracts.ledger import ALLOWED_WRITERS, DeployRecord
 
 from chaos_cli import ledger
+from chaos_cli.config import REPO_ROOT
 from chaos_cli.ledger import Releases
 
 FIXED = datetime(2026, 10, 9, 12, 0, 0, tzinfo=UTC)
@@ -47,6 +48,28 @@ def test_history_agrees_with_the_release_entries(releases: Releases) -> None:
     }
     assert len({(s, r) for s, r, _ in pairs}) == len({sha for _, _, sha in pairs}) == len(pairs)
     assert all(len(sha) == 40 and sha == sha.lower() for _, _, sha in pairs)
+
+
+def test_contract_ledger_fixture_agrees_with_releases(releases: Releases) -> None:
+    """contracts/fixtures/ledger/deploys.jsonl describes this testbed, so mock mode,
+    recorded fixtures and the live ledger show the same releases."""
+    fixture = REPO_ROOT / "contracts" / "fixtures" / "ledger" / "deploys.jsonl"
+    known = {
+        (e["service"], e["release"]): (e["commit_sha"], e["commit_message"], e["config_hash"])
+        for e in releases.history
+    }
+    for service, entries in releases.releases.items():
+        for release, entry in entries.items():
+            known[(service, release)] = (
+                entry["commit_sha"],
+                entry["commit_message"],
+                ledger.config_hash(entry["config"]),
+            )
+    for record in ledger.parse_lines(fixture.read_text(encoding="utf-8")):
+        expected = known[(record.service, record.release)]
+        assert (record.commit_sha, record.commit_message, record.config_hash) == expected
+        if record.kind == "reset":
+            assert record.reason == ledger.REASON_RESET
 
 
 def test_every_written_line_validates_and_uses_allowed_writers(releases: Releases) -> None:
