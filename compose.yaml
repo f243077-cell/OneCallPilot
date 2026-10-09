@@ -6,4 +6,5 @@
 name: oncallpilot
 
 include:
+  - infrastructure/compose/testbed.yml
   - infrastructure/compose/runner.yml
