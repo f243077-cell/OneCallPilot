@@ -88,8 +88,7 @@ http {
     }
     server {
         listen 80;
-        location = /healthz { return 200 "ok
-"; }
+        location = /healthz { return 200 "ok\n"; }
         location / {
             proxy_pass http://api;
             proxy_next_upstream error timeout http_502;
