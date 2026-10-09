@@ -28,8 +28,10 @@
 - **Installed** `uv` 0.12.7 with pip; `uv` downloaded Python 3.12.14 for the contracts environment.
 - **Read** Tanzeel's C4, C6, and C7 as their reader. Nothing is blocking; the notes are below.
 - **Explained Docker and Compose** in `learn.md` (section 3, "Docker, in more detail"), as Usman asked.
+- **Wrote `next.md`**, the step-by-step plan for the next Claude session, as Usman asked. While writing it I found 4 new commits on `tanzeel` (A1.2: `cs-lb` and all 12 slot containers). They are not merged yet; a trial merge with `git merge-tree` was clean. They also bring two decisions for Usman: Tanzeel's "C7 deviations".
 
 ### Next
+**`next.md` has the detailed, step-by-step version of this list for the next Claude session.**
 1. **Send Tanzeel the message below** and agree a time for the 30-minute fixture walkthrough.
 2. **Usman, by hand** (steps below): install Docker Desktop (S0.6), get a Gemini API key (B0.3), and create the two Supabase projects (B0.1).
 3. **Next session, once 2 is done:**
@@ -42,6 +44,7 @@
 
 ### Waiting on
 - **Usman:**
+  - Decide on Tanzeel's two C7 deviations (`next.md` §2): amend `contracts/telemetry.md` to match his code (recommended), or ask him to change the code.
   - Docker Desktop, a Gemini key, and the Supabase projects (steps below).
   - Whether to open the optional draft PR.
   - Your GitHub username, if you want the Usman lines in `.github/CODEOWNERS` switched on. Tanzeel left them commented out with a TODO.

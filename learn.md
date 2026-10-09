@@ -125,3 +125,13 @@ The tests replay each story and check that it makes sense: each step follows the
 **The read-only doorman (socket-proxy-ro).** Usman's monitoring tools need to *look at* Docker containers but must never change them. `socket-proxy-ro` sits in front of Docker and lets only "look" requests through. Tanzeel found that this proxy image also opens two extra "Podman" doors by default (`LIBPOD_PING`, `LIBPOD_VERSION`), so we closed them, as he did for his read-write proxy. It is written down but not started yet, because Docker is not installed on this laptop.
 
 **What is still waiting, and why.** Three checks (S0.7) need things only Usman can set up: Docker Desktop (to test the doorman), a Gemini key (to test the search "embeddings"), and the Supabase projects (to test login). The steps are in `handoff.md`.
+
+**Tanzeel kept going, too.** During the day he pushed task A1.2 to his branch:
+- **`cs-lb`**, a load balancer (nginx) that spreads the shop's traffic across however many API copies are running;
+- **all 12 "slot" containers**: every API and worker version, created in advance and left stopped, so the runner only ever switches them on or off.
+
+He also left Usman a decision. In two small places his code differs from the telemetry contract (C7): admin calls are kept out of the logs on purpose, and the payments service's log lines have no `route` field. Usman decides whether the contract is changed to match.
+
+Git checked that his new work merges cleanly into `usman`; the merge itself is the first step of the next session.
+
+**A to-do list for the next session.** We wrote `next.md`: an ordered list of exactly what the next Claude session should do. It covers what to check first, which questions to ask Usman, what each check (S0.7) needs, and what must wait. A new session starts with no memory of this one, so these files are how the work carries on without anything being lost.

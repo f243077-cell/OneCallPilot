@@ -1,6 +1,6 @@
 # Context — current state
 
-> Rewritten at the end of every session so it matches reality (`CLAUDE.md` §11.4). Read it right after `CLAUDE.md`, then read `handoff.md`.
+> Rewritten at the end of every session so it matches reality (`CLAUDE.md` §11.4). Read it right after `CLAUDE.md`, then `handoff.md`, then **`next.md`**, the step-by-step plan for the next session.
 > **Last updated:** 2026-10-09, end of session 1.
 
 ## Who and where
@@ -11,7 +11,7 @@
 | Branch | Owner | What is on it |
 |---|---|---|
 | `main` | both | Only the initial README. Nothing is merged yet. |
-| `tanzeel` | Tanzeel | Phase 0 Stream A plus A1.1, up to `6cac236`: skeleton, CI, contracts C4/C6/C7, Flutter project, Chaos Shop baseline, rw-proxy and network spikes. Draft PR #1 (not to be merged as is). |
+| `tanzeel` | Tanzeel | Phase 0 Stream A plus A1.1 and A1.2, up to `cd5b74b`: skeleton, CI, contracts C4/C6/C7, Flutter project, Chaos Shop with `cs-lb` and all 12 slots, rw-proxy and network spikes. Draft PR #1 (not to be merged as is). **The 4 A1.2 commits are not merged into `usman` yet**; a trial merge was clean (`next.md` §1). |
 | `usman` | Usman | `tanzeel` at `6cac236`, plus Usman's 11 commits: `CLAUDE.md` §11 and the session files, contracts C1/C2/C3/C5/C8/C9 and the Phase 0 fixtures (7 commits, only `contracts/`), socket-proxy-ro, and the week-1 progress note. Pushed to `origin/usman`. |
 
 A local `.git/hooks/pre-push` (not in git) refuses every push except `refs/heads/usman`.
