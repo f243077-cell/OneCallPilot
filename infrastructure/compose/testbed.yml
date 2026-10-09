@@ -21,19 +21,27 @@ x-python-healthcheck: &python-healthcheck
   timeout: 3s
   retries: 3
   start_period: 20s
+  # Checked every 2 s while starting, so a slot reports healthy soon after its
+  # app listens (inject and reset wait for it).
+  start_interval: 2s
 
 x-store-env: &store-env
   CS_DATABASE_URL: postgresql://shop:${CS_POSTGRES_PASSWORD:?set CS_POSTGRES_PASSWORD in .env}@cs-postgres:5432/shop
   CS_REDIS_URL: redis://:${CS_REDIS_PASSWORD:?set CS_REDIS_PASSWORD in .env}@cs-redis:6379/0
 
-x-api-env: &api-env
+x-store-env-chaos: &store-env-chaos
   <<: *store-env
+  CHAOS_TOKEN: ${CHAOS_TOKEN:?set CHAOS_TOKEN in .env}
+
+# Non-secret release configuration must equal `config` in chaos-shop/releases.yaml
+# (the ledger's config_hash is computed from it; a test checks they agree).
+x-api-env: &api-env
+  <<: *store-env-chaos
   CS_PAYMENTS_URL: http://cs-payments:8002
   RUNNER_ADMIN_TOKEN: ${RUNNER_ADMIN_TOKEN:?set RUNNER_ADMIN_TOKEN in .env}
 
 x-worker-env: &worker-env
-  <<: *store-env
-  QUEUE_BATCH_SIZE: "10"
+  <<: *store-env-chaos
 
 x-managed-labels: &managed-labels
   oncallpilot.managed: "true"
@@ -53,12 +61,15 @@ x-api-slot: &api-slot
     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2)"]
 
 # Every worker slot: alias worker-upstream, restarted on failure (architecture §11.1).
+# No swap (memswap_limit = mem_limit): growing memory ends in an OOM kill and a
+# restart, as scenario 1 needs, instead of slowly paging out.
 x-worker-slot: &worker-slot
   networks:
     chaos_net:
       aliases: [worker-upstream]
   cpus: 0.5
   mem_limit: 256m
+  memswap_limit: 256m
   restart: on-failure
   healthcheck:
     <<: *python-healthcheck
@@ -357,6 +368,7 @@ services:
     environment:
       <<: *worker-env
       CS_INSTANCE: cs-worker-210
+      QUEUE_BATCH_SIZE: "10"
     depends_on:
       cs-postgres: {condition: service_healthy}
       cs-redis: {condition: service_healthy}
@@ -379,6 +391,9 @@ services:
     environment:
       <<: *worker-env
       CS_INSTANCE: cs-worker-220
+      # Release 2.2.0 ships a batch size above the worker's limit of 100: the
+      # worker refuses to start and restarts in a loop (scenario 6).
+      QUEUE_BATCH_SIZE: "250"
 
   cs-loadgen:
     image: chaos-shop/loadgen:1.0.0
