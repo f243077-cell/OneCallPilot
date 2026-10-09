@@ -6,9 +6,11 @@ from fastapi import FastAPI
 
 from common.identity import Identity, require_env
 from common.serve import serve
+from common.state import state_dir
 from worker.app import create_app
 from worker.backends import PgWorkerStore, RedisJobSource
 from worker.jobs import JobRunner, WorkerMetrics, parse_batch_size
+from worker.retention import ResultRetention
 
 PORT = 8001
 
@@ -19,7 +21,15 @@ def build(identity: Identity) -> FastAPI:
     source = RedisJobSource(require_env("CS_REDIS_URL"))
     store = PgWorkerStore(require_env("CS_DATABASE_URL"))
     runner = JobRunner(source, store, metrics, batch_size=batch_size)
-    return create_app(identity, runner, metrics, source, store)
+    return create_app(
+        identity,
+        runner,
+        metrics,
+        source,
+        store,
+        retention=ResultRetention(state_dir() / "worker-result-retention"),
+        chaos_token=os.environ.get("CHAOS_TOKEN", ""),
+    )
 
 
 def main() -> None:

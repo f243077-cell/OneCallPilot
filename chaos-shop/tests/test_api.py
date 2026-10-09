@@ -8,6 +8,7 @@ from prometheus_client.parser import text_string_to_metric_families
 
 from api.app import create_app
 from api.deps import Deps
+from api.faults import Faults
 from api.metrics import ApiMetrics
 from tests.conftest import ADMIN_TOKEN, API_IDENTITY, ApiHarness
 from tests.fakes import FakeCache, FakePayments, FakeStore, store_unavailable
@@ -188,6 +189,8 @@ def test_internal_endpoints_refuse_without_a_configured_token() -> None:
         Deps(FakeStore(), FakeCache(), FakePayments()),
         metrics,
         runner_admin_token="",
+        chaos_token="",
+        faults=Faults(),
     )
     with TestClient(app) as client:
         response = client.get("/internal/cache/stats", headers={"Authorization": "Bearer "})

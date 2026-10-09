@@ -19,7 +19,10 @@ ENV PATH=/opt/venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 COPY --from=deps /opt/venv /opt/venv
-RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin shop
+RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin shop \
+    && install -d -o shop -g shop /var/lib/shop
+# State that must survive a container restart (common/state.py, ADR-19).
+ENV CS_STATE_DIR=/var/lib/shop
 WORKDIR /app
 COPY common/ common/
 

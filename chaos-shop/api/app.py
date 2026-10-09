@@ -1,4 +1,4 @@
-"""cs-api routes: /products, /cart, /checkout, /orders, /healthz, /metrics, /internal/cache/*.
+"""cs-api routes: /products, /cart, /checkout, /orders, /healthz, /metrics, /internal/*.
 
 Every request except /metrics and /internal/* is counted in the C7 http metrics
 and gets one access line (logger ``chaosshop.access``): INFO below 500, ERROR
@@ -28,7 +28,9 @@ from api.deps import (
     PaymentFailed,
     StoreUnavailable,
 )
+from api.faults import Faults
 from api.metrics import ApiMetrics, is_counted, method_label, route_label
+from api.pricing import apply_coupon, coupon_percent, order_total_cents
 from common.auth import bearer_guard
 from common.identity import Identity
 from common.jsonlog import request_id_var, route_var
@@ -60,10 +62,15 @@ class CartIn(_Strict):
 
 class CheckoutIn(_Strict):
     cart_id: UUID
+    coupon: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class CacheClearIn(_Strict):
     cache: CacheName
+
+
+class SwitchIn(_Strict):
+    enabled: bool
 
 
 def _error(status: int, code: str, **extra: Any) -> JSONResponse:
@@ -85,11 +92,18 @@ def _lines_out(lines: Sequence[CartLine]) -> list[dict[str, int]]:
 
 
 def create_app(
-    identity: Identity, deps: Deps, metrics: ApiMetrics, *, runner_admin_token: str
+    identity: Identity,
+    deps: Deps,
+    metrics: ApiMetrics,
+    *,
+    runner_admin_token: str,
+    chaos_token: str,
+    faults: Faults,
 ) -> FastAPI:
     store, cache, payments = deps.store, deps.cache, deps.payments
     metrics.watch_pool(store.pool_counts)
     admin = Depends(bearer_guard(runner_admin_token))
+    chaos = Depends(bearer_guard(chaos_token))
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -242,12 +256,22 @@ def create_app(
     @app.post("/checkout", status_code=201, response_model=None)
     async def checkout(body: CheckoutIn) -> dict[str, Any] | JSONResponse:
         try:
-            order = await store.create_order(body.cart_id)
+            lines = await store.get_cart(body.cart_id)
+        except StoreUnavailable:
+            log_checkout.error("could not read the cart", exc_info=True)
+            return _error(503, "STORE_UNAVAILABLE")
+        if not lines:
+            return _error(404, "CART_NOT_FOUND")
+        total = order_total_cents(lines, identity.release)
+        if body.coupon is not None:
+            # The code is customer input: logged as data (scenario 8, C7 §3.5).
+            log_checkout.info("checkout with coupon %s", body.coupon)
+            total = apply_coupon(total, coupon_percent(body.coupon))
+        try:
+            order = await store.create_order(body.cart_id, total)
         except StoreUnavailable:
             log_checkout.error("could not create the order", exc_info=True)
             return _error(503, "STORE_UNAVAILABLE")
-        if order is None:
-            return _error(404, "CART_NOT_FOUND")
 
         started = time.perf_counter()
         try:
@@ -285,6 +309,15 @@ def create_app(
             log_orders.error("could not list orders", exc_info=True)
             return _error(503, "STORE_UNAVAILABLE")
         return {"orders": [_order_out(o) for o in recent]}
+
+    @app.get("/internal/chaos/slow-queries", dependencies=[chaos])
+    async def get_slow_queries() -> dict[str, bool]:
+        return {"enabled": faults.slow_checkout_queries}
+
+    @app.put("/internal/chaos/slow-queries", dependencies=[chaos])
+    async def set_slow_queries(body: SwitchIn) -> dict[str, bool]:
+        faults.slow_checkout_queries = body.enabled
+        return {"enabled": faults.slow_checkout_queries}
 
     @app.post("/internal/cache/clear", dependencies=[admin], response_model=None)
     async def cache_clear(body: CacheClearIn) -> dict[str, Any] | JSONResponse:

@@ -1,7 +1,9 @@
 """TB-003: /metrics of cs-api and cs-worker carry every C7 metric with the right labels."""
 
 import sys
+import tempfile
 from collections.abc import Iterable
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from prometheus_client import CollectorRegistry
@@ -17,6 +19,7 @@ from tests.contract import API_METRICS, WORKER_METRICS, metric_problems
 from tests.fakes import FakeJobSource, FakeWorkerStore
 from worker.app import create_app as create_worker_app
 from worker.jobs import JobRunner, WorkerMetrics
+from worker.retention import ResultRetention
 
 ON_LINUX = sys.platform == "linux"  # the process collector reads /proc
 API_BASE = {"service": "api", "release": "1.4.0", "instance": "cs-api-140-1"}
@@ -60,7 +63,16 @@ def test_worker_metrics_follow_the_contract() -> None:
         {"type": "send_receipt", "order_id": str(uuid4())},  # unknown order: an error
     ]
     runner = JobRunner(source, store, metrics, batch_size=10, receipt_seconds=0)
-    app = create_worker_app(WORKER_IDENTITY, runner, metrics, source, store)
+    retention = ResultRetention(Path(tempfile.mkdtemp()) / "marker")
+    app = create_worker_app(
+        WORKER_IDENTITY,
+        runner,
+        metrics,
+        source,
+        store,
+        retention=retention,
+        chaos_token="w" * 32,
+    )
     import asyncio
 
     asyncio.run(runner.run_once())

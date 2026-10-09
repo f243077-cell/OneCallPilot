@@ -4,6 +4,7 @@ import asyncio
 import json
 import random
 from collections import Counter
+from pathlib import Path
 
 import httpx
 import pytest
@@ -113,7 +114,8 @@ def test_run_loop_sends_at_the_scheduled_rate() -> None:
     assert len(sent) == pytest.approx(300, abs=2)  # 5 rps for 60 s
 
 
-def test_control_api_needs_the_chaos_token() -> None:
+def test_control_api_needs_the_chaos_token(tmp_path: Path) -> None:
+    state_file = tmp_path / "loadgen.json"
     client = httpx.AsyncClient(base_url="http://target")
     generator = TrafficGenerator(client, RateSchedule(5, 40, 30))
     app = create_app(
@@ -122,6 +124,7 @@ def test_control_api_needs_the_chaos_token() -> None:
         client,
         chaos_token=TOKEN,
         start_traffic=False,
+        state_file=state_file,
     )
     with TestClient(app) as control:
         assert control.get("/healthz").status_code == 200

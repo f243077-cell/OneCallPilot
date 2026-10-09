@@ -3,6 +3,7 @@
 import json
 import random
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -18,21 +19,28 @@ AUTH = {"Authorization": f"Bearer {TOKEN}"}
 
 
 class Harness:
-    def __init__(self, logs: ListHandler) -> None:
+    def __init__(self, logs: ListHandler, state_file: Path) -> None:
         self.slept: list[float] = []
         self.logs = logs
 
         async def sleep(seconds: float) -> None:
             self.slept.append(seconds)
 
-        app = create_app(IDENTITY, chaos_token=TOKEN, sleep=sleep, rng=random.Random(1))
+        self.state_file = state_file
+        app = create_app(
+            IDENTITY,
+            chaos_token=TOKEN,
+            sleep=sleep,
+            rng=random.Random(1),
+            state_file=state_file,
+        )
         self.client = TestClient(app)
 
 
 @pytest.fixture
-def payments() -> Iterator[Harness]:
+def payments(tmp_path: Path) -> Iterator[Harness]:
     for logs in capture(IDENTITY):
-        yield Harness(logs)
+        yield Harness(logs, tmp_path / "payments.json")
 
 
 def test_charge_takes_only_the_base_latency_by_default(payments: Harness) -> None:
@@ -73,3 +81,11 @@ def test_access_lines_match_the_contract_and_skip_internal(payments: Harness) ->
     assert records[0]["status"] == 200
     assert "route" not in records[0]
     assert log_problems(lines[0]) == []
+
+
+def test_delay_survives_a_restart(payments: Harness) -> None:
+    """ADR-19: a restart of cs-payments keeps the delay until chaos reset sets it to 0."""
+    payments.client.put("/internal/delay", json={"delay_ms": 2500}, headers=AUTH)
+    restarted = create_app(IDENTITY, chaos_token=TOKEN, state_file=payments.state_file)
+    with TestClient(restarted) as client:
+        assert client.get("/internal/delay", headers=AUTH).json() == {"delay_ms": 2500}
