@@ -128,8 +128,9 @@ def log_problems(line: str, base: dict[str, str] | None = None) -> list[str]:
     """Every contract problem in one log line; an empty list means it conforms.
 
     Request lines (lines with ``status``) need ``request_id``, ``status`` and
-    ``duration_ms``, and ``route`` from the C7 route values, except on
-    cs-payments, whose request lines carry no ``route``.
+    ``duration_ms``. Only cs-api request lines need ``route`` (C7 route values):
+    cs-lb lines have none by contract (C7 §3.3), and cs-payments lines have none
+    (accepted deviation, docs/checks/week-1.md).
     """
     problems: list[str] = []
     if len(line.encode("utf-8")) + 1 > MAX_LINE_BYTES:
@@ -164,7 +165,7 @@ def log_problems(line: str, base: dict[str, str] | None = None) -> list[str]:
             record["request_id"]
         ):
             problems.append("request_id missing or not 32 lower-case hex")
-        if record.get("service") != "payments" and record.get("route") not in LABEL_VALUES["route"]:
+        if record.get("service") == "api" and record.get("route") not in LABEL_VALUES["route"]:
             problems.append(f"route {record.get('route')!r}")
     if "route" in record and record["route"] not in LABEL_VALUES["route"]:
         problems.append(f"route {record['route']!r}")

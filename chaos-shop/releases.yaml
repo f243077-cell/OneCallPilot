@@ -1,10 +1,12 @@
 # Chaos Shop releases (architecture §11.1, C6 deploy ledger, C7 telemetry).
 #
-# One entry per release that has an image. The images read their own entry at
+# One entry per release that has an image and slot containers
+# (infrastructure/compose/testbed.yml). The images read their own entry at
 # start-up, so `app_info{commit}` (C7) is the first 12 characters of
 # `commit_sha`, the same value the deploy ledger records for that release.
-# Task A1.2 adds releases 1.5.0 and 2.2.0; task A1.3 adds the seeded deploy
-# history that `chaos reset` writes to the ledger.
+# Commit SHAs are full 40-character lower-case hex. The release history is
+# simulated, so they do not point at commits in this repository.
+# Task A1.3 adds the seeded deploy history that `chaos reset` writes to the ledger.
 #
 # Neutral naming (TB-010): release numbers and commit messages are visible to
 # the agent. They must never name a fault or the tool that injects one.
@@ -14,7 +16,13 @@ releases:
     "1.4.0":
       commit_sha: "606c2674b8e32ec226c88019db05b426594a08f6"
       commit_message: "cart: cache price lookups"
+    "1.5.0":
+      commit_sha: "e56a282e7523212fea82c73f9157b41d5ba1743b"
+      commit_message: "checkout: compute totals with new pricing rounding"
   worker:
     "2.1.0":
       commit_sha: "69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45"
       commit_message: "jobs: batch receipt emails"
+    "2.2.0":
+      commit_sha: "16cbd593f8ac567df18cb3d2a3b884c3dc7b455b"
+      commit_message: "jobs: read queue batch size from deploy config"
