@@ -72,7 +72,47 @@ Note: the Docker SDK's `events()` stream turns an HTTP error into `StopIteration
 
 _To be filled in by Usman: Alloy `discovery.docker` + `loki.source.docker` through the ro proxy, the endpoints it calls (decides `NETWORKS=1`), and POST → 403._
 
-## (b) nginx upstream `resolve` — pending
+## (b) nginx upstream `resolve` — Tanzeel — 2026-10-09 — **passed**
+
+**Question (ADR-07, TB-011):** does open-source nginx ≥ 1.27.3 follow a Docker network alias with `server … resolve`, so that started and stopped replicas join and leave the upstream **without a reload**?
+
+**Setup** (throwaway, not committed): image `nginx:1.30.5-alpine` (stable branch, nginx/1.30.5) on a user-defined bridge network; backends are `busybox:1.37` containers running `httpd` on port 8000, each answering with its own hostname, all with `--network-alias api-upstream`. Requests are sent from inside the nginx container (nothing published).
+
+```nginx
+events {}
+http {
+    resolver 127.0.0.11 valid=5s ipv6=off;
+    upstream api {
+        zone api 64k;
+        server api-upstream:8000 resolve;
+    }
+    server {
+        listen 80;
+        location = /healthz { return 200 "ok
+"; }
+        location / {
+            proxy_pass http://api;
+            proxy_next_upstream error timeout http_502;
+        }
+    }
+}
+```
+
+**Results** (nginx master PID 1 throughout, restart count 0, so no reload or restart):
+
+| Step | Result |
+|---|---|
+| nginx starts with **no** backend on the alias | Starts and stays up; `/healthz` → 200; `/` → 502 (`api-upstream could not be resolved`, then `no live upstreams`) |
+| Start backend 1 | Served after 6 s; 12/12 requests to backend 1 |
+| Start backend 2 | **Picked up after 3 s**; 12 requests split 6/6 |
+| Stop backend 2 | **Dropped after 5 s**; 12/12 requests to backend 1, no client errors seen |
+| Start backend 2 again | Back after 8 s |
+
+**Conclusions for `cs-lb` (A1.2):**
+- ADR-07 holds: `zone` + `resolver 127.0.0.11 valid=5s` + `server api-upstream:8000 resolve` follows scale-up and scale-down within TB-011's 10 s, with no reload.
+- `cs-lb` can start before any api slot; it returns 502 until one is running. `ocp up` should still wait for the api slot to be healthy before declaring the stack healthy.
+- Use `ipv6=off` (Docker's embedded DNS on these networks is IPv4) and `proxy_next_upstream error timeout http_502`, so a request that hits a replica being stopped is retried on another one.
+- Pin `nginx:1.30.5-alpine` (or a later 1.30.x stable) for `cs-lb`.
 
 ## (c) `gemini-embedding-001` at 768 dimensions — Usman, pending
 
