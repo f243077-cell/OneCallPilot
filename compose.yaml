@@ -1,0 +1,8 @@
+# Root Compose file (architecture.md §12.1). Requires Compose >= 2.20.
+# Each owner adds services to their own file in infrastructure/compose/
+# and an `include:` entry here when that file first exists:
+#   testbed.yml (Tanzeel), observability.yml (Usman), copilot.yml (Usman),
+#   runner.yml (Tanzeel), test.yml (Usman).
+name: oncallpilot
+
+services: {}

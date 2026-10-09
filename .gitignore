@@ -1,0 +1,44 @@
+# --- Secrets (never commit; CLAUDE.md §4.6) ---
+.env
+.env.*
+!.env.example
+infrastructure/secrets/*
+!infrastructure/secrets/.gitkeep
+google-services.json
+*service-account*.json
+*.jks
+*.keystore
+key.properties
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# --- Flutter / Dart / Android ---
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/coverage/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+
+# --- Editors and OS ---
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
