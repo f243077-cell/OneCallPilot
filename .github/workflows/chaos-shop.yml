@@ -1,11 +1,13 @@
-# CI skeleton (phases.md S0.3, TEST-012). Placeholder job that always passes;
-# the owner replaces the step with real checks in the task that adds code.
+# Chaos Shop checks (TB-001, TB-003, TB-004, TB-005, TEST-012): lint, type-check
+# and unit-test chaos-shop/, including the C7 metric and log contract tests, then
+# check that the testbed Compose file is valid and its images build.
+# The live checks (tests/live, `pytest -m live`) need the running testbed and
+# run on the integration host only.
 #
 # Path filtering (TEST-012): this workflow covers chaos-shop/, infrastructure/compose/testbed.yml.
 # The trigger is deliberately NOT path-filtered, because a required check
-# that never reports blocks merges. When real steps arrive, filter inside
-# the job (skip expensive steps when no covered path changed) and keep the
-# job name stable, since branch protection requires it by name.
+# that never reports blocks merges. Keep the job name stable: branch
+# protection requires it by name.
 name: chaos-shop
 
 on:
@@ -25,7 +27,36 @@ jobs:
   chaos-shop:
     name: chaos-shop
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: chaos-shop
     steps:
-      - name: Placeholder
-        run: echo "chaos-shop - no checks yet (CI skeleton, S0.3)"
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pipx install uv==0.12.7
+
+      - name: Install dependencies (locked)
+        run: uv sync --locked
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Mypy (strict)
+        run: uv run mypy
+
+      - name: Pytest (unit and contract tests)
+        run: uv run pytest -q
+
+      - name: Compose file is valid (dummy values from .env.example)
+        working-directory: .
+        run: docker compose --env-file .env.example --profile testbed config --quiet
+
+      - name: Images build
+        working-directory: .
+        run: docker compose --env-file .env.example --profile testbed build
