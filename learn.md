@@ -40,6 +40,13 @@ The two halves only meet through **contracts** (next section). That is what lets
 - **Docker and Docker Compose.** Docker runs each program in its own box (a *container*). Compose is a file that lists which containers to run and how they connect. Our root `compose.yaml` uses `include:` lines so that each owner keeps their own file under `infrastructure/compose/`.
 - **Socket proxy.** A doorman between a program and Docker. The *read-only* proxy (`socket-proxy-ro`, Usman's) only lets "look" requests through. The *read-write* proxy (`socket-proxy-rw`, Tanzeel's) only lets start, stop, and restart through. Nothing can create, delete, or run commands inside containers.
 - **Git branch.** A separate line of work in the same repository. `main` is the shared final version. `tanzeel` is Tanzeel's line of work, and `usman` is Usman's. Usman's line started as a copy of Tanzeel's, so it already contains his work; new work from Tanzeel is brought in by *merging*.
+- **OpenAPI (`openapi.yaml`).** A standard file that lists every web address (endpoint) of the backend: what you send to it, what comes back, and what errors are possible. The app and the backend both build against it.
+- **WebSocket.** A connection that stays open, so the server can *push* news to the phone the moment it happens ("new evidence", "proposal ready") instead of the phone asking again and again.
+- **Fingerprint.** A short code computed from the exact contents of something. If anything changes, the fingerprint changes. The phone sends back the fingerprint of the proposal it showed, so the server can refuse an approval for something that changed in the meantime.
+- **Idempotency key.** A random ID attached to an approval attempt. If the phone sends the same attempt twice (a double tap, or a retry after the network dropped), the server sees the same key and does the action only once.
+- **Test vector.** A worked example with the right answer written down, for example "this message, signed with this test key, gives this signature". Both sides check their code against it, so their signing can never quietly drift apart.
+- **Timeline fixture.** A whole incident, from "opened" to "resolved", written as a list of timed events plus the final state. The app's mock mode plays it like a recording.
+- **Discriminated union.** A message that can be one of several kinds, with a field that says which kind it is (for example `"event": "proposal.created"`). The checker reads that field first, then checks the rest against the right form.
 
 ---
 
@@ -56,3 +63,29 @@ The two halves only meet through **contracts** (next section). That is what lets
 4. **Wrote the house rules into `CLAUDE.md`** (section 11): work only on `usman`, never push to `tanzeel` or `main`, bring in Tanzeel's work by merging, and keep these three notes files up to date.
 
 **Why merge and not "rebase"?** Both bring in Tanzeel's new work. Rebasing rewrites the history of `usman`, which breaks the copy already on GitHub. Merging only adds to it, so it is the safe choice for a branch other people can see.
+
+**Then we wrote Usman's six contracts.** Tanzeel had asked for C1, C2, C3, C5, C8, and C9. In plain words:
+
+| Contract | What it agrees | Everyday picture |
+|---|---|---|
+| C1 domain models | What an incident, a piece of evidence, a hypothesis, a proposal, and an execution look like | The standard forms everyone fills in |
+| C2 REST API (`openapi.yaml`) | Every address the phone can call, and its answers and errors | The menu of a restaurant, with what each dish contains |
+| C3 WebSocket | How live updates reach the phone, in order, and how a phone that lost signal catches up | A live news ticker that can replay what you missed |
+| C5 runner messages | The exact "do this" and "done" messages between the backend and the runner, and how they are sealed | Sealed envelopes between two offices |
+| C8 approval protocol | The steps to approve safely: get a one-time code, confirm with a fingerprint on the phone, approve | A bank transfer that needs a one-time code |
+| C9 push payload | The tiny notification a phone receives when the app is closed | A doorbell: it only says "come look", never the details |
+
+Each contract was written as Python models, so a machine can check every message. Then a script turned each model into a JSON Schema file, so the Dart app can check messages too. There are 210 new automatic tests, and all 246 tests pass.
+
+**We wrote sample data (fixtures) for the walkthrough.** There are three full incident stories:
+1. *bad deploy, fixed*: a new release breaks checkout; the AI suggests rolling back; approved; fixed.
+2. *slow payments, escalated*: an outside company is slow; nothing on the menu can fix that; the AI stops and asks a human.
+3. *scaling did not help, so it was undone*: three copies of the API did not fix the slowness; the system offers to undo the change; approved; resolved.
+
+The tests replay each story and check that it makes sense: each step follows the allowed order, every piece of cited evidence exists, and every action matches Tanzeel's action menu (C4).
+
+**Why the "sealed envelope" matters (C5).** The runner is the only part that can change anything, so it must be sure an order is real. Every message gets a signature made with a secret key. The part of the backend that talks to the AI has **no** copy of the "execute" key, so even if the AI were tricked, it could not forge an order. We saved worked examples (test vectors) with fake test keys, so Tanzeel's runner and Usman's backend can prove they seal envelopes the same way.
+
+**The read-only doorman (socket-proxy-ro).** Usman's monitoring tools need to *look at* Docker containers but must never change them. `socket-proxy-ro` sits in front of Docker and lets only "look" requests through. Tanzeel found that this proxy image also opens two extra "Podman" doors by default (`LIBPOD_PING`, `LIBPOD_VERSION`), so we closed them, as he did for his read-write proxy. It is written down but not started yet, because Docker is not installed on this laptop.
+
+**What is still waiting, and why.** Three checks (S0.7) need things only Usman can set up: Docker Desktop (to test the doorman), a Gemini key (to test the search "embeddings"), and the Supabase projects (to test login). The steps are in `handoff.md`.
