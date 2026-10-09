@@ -55,8 +55,19 @@ jobs:
 
       - name: Compose file is valid (dummy values from .env.example)
         working-directory: .
-        run: docker compose --env-file .env.example --profile testbed config --quiet
+        run: >-
+          docker compose --env-file .env.example
+          --profile testbed --profile testbed-slots config --quiet
 
-      - name: Images build
+      - name: cs-lb nginx config is valid
         working-directory: .
-        run: docker compose --env-file .env.example --profile testbed build
+        run: >-
+          docker run --rm --entrypoint nginx
+          -v "$PWD/chaos-shop/lb/nginx.conf:/etc/nginx/nginx.conf:ro"
+          nginx:1.30.5-alpine -t
+
+      - name: Images build (every release)
+        working-directory: .
+        run: >-
+          docker compose --env-file .env.example
+          --profile testbed --profile testbed-slots build
