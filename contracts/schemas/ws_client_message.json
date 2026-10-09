@@ -1,0 +1,86 @@
+{
+  "$defs": {
+    "WsAuth": {
+      "additionalProperties": false,
+      "description": "First message, within 5 s of connecting; sent again whenever the token refreshes.",
+      "properties": {
+        "token": {
+          "maxLength": 8192,
+          "minLength": 1,
+          "title": "Token",
+          "type": "string"
+        },
+        "type": {
+          "const": "auth",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "token"
+      ],
+      "title": "WsAuth",
+      "type": "object"
+    },
+    "WsPong": {
+      "additionalProperties": false,
+      "description": "The answer to every ``ping``.",
+      "properties": {
+        "type": {
+          "const": "pong",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "WsPong",
+      "type": "object"
+    },
+    "WsResume": {
+      "additionalProperties": false,
+      "description": "Optional, after ``hello``: replay every event after ``last_event_id``.",
+      "properties": {
+        "last_event_id": {
+          "pattern": "^[0-9]+-[0-9]+$",
+          "title": "Last Event Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "resume",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "last_event_id"
+      ],
+      "title": "WsResume",
+      "type": "object"
+    }
+  },
+  "description": "Any message the app sends on ``/ws/incidents``.",
+  "discriminator": {
+    "mapping": {
+      "auth": "#/$defs/WsAuth",
+      "pong": "#/$defs/WsPong",
+      "resume": "#/$defs/WsResume"
+    },
+    "propertyName": "type"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/WsAuth"
+    },
+    {
+      "$ref": "#/$defs/WsResume"
+    },
+    {
+      "$ref": "#/$defs/WsPong"
+    }
+  ],
+  "title": "WsClientMessage"
+}

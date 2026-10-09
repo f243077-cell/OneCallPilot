@@ -1,0 +1,22 @@
+{
+  "type": "event",
+  "event": "incident.opened",
+  "event_id": "1791968425000-0",
+  "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+  "state_version": 1,
+  "ts": "2026-10-14T09:00:25Z",
+  "data": {
+    "id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+    "service": "api",
+    "severity": "sev1",
+    "status": "investigating",
+    "status_reason": null,
+    "title": "api error rate 31%",
+    "opened_at": "2026-10-14T09:00:25Z",
+    "resolved_at": null,
+    "resolution": null,
+    "state_version": 1,
+    "top_hypothesis": null,
+    "pending_proposal_id": null
+  }
+}

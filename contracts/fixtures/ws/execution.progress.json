@@ -1,0 +1,15 @@
+{
+  "type": "event",
+  "event": "execution.progress",
+  "event_id": "1791968523000-0",
+  "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+  "state_version": 12,
+  "ts": "2026-10-14T09:02:03Z",
+  "data": {
+    "execution_id": "00000000-0000-4000-8000-000000000040",
+    "proposal_id": "8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02",
+    "step": "starting cs-api-140-1",
+    "status": "running",
+    "message": "waiting for cs-api-140-1 to report healthy"
+  }
+}
