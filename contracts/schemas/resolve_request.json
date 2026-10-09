@@ -1,0 +1,17 @@
+{
+  "additionalProperties": false,
+  "description": "Body of ``POST /incidents/{id}/resolve`` (API-007).",
+  "properties": {
+    "reason": {
+      "maxLength": 500,
+      "minLength": 3,
+      "title": "Reason",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reason"
+  ],
+  "title": "ResolveRequest",
+  "type": "object"
+}

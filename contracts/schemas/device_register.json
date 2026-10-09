@@ -1,0 +1,30 @@
+{
+  "additionalProperties": false,
+  "description": "Body of ``POST /devices``: upserted by ``fcm_token`` for the caller (API-011).",
+  "properties": {
+    "app_version": {
+      "maxLength": 50,
+      "minLength": 1,
+      "title": "App Version",
+      "type": "string"
+    },
+    "fcm_token": {
+      "maxLength": 4096,
+      "minLength": 1,
+      "title": "Fcm Token",
+      "type": "string"
+    },
+    "platform": {
+      "const": "android",
+      "title": "Platform",
+      "type": "string"
+    }
+  },
+  "required": [
+    "fcm_token",
+    "platform",
+    "app_version"
+  ],
+  "title": "DeviceRegister",
+  "type": "object"
+}

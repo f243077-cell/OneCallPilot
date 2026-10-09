@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "description": "``200`` of ``POST /devices``.",
+  "properties": {
+    "device_id": {
+      "format": "uuid",
+      "title": "Device Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "device_id"
+  ],
+  "title": "DeviceRegistered",
+  "type": "object"
+}

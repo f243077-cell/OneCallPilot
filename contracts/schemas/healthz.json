@@ -1,0 +1,43 @@
+{
+  "additionalProperties": false,
+  "description": "``GET /healthz`` (API-002): ``200`` when both are up, ``503`` otherwise.",
+  "properties": {
+    "contracts_version": {
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "title": "Contracts Version",
+      "type": "string"
+    },
+    "db": {
+      "enum": [
+        "up",
+        "down"
+      ],
+      "title": "Db",
+      "type": "string"
+    },
+    "redis": {
+      "enum": [
+        "up",
+        "down"
+      ],
+      "title": "Redis",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "degraded"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "status",
+    "contracts_version",
+    "db",
+    "redis"
+  ],
+  "title": "Healthz",
+  "type": "object"
+}

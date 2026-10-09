@@ -11,7 +11,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from oncallpilot_contracts import approval, domain, push, runner, ws
+from oncallpilot_contracts import api, approval, domain, push, runner, ws
 from oncallpilot_contracts.ledger import DeployRecord
 
 # Schema file name (without .json) -> model. Add new contract models here.
@@ -50,6 +50,18 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     # C3 WebSocket protocol
     "ws_client_message": ws.WsClientMessage,
     "ws_server_message": ws.WsServerMessage,
+    # C2 REST bodies (openapi.yaml refers to these files)
+    "healthz": api.Healthz,
+    "alert_in": api.AlertIn,
+    "ingest_accepted": api.IngestAccepted,
+    "incident_page": api.IncidentPage,
+    "log_tail": api.LogTail,
+    "resolve_request": api.ResolveRequest,
+    "device_register": api.DeviceRegister,
+    "device_registered": api.DeviceRegistered,
+    "audit_page": api.AuditPage,
+    "monitor_settings_update": api.MonitorSettingsUpdate,
+    "error_envelope": api.ErrorEnvelope,
 }
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
