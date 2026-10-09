@@ -145,7 +145,7 @@ The exact PromQL lives with the consumers (`backend/`); this table only shows wh
 | `service` | string | always | Same as `oncallpilot.service` |
 | `release` | string | always | Same as `oncallpilot.release` |
 | `instance` | string | always | Container name, e.g. `cs-api-150-2` |
-| `logger` | string | always | Python logger name, e.g. `chaosshop.checkout`; nginx uses `nginx.access` |
+| `logger` | string | always | Logger name: `shop.<area>` for Chaos Shop code, e.g. `shop.checkout`; nginx uses `nginx.access`. Neutral (TB-010): never names a fault or the injector |
 | `msg` | string | always | Human-readable message |
 | `request_id` | string | request lines | 32-character lower-case hex; taken from `X-Request-ID` if valid, else generated. `cs-lb` forwards it. |
 | `route` | string | request lines | Route template, same values as the `route` metric label |
@@ -156,7 +156,7 @@ The exact PromQL lives with the consumers (`backend/`); this table only shows wh
 | `stacktrace` | string | exception lines | Full Python traceback text, **starting with `Traceback (most recent call last):`** (the detector's `stack_traces` signal matches the literal `Traceback`) |
 
 - Exceptions are logged at `ERROR` (or `CRITICAL` for a crash on startup) and always include `exc_type`, `exc_message`, and `stacktrace`.
-- `api` writes one access line per request (`logger` = `chaosshop.access`), at `INFO` for status < 500 and `ERROR` for ≥ 500.
+- `api` writes one access line per request (`logger` = `shop.access`), at `INFO` for status < 500 and `ERROR` for ≥ 500.
 - Services may add other keys. Consumers must ignore unknown keys; no consumer may depend on a key not listed above.
 
 ### 3.3 Per-service sources
