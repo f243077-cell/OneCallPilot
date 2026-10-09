@@ -146,6 +146,17 @@ Within the §12.4 estimate (Chaos Shop baseline ≈ 0.6 GB); A1.2 adds `cs-lb` a
 
 **Memory (baseline after reset, 2026-10-09):** about **227 MiB** used, limits unchanged at **1,088 MiB**. During scenario 1 the worker climbs to its 256 MiB limit and is killed. The helper container (limit 64 MiB) lives about 1–2 s per command. The Windows host had 1.7 GB free of 15.9 GB, with no other containers running.
 
+**A1.3 deviations (accepted 2026-10-09):**
+1. Scenario 8's crafted checkouts come from `cs-loadgen` (switched on by `chaos inject 8`), not from the CLI itself, because `inject` must return within 30 s while the traffic continues. **Proposed one-line correction** to architecture §11.3, row 8 (shared doc, not edited yet): "Chaos CLI sends 2 rps of checkout requests…" → "The chaos CLI switches on a `cs-loadgen` stream of 2 rps of checkout requests…".
+2. Command times: `inject` is at most 13.7 s (TB-006, 30 s); `reset` takes 10–21 s (TB-007, 90 s); `verify` takes about 4 minutes, because its 3-minute hold comes from the spec.
+3. Worker slots run with `memswap_limit: 256m`, and the health checks use `start_interval: 2s`.
+4. The TB-010 grep leaves out `deploy_id` (a random UUID) and `image_tag` (fixed by C6, not agent-visible).
+5. Scenario 3's switch lives in process memory on purpose: a restart is its fix.
+
+**Logger names (C7 change, 2026-10-09):** `logger` is agent-visible, so Chaos Shop code now logs as `shop.<area>` (`shop.access`, `shop.checkout`, `shop.jobs`, …) instead of `chaosshop.*`; nginx keeps `nginx.access`. Contract commit `2910d52` changes only `contracts/telemetry.md`; the code and the C7 checks (`chaos-shop/tests/contract.py` now rejects a non-neutral `logger`; the CLI's TB-010 grep checks every logger name in the services and `nginx.conf`) are a separate commit. `contracts/VERSION` stays 0.1.0 while the contracts are unreleased drafts (no `contracts-v0.1.0` tag yet).
+
+**Overnight persistence run (TB-008, before Gate G1, after A1.4):** `uv run --project chaos-shop/cli chaos verify --all --hold 900 > verify-overnight.log` runs all 8 scenarios in a row (about 2.5 hours), prints progress as it goes and ends with a PASS/FAIL table. Run it with nothing else on the host.
+
 ## C7 deviations (accepted for now, 2026-10-09)
 
 Both are in the implementation; `contracts/telemetry.md` is unchanged. Usman decides whether the contract is tightened or amended in a separate `contract/*` PR.
@@ -168,6 +179,27 @@ Architecture §12.1 lists four profiles (`testbed`, `obs`, `copilot`, `runner`).
 - Docker volume **`deploy_ledger`** (`oncallpilot_deploy_ledger`). The chaos CLI's helper container creates it on the first `chaos reset`; `runner.yml` (rw, task A2.1) and Usman's `copilot.yml` (ro) declare `deploy_ledger: {}` and mount it. Compose adopts a volume that already exists (tested 2026-10-09). A declared volume that no service mounts is not created by `up`.
 - **`LEDGER_PATH=/ledger/deploys.jsonl`** in every container that mounts it.
 - The file and the directory belong to **uid 10001** (mode 0644), so the runner must run as uid 10001, the same non-root user as the Chaos Shop images.
+
+## Phase 0 close-out (2026-10-09)
+
+**Definition of done** (`phases.md`, Phase 0):
+
+| Item | Status | Owner of what is left |
+|---|---|---|
+| All contracts merged and read by the other developer | **Not done.** Drafts only: C4, C6, C7 on `tanzeel` (read by Usman: no blocking issue); C1, C2, C3, C5, C8, C9 on `usman`, read by Tanzeel with 8 non-blocking issues in `docs/checks/contract-review-a.md`. Nothing is merged into `main`. | Tanzeel and Usman: split the contract commits into `contract/*` PRs and merge (Tanzeel decides when); Usman answers the review. |
+| Python fixtures validate against the schemas | **Done on the branches.** `contracts/python` on `usman` (which includes C4, C6, C7): 246 tests pass, timelines and ws fixtures validate, schemas regenerate with no diff. Tanzeel's ledger fixture validates on `tanzeel` (36 tests). | Becomes "done on `main`" when the contract PRs merge. |
+| Dart parses the fixtures (stub test) | **Done, pending merge.** `mobile/test/contracts/fixtures_test.dart` parses all 3 timelines, 14 WebSocket messages and the ledger fixture from `origin/usman` (21/21, run with `OCP_CONTRACTS_DIR`). On `tanzeel` the C1/C3 groups are skipped with a message until the fixtures are merged. | Goes green by itself once the C1/C3 fixtures are on `main`. |
+| The phone reached the laptop | **Done** (S0.5, 2026-10-09, `docs/checks/network.md`). | — |
+| Deliverable: `contracts-v0.1.0` tag | **Not done.** Needs the contract PRs merged. | Tanzeel (tag after the merge, when told). |
+| Deliverable: green CI skeleton | **Workflows exist**; real checks in `contracts.yml` and `chaos-shop.yml`. The first CI result on the draft PR has not been checked here (no `gh` CLI). | Tanzeel: check the PR's checks, then set branch protection on `main`. |
+| Deliverable: network spike result | **Done** (`docs/checks/network.md`). | — |
+| Integration checkpoint: 30-minute fixture walkthrough | **Not done.** | Tanzeel and Usman. |
+
+**Still open on Usman's side** (from `origin/usman`, `docs/checks/week-1.md`): S0.6 Docker Desktop on his laptop, B0.1 Supabase projects, B0.3 API keys, S0.7 (a) ro proxy with Alloy, (c) embeddings, (d) Supabase JWKS.
+
+**Contract commits to split into `contract/*` PRs later** (each touches only `contracts/`): `1e513ad`, `85c23b6`, `886ef7c`, `c762ac6`, `bdb408c`, `13fb73f`, and now **`2910d52`** (C7 neutral logger names).
+
+**Merge notes for later:** `origin/usman` is built on `tanzeel` at `6cac236` (A1.1). Merging both into `main` will conflict in `compose.yaml` (each branch adds one `include:` line) and in `docs/checks/week-1.md` (both add sections); both are simple to resolve.
 
 ## Friday checkpoint (W1)
 
