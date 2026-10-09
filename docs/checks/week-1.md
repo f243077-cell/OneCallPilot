@@ -36,7 +36,8 @@
 |---|---|---|---|
 | A1.1 Chaos Shop services + C7 telemetry | done (on `tanzeel`) | 2026-10-09 | Below |
 | A1.2 `cs-lb` and slots, releases 1.4.0/1.5.0/2.1.0/2.2.0 | done (on `tanzeel`) | 2026-10-09 | Below |
-| A1.3 chaos CLI, seeded ledger, 8 faults | done (on `tanzeel`); scenario 5 waits for A1.4 | 2026-10-09 | Below |
+| A1.3 chaos CLI, seeded ledger, 8 faults | done (on `tanzeel`); scenario 5 completed in A1.4 | 2026-10-09 | Below |
+| A1.4 traffic spike calibrated: 1 replica saturates, 3 recover | done (on `tanzeel`) | 2026-10-09 | Below |
 
 ### A1.1 — Chaos Shop baseline services
 
@@ -141,13 +142,13 @@ Within the §12.4 estimate (Chaos Shop baseline ≈ 0.6 GB); A1.2 adds `cs-lb` a
   | 7 | slow-dependency | 1.4 s | checkouts 201 in 2.55–2.62 s | none (escalate) | — |
   | 8 | log-injection | 1.4 s | 20 checkout 500s in 10 s | none (escalate) | — |
 
-  Reset takes 10–21 s per run. **Scenario 5 fails until A1.4:** the spike rate is still the placeholder (40 rps, which the loadgen reaches), and one api slot handles it with p95 8 ms. A1.4 calibrates `CS_LOADGEN_SPIKE_RPS`.
+  Reset takes 10–21 s per run. **Scenario 5 fails until A1.4:** the spike rate is still the placeholder (40 rps, which the loadgen reaches), and one api slot handles it with p95 8 ms. A1.4 calibrates `CS_LOADGEN_SPIKE_RPS`. (Done: see A1.4. The old check, a `GET /products` probe, could not have seen the spike either; A1.4 replaced it.)
 - **15-minute persistence** (`verify 1 --hold 900`): still broken after 900 s and fixed 17 s after a graceful restart. The other 7 scenarios still need their 15-minute run before Gate G1.
 
 **Memory (baseline after reset, 2026-10-09):** about **227 MiB** used, limits unchanged at **1,088 MiB**. During scenario 1 the worker climbs to its 256 MiB limit and is killed. The helper container (limit 64 MiB) lives about 1–2 s per command. The Windows host had 1.7 GB free of 15.9 GB, with no other containers running.
 
 **A1.3 deviations (accepted 2026-10-09):**
-1. Scenario 8's crafted checkouts come from `cs-loadgen` (switched on by `chaos inject 8`), not from the CLI itself, because `inject` must return within 30 s while the traffic continues. **Proposed one-line correction** to architecture §11.3, row 8 (shared doc, not edited yet): "Chaos CLI sends 2 rps of checkout requests…" → "The chaos CLI switches on a `cs-loadgen` stream of 2 rps of checkout requests…".
+1. Scenario 8's crafted checkouts come from `cs-loadgen` (switched on by `chaos inject 8`), not from the CLI itself, because `inject` must return within 30 s while the traffic continues. **One-line correction** to architecture §11.3, row 8: "Chaos CLI sends 2 rps of checkout requests…" → "The chaos CLI switches on a `cs-loadgen` stream of 2 rps of checkout requests…". Approved and applied in its own docs commit `84b4779` (2026-10-09).
 2. Command times: `inject` is at most 13.7 s (TB-006, 30 s); `reset` takes 10–21 s (TB-007, 90 s); `verify` takes about 4 minutes, because its 3-minute hold comes from the spec.
 3. Worker slots run with `memswap_limit: 256m`, and the health checks use `start_interval: 2s`.
 4. The TB-010 grep leaves out `deploy_id` (a random UUID) and `image_tag` (fixed by C6, not agent-visible).
@@ -156,6 +157,82 @@ Within the §12.4 estimate (Chaos Shop baseline ≈ 0.6 GB); A1.2 adds `cs-lb` a
 **Logger names (C7 change, 2026-10-09):** `logger` is agent-visible, so Chaos Shop code now logs as `shop.<area>` (`shop.access`, `shop.checkout`, `shop.jobs`, …) instead of `chaosshop.*`; nginx keeps `nginx.access`. Contract commit `2910d52` changes only `contracts/telemetry.md`; the code and the C7 checks (`chaos-shop/tests/contract.py` now rejects a non-neutral `logger`; the CLI's TB-010 grep checks every logger name in the services and `nginx.conf`) are a separate commit. `contracts/VERSION` stays 0.1.0 while the contracts are unreleased drafts (no `contracts-v0.1.0` tag yet).
 
 **Overnight persistence run (TB-008, before Gate G1, after A1.4):** `uv run --project chaos-shop/cli chaos verify --all --hold 900 > verify-overnight.log` runs all 8 scenarios in a row (about 2.5 hours), prints progress as it goes and ends with a PASS/FAIL table. Run it with nothing else on the host.
+
+### A1.4 — traffic spike calibration (TB-005, scenario 5)
+
+**Result:** `CS_LOADGEN_SPIKE_RPS` is **100** (was the 40 rps placeholder), with a 30 s ramp; the baseline stays at 5 rps. CPU and memory limits are unchanged (`cs-api-*` `cpus: 0.5`, `cs-loadgen` `cpus: 1.0`).
+
+**How it was calibrated** (2026-10-09, integration host: Docker with 4 CPUs and 9.7 GiB, Windows 1.0–1.8 GB free, no other containers):
+- A scratch sampler container on `chaos_net` (not committed) read every api slot's `/metrics` every 13 s. It computed what the detector's PromQL computes (architecture §6.8): request rate, 5xx share and histogram p95 over all routes except `/healthz`. `docker stats` ran alongside.
+- **Baseline:** 5.0–5.3 rps, p95 48–121 ms, no 5xx.
+- **Ramp 5 → 250 rps over 10 minutes, one slot:**
+  - Up to about 40 rps, p95 stays at 70–95 ms.
+  - From about 45 rps the slot's CPU sits at its 0.5 limit, and p95 swings between 0.4 and 9 s.
+  - The slot never served more than 75–98 rps.
+  - Near 100 rps, `cs-loadgen` reached its own 1.0 CPU limit.
+- **Steady 60 rps, one slot, 3 minutes:**
+  - It served all 60 rps with no 5xx; p95 was 0.2–1.5 s.
+  - This is degraded but keeps up, so it is not a saturation: **rejected**.
+- **Steady 100 rps, one slot, two 3-minute holds:**
+  - The loadgen sends 84–99 rps, and the slot serves 76–92 rps.
+  - p95 is 8.2–9.6 s, and checkout p95 is 10–25 s.
+  - 3.5–12 % of requests get 503 (`DatabasePoolTimeout`).
+  - The loadgen sheds requests at its 256 in-flight cap.
+  - All of this held for the whole hold.
+- **After scaling to 3 slots at 100 rps:**
+  - Each slot uses 10–50 % of its 0.5 CPU.
+  - p95 is 95–130 ms with 0 % 5xx, serving 94–103 rps.
+- **Why 100 rps:**
+  - It is at least 10 % above the best throughput one slot reached, so a single slot can never catch up and the queue keeps growing.
+  - It is about 40 % of the capacity of three slots.
+  - It cannot go higher: `cs-loadgen` is one Python process and produces at most about 100 rps at `cpus: 1.0`.
+
+**What the agent will see in scenario 5:**
+- The api request rate goes from 5 to about 90 rps, and api CPU sits at its limit.
+- p95 is about 9 s, and 4–8 % of requests get 503 `DatabasePoolTimeout`.
+- The pool timeouts are a side effect: CPU-starved handlers hold their connections longer.
+- Scenario 3 also shows pool timeouts, but there the request rate stays at 5 rps and CPU stays low. The `request_rate` and `cpu_usage` templates tell the two apart.
+
+**`chaos verify 5` check changed:**
+- The A1.3 check probed `GET /products` through `cs-lb`. `/products` is served from the cache, so it stayed at 15–300 ms while checkout waited 10–25 s; it could not see the spike.
+- The check now reads every running api slot's C7 counters over 15 s, the same way as the detector:
+  - **Broken:** p95 ≥ 1 s or 5xx ≥ 5 %, with the loadgen in spike mode. Both are well past the detector's 300 ms and 2 % floors.
+  - **Recovered:** at least 3 slots, p95 < 300 ms and 5xx < 2 %, while still serving at least 70 % of the spike rate. The last condition shows the load is still there and the slots carry it.
+
+**Recovery against the limits:**
+- `chaos verify` requires recovery within 120 s of the fix (architecture §11.3). Scenario 5 recovered in 44–46 s, measured from the scale command. That time includes the slots starting (about 8 s) and the 15 s check window.
+- The sampler showed p95 back at 95 ms within 26 s of the scale.
+- The worker's signal verification (normal for 60 s within 300 s, architecture §5.10) therefore has room.
+- After `chaos reset`, requests already queued drain for about 25 s. The detector's 180 s warm-up covers this, and the live TB-005 check waits 30 s.
+
+**Memory and CPU:**
+- With 3 api slots at the spike, running Chaos Shop containers use about **330 MiB** (two extra slots at 27–50 MiB each). The limits of the running containers go from 1,088 to 1,600 MiB.
+- Peak CPU across the testbed is about 2.9 of 4 cores, mostly the loadgen (up to 100 %) and the three api slots.
+- Windows had 1.55–1.8 GB free during the runs; Docker Desktop stayed up.
+
+**Checks (2026-10-09):**
+- **Unit tests:** chaos-shop 77 passed and CLI 37 passed; ruff and `mypy --strict` are clean.
+  - New in chaos-shop: TB-005 driven by the compose values: 5 ± 1 rps over each minute at baseline, and 100 rps held after the 30 s ramp.
+  - New in the CLI: Prometheus-style `histogram_quantile`; the request window (slots summed, `/healthz` excluded, restarted slots counted from zero); the scenario 5 checks (one slow slot is broken; recovery needs 3 slots, low p95 and the spike load still served).
+- **Live TB-005** (`chaos-shop/cli`, `pytest -m live -k baseline_traffic`): passed. After reset the api serves 5 ± 1 rps over 60 s, measured from its own counters as Prometheus would, with no 5xx.
+- **`chaos verify --all --hold 180`**, 2026-10-09, one unattended run of 31 minutes: **8/8 PASS**.
+
+  | # | Scenario | Inject | Broken after 180 s | Recovered after fix |
+  |---|---|---|---|---|
+  | 1 | memory-leak | 1.7 s | rss 230 MiB, retention on | 15 s |
+  | 2 | bad-deploy | 9.9 s | 10/10 checkouts 500 | 3 s |
+  | 3 | db-pool | 1.6 s | 25 pool timeouts in 10 s, pool 5/5 | 13 s |
+  | 4 | cache-outage | 0.3 s | cs-redis exited, checkouts 503 | 8 s |
+  | 5 | traffic-spike | 1.6 s | 1 slot: 101 rps, 5xx 5.7 %, p95 8.6 s | **44 s** (3 slots: 103 rps, 5xx 0 %, p95 107 ms) |
+  | 6 | config-crash | 3.2 s | cs-worker-220 restarting, 11 restarts | 10 s |
+  | 7 | slow-dependency | 1.5 s | checkouts 201 in 2.55–2.59 s | persists (escalate) |
+  | 8 | log-injection | 1.9 s | 20 checkout 500s in 10 s | persists (escalate) |
+
+  Each reset took 10.6–17.2 s.
+
+**Deviations:** none from the architecture. Two things to know:
+1. The loadgen runs at its CPU ceiling during the spike. If the host is busier (for example the full stack in W2), the loadgen sends a little less than 100 rps. One slot still saturates above about 75–90 rps, and the check needs only 70 % of the spike rate served. The overnight `verify --all --hold 900` with the full stack will show whether there is enough margin.
+2. Errors during the spike are pool timeouts, as described above.
 
 ## C7 deviations (accepted for now, 2026-10-09)
 
@@ -197,7 +274,9 @@ Architecture §12.1 lists four profiles (`testbed`, `obs`, `copilot`, `runner`).
 
 **Still open on Usman's side** (from `origin/usman`, `docs/checks/week-1.md`): S0.6 Docker Desktop on his laptop, B0.1 Supabase projects, B0.3 API keys, S0.7 (a) ro proxy with Alloy, (c) embeddings, (d) Supabase JWKS.
 
-**Contract commits to split into `contract/*` PRs later** (each touches only `contracts/`): `1e513ad`, `85c23b6`, `886ef7c`, `c762ac6`, `bdb408c`, `13fb73f`, and now **`2910d52`** (C7 neutral logger names).
+**Contract commits to split into `contract/*` PRs later** (each touches only `contracts/`): `1e513ad`, `85c23b6`, `886ef7c`, `c762ac6`, `bdb408c`, `13fb73f`, **`2910d52`** (C7 neutral logger names) and **`84d9cbd`** (C6 ledger fixture aligned with `releases.yaml`). `contracts/VERSION` stays 0.1.0 until the contracts are merged and tagged (ruling of 2026-10-09).
+
+**Ledger fixture alignment (2026-10-09):** `contracts/fixtures/ledger/deploys.jsonl` now uses the commit SHAs, messages and config hashes from `chaos-shop/releases.yaml`, the seeded history's deploy times, and the reset reason `chaos reset` writes. Line order, kinds, writers and the 1.5.0 deploy time (which `test_ledger.py` relies on) are unchanged. Usman's contract suite from `origin/usman` (temporary worktree, outside the repository, with the changed fixture copied in): **246 passed**, none broken. The Dart fixture test against the same worktree: 21/21. A new CLI test fails if the fixture drifts from `releases.yaml` again.
 
 **Merge notes for later:** `origin/usman` is built on `tanzeel` at `6cac236` (A1.1). Merging both into `main` will conflict in `compose.yaml` (each branch adds one `include:` line) and in `docs/checks/week-1.md` (both add sections); both are simple to resolve.
 
