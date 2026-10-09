@@ -48,6 +48,42 @@ The two halves only meet through **contracts** (next section). That is what lets
 - **Timeline fixture.** A whole incident, from "opened" to "resolved", written as a list of timed events plus the final state. The app's mock mode plays it like a recording.
 - **Discriminated union.** A message that can be one of several kinds, with a field that says which kind it is (for example `"event": "proposal.created"`). The checker reads that field first, then checks the rest against the right form.
 
+### Docker, in more detail
+
+**The problem it solves.** A program needs the right version of Python, the right libraries, and the right settings. Installing all of that by hand on every laptop is slow, and two projects can need different versions ("it works on my machine"). Docker packs a program **with everything it needs** into one standard box, so it runs the same on Usman's laptop, Tanzeel's laptop, and GitHub's CI. The name comes from shipping containers: one standard box that any ship, crane, or truck can carry, whatever is inside.
+
+**Images and containers**, the two words that matter most:
+
+| Word | What it is | In this project |
+|---|---|---|
+| **Image** | A frozen, read-only package: a small Linux file system, the runtime (such as Python 3.12), the libraries, and the program. It is built from a recipe file called a **Dockerfile**. | `chaos-shop/Dockerfile` builds the image `chaos-shop/api:1.4.0` |
+| **Container** | A running copy of an image, like an object made from a class. Many containers can run from one image, and deleting a container does not change the image. | `cs-api-140-1` runs from `chaos-shop/api:1.4.0`; task A1.2 adds four more copies (slots) of it |
+| **Tag** | The version label after the colon. We always pin it and never use `latest`, so everyone runs exactly the same thing (`CLAUDE.md` §4.8). | `postgres:17.11-alpine` |
+| **Registry** | An online store that Docker downloads images from. | Docker Hub, `lscr.io` |
+
+**Not a full virtual machine.** A virtual machine runs a whole second operating system. Containers share the host's Linux kernel, so they start in about a second and use little memory: Tanzeel measured the whole Chaos Shop baseline at about 215 MiB. Windows has no Linux kernel, so Docker Desktop runs one small Linux virtual machine (WSL 2), and every container runs inside it:
+
+```text
+Windows laptop
+└── WSL 2: one small Linux virtual machine
+    └── Docker Engine: starts, stops, and watches containers
+        ├── cs-postgres      (image postgres:17.11-alpine)
+        ├── cs-api-140-1     (image chaos-shop/api:1.4.0)
+        └── socket-proxy-ro  (image lscr.io/linuxserver/socket-proxy:3.4.6-r0-ls101)
+```
+
+**A container sees only what it is given.** That is what makes Docker useful for safety:
+- **Environment variables:** settings and secrets passed in at start, such as `CS_POSTGRES_PASSWORD`. Each service gets only the ones it needs; for example, the runner never gets `DATABASE_URL`.
+- **Volumes:** folders or files from outside, mounted inside the container. `cs_postgres_data` keeps the shop's data when the container restarts.
+- **Networks:** containers on the same Docker network reach each other by name (`cs-api-140-1` finds the database simply as `cs-postgres`). Containers on different networks cannot reach each other at all, and `internal: true` also cuts a network off from the internet. This is how the trust zones of architecture §3 are built: only the runner and `socket-proxy-rw` share `rw_proxy_net`.
+- **Ports:** nothing outside can reach a container unless one of its ports is *published*. Only `backend-api:8000` is published to the Wi-Fi, so the phone can reach it.
+
+**Health and restarts.** A *healthcheck* is a small command Docker runs every few seconds (for Postgres, `pg_isready`) to mark a container healthy or unhealthy. Other containers can wait for that (`depends_on: condition: service_healthy`). A *restart policy* says what happens when a container stops, and that matters for the faults: `cs-redis` has none, so when scenario 4 stops it, it stays stopped until someone fixes it.
+
+**The Docker socket is the master key.** Docker is controlled through one file, `/var/run/docker.sock`. Whoever can use it can start, stop, create, or delete any container, which means control of the whole machine. So in OnCallPilot only the two socket proxies may touch it, and they act as doormen. `socket-proxy-ro` lets only "look" requests through. `socket-proxy-rw` lets only start, stop, and restart through. That is also why every api and worker version exists in advance as a stopped *slot* container: the runner can switch slots on and off, but it can never create a new container (ADR-04).
+
+**Docker Compose** describes many containers in one YAML file, so one command starts them all in the right order (`docker compose up`) and one stops them (`docker compose down`). Each entry under `services:` is one container: its image, settings, volumes, networks, and healthcheck. A *profile* is a group switch: `socket-proxy-ro` has `profiles: [obs]`, so it starts only with `--profile obs`. Our root `compose.yaml` holds little more than `include:` lines. Each owner keeps their own file (`testbed.yml` and `runner.yml` for Tanzeel; `observability.yml`, and later `copilot.yml` and `test.yml`, for Usman), so the two of them rarely edit the same file (`CLAUDE.md` §8.5). Later, `ocp up` will run Compose for you, reset Chaos Shop, and wait until everything is healthy.
+
 ---
 
 ## 4. Session log

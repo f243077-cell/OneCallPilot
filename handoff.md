@@ -27,6 +27,7 @@
   - The compose files were parsed and the proxy's safety settings checked by script. They were **not** run with Docker, because Docker is not installed here.
 - **Installed** `uv` 0.12.7 with pip; `uv` downloaded Python 3.12.14 for the contracts environment.
 - **Read** Tanzeel's C4, C6, and C7 as their reader. Nothing is blocking; the notes are below.
+- **Explained Docker and Compose** in `learn.md` (section 3, "Docker, in more detail"), as Usman asked.
 
 ### Next
 1. **Send Tanzeel the message below** and agree a time for the 30-minute fixture walkthrough.
@@ -72,8 +73,9 @@
 1. Windows 10 Home needs WSL 2. In PowerShell **as Administrator**, run `wsl --install`, then restart.
 2. Install Docker Desktop for Windows from docker.com and choose the WSL 2 backend. Restart if asked.
 3. Check in a terminal: `docker version` (note the *Server API version*) and `docker compose version` (must be 2.20 or newer, for `include:`).
-4. If drive C: is short of space, move the disk image: Docker Desktop → Settings → Resources → Advanced.
-5. Tell Claude "Docker is installed", and S0.7 (a) can run.
+4. Copy `.env.example` to a root `.env` (git-ignored) and replace the four testbed values with your own random hex, made with `python -c "import secrets; print(secrets.token_hex(24))"`. Compose reads every included file, so it asks for these even when you start only `socket-proxy-ro`.
+5. If drive C: is short of space, move the disk image: Docker Desktop → Settings → Resources → Advanced.
+6. Tell Claude "Docker is installed", and S0.7 (a) can run.
 
 **B0.3 — Gemini API key** (one key serves the LLM and embeddings, ADR-13/14):
 1. Create an API key in Google AI Studio.
