@@ -1,0 +1,31 @@
+# Target allowlist of the runner (architecture §7.4, RUN-004, CLAUDE.md §6.4).
+#
+# A container may be touched only if it matches BOTH its service's labels and
+# `name_regex`. The runner checks both immediately before every Docker call
+# (from task A2.3 on), never once at start-up. A service missing here is
+# refused with TARGET_NOT_ALLOWED, even if the catalogue lists it.
+#
+# `releases`: the releases that have slot containers on the testbed
+# (TB-002, infrastructure/compose/testbed.yml). The catalogue's
+# `values_from: ledger_releases` is limited to these.
+#
+# Never widen this file to reach copilot, observability or proxy containers.
+
+name_regex: "^cs-(api|worker|redis)(-[0-9]+)*$"
+
+services:
+  api:
+    labels:
+      oncallpilot.managed: "true"
+      oncallpilot.service: api
+    releases: ["1.4.0", "1.5.0"]
+  worker:
+    labels:
+      oncallpilot.managed: "true"
+      oncallpilot.service: worker
+    releases: ["2.1.0", "2.2.0"]
+  redis:
+    labels:
+      oncallpilot.managed: "true"
+      oncallpilot.service: redis
+    releases: []
