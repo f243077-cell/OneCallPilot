@@ -39,6 +39,7 @@
 | A1.3 chaos CLI, seeded ledger, 8 faults | done (on `tanzeel`); scenario 5 completed in A1.4 | 2026-10-09 | Below |
 | A1.4 traffic spike calibrated: 1 replica saturates, 3 recover | done (on `tanzeel`) | 2026-10-09 | Below |
 | A1.5 Flutter skeleton: env config, go_router, theme, login, secure session, `MockIncidentRepository` | done (on `tanzeel`); device checks open | 2026-10-10 | Below |
+| A1.6 Incident Feed and Incident Detail (hypotheses, `E#` chips, evidence cards with fl_chart) in mock mode | done (on `tanzeel`); phone check open | 2026-10-10 | Below |
 
 ### A1.1 — Chaos Shop baseline services
 
@@ -292,6 +293,8 @@ Two observations, both accepted as they are (ruling of 2026-10-10):
   - Until C1 is on `main`, run it against a worktree of `origin/usman`.
   - Without synced fixtures, the app starts with a message naming the command.
 - **CI** (`.github/workflows/mobile.yml`, replacing the skeleton step): locked `pub get`, the DTO code regenerates with no diff, `flutter analyze`, `flutter test`.
+  - `subosito/flutter-action` is pinned to commit `1a449444c387b1966244ae4d4f8c696479add0b2` (v2.23.0, which is also the `v2` tag); checked 2026-10-10 with `git ls-remote` and the GitHub releases API.
+  - `actions/checkout@v4` is GitHub's own action, so it stays on its tag; it is the only other action in our workflows.
 
 **Checks (2026-10-10):**
 - `flutter analyze`: no issues.
@@ -311,9 +314,54 @@ Two observations, both accepted as they are (ruling of 2026-10-10):
 - MOB-017's full flow (feed → detail → review → approve → execution → resolved) needs the screens of A1.6, A2.7 and A2.9. A1.5 provides the replay and approval engine they will use.
 - MOB-002's manual push-tap test belongs to A3.2.
 
-**Two build settings changed in `mobile/android/gradle.properties`:**
+**Laptop-specific workaround, accepted 2026-10-10** (`mobile/android/gradle.properties`). It is needed on Tanzeel's integration laptop; another machine may not need it:
 1. The Gradle heap is 2 GB instead of the template's 8 GB: the laptop has 16 GB, and Docker holds up to 10 GB.
 2. `kotlin.incremental=false`: the first build failed in `url_launcher_android` with "Could not close incremental caches", because the plugin sources sit in the pub cache on C: and the build on D:.
+
+### A1.6 — Incident Feed and Incident Detail (MOB-003, MOB-004, MOB-005)
+
+**What exists now** (mock mode, through `IncidentRepository`; nothing in `contracts/` changed):
+- **Package** (approved 2026-10-10): fl_chart 1.2.0, which brings equatable 2.1.0 (pure Dart).
+- **Payload DTOs** (`data/models/evidence_payloads.dart`): one json_serializable class per C1 evidence kind (`DetectorSignalPayload`, `LogQueryPayload`, `MetricQueryPayload`, `DeployListPayload`, `ServiceHealthPayload`, `RunbookHitPayload`), plus the enums `LogLevel`, `MetricTemplate`, `DeployKind` and `DeployedBy`. An unknown kind, or a payload of the wrong shape, parses to null instead of throwing.
+- **Feed** (`/incidents`, MOB-003):
+  - Open and past tabs. Each row shows a severity badge, the title, service · status (with the escalation reason or the resolution), and a "time since alert" that updates every 5 s.
+  - `incident.opened` is applied from the event itself. Other events refetch the list; events with an old `state_version` are ignored (§10.3).
+  - Pull to refresh. States for loading, error with Retry (showing the ApiError's message), and an empty tab.
+- **Detail** (`/incidents/:id`, MOB-004):
+  - Header with severity, service, status and age, and a "Review proposed action" button when a proposal is pending (it opens `/proposals/:id`, task A2.7).
+  - Hypotheses ranked by `rank`, each with category, confidence bar and percentage, and `E#` chips. A chip scrolls to its evidence card; a chip for an unknown ref is disabled.
+  - Dropped hypotheses are hidden behind "Show N dropped".
+  - It refetches on a newer event for this incident. States for loading, not found, error with Retry, and no hypotheses or evidence yet.
+- **Evidence cards** (`shared/widgets/evidence_card.dart`, MOB-005):
+  - **Alert signal:** value against baseline, and z.
+  - **Log:** the lines, with ERROR and CRITICAL highlighted; "n of total"; top exception types; or "No matching lines".
+  - **Metric:** an fl_chart line, with the incident's span shaded (from the anomaly start to the incident end or the last point) and the change point as a dashed line. Baseline, peak and % change appear below. With fewer than 2 points it shows the payload's `note`.
+  - **Commit:** release, kind and writer, message, 12-character SHA, time.
+  - **Health:** each container's state, health, restarts and OOM; the probe result.
+  - **Runbook:** heading, source and a 280-character snippet.
+  - A disproof query is labelled "disproof check".
+- **Metric units:** C1 has no unit (issue 4 in `contract-review-a.md`), so the app picks one per template: % for error and failure rates, ms or s for latencies, cores for `cpu_usage` (the fixtures use 0.5 for a full slot), rps, MiB.
+- **Unknown values:**
+  - Any enum value this build does not know reads "Unknown". For severity it reads "SEV?".
+  - An unknown evidence kind reads "Unknown evidence" and shows "This app version cannot show this evidence type." with its summary.
+
+**Two bugs found by the tests and fixed before commit:** two highlighted log lines shared a widget key (Flutter threw "Duplicate keys"), and a payload missing an enum field threw an `ArgumentError` that the parser did not catch.
+
+**Checks (2026-10-10):**
+- `flutter analyze`: no issues.
+- `flutter test` on `tanzeel`: **54 passed**, 3 skipped (the fixture groups).
+  - Feed: 9 tests. They include MOB-003's acceptance: an `incident.opened` event is on screen one frame after the stream delivers it, with no refetch.
+  - Detail: 9 tests. They include MOB-004's acceptance: on a 540 × 800 screen, `EvidenceCard(E3)` is off screen until the E3 chip is tapped, and visible after.
+  - Evidence cards: 8 tests, one per variant plus empty log and empty metric.
+  - Formatting: 3 tests.
+- `OCP_CONTRACTS_DIR=<worktree of origin/usman 0582f37>/contracts flutter test`: **88 passed**.
+  - The feed lists the 3 fixture incidents from `MockIncidentRepository`.
+  - For each timeline's final incident, every evidence card renders its variant (never the fallback), every metric item draws a chart, and every cited `E#` chip scrolls its card into view.
+  - The fixtures contain all six evidence kinds. None has `suspicious_content: true` or a dropped hypothesis, so those use the tests' own incident; the suspicious chip (MOB-019) is task A3.5.
+
+**Debug APK for the phone** (not checked on a device yet):
+- Path: `D:\PROJECTS\OneCallpilot\mobile\build\app\outputs\flutter-apk\app-debug.apk` (`mobile/build/app/outputs/flutter-apk/app-debug.apk`), 220 MB (debug, all ABIs), SHA-1 `30f9069600db3e47b2f82e43d0d9b7808e52be3f`.
+- **Built in mock mode:** `flutter build apk --debug --dart-define=DATA_SOURCE=mock` at the A1.6 commit, with the 3 timelines synced from `origin/usman` at `0582f37` and bundled in the APK. It needs no network: any email with a password of at least 6 characters signs in, and the incidents replay from the start on every launch.
 
 ## C7 deviations (accepted for now, 2026-10-09)
 
