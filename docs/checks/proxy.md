@@ -24,7 +24,7 @@ The image enables **`EVENTS=1`, `PING=1`, `VERSION=1`, `LIBPOD_PING=1`, `LIBPOD_
 
 `infrastructure/compose/runner.yml`, profile `runner`:
 
-`CONTAINERS=1, ALLOW_START=1, ALLOW_STOP=1, ALLOW_RESTARTS=1, POST=0, EVENTS=0, PING=0, VERSION=0, LIBPOD_PING=0, LIBPOD_VERSION=0`, Docker socket mounted read-only, `read_only: true` with `tmpfs: /run`, only on the internal network `rw_proxy_net`, no published ports, healthcheck `nc -z 127.0.0.1 2375`.
+`CONTAINERS=1, ALLOW_START=1, ALLOW_STOP=1, ALLOW_RESTARTS=1, POST=0, EVENTS=0, PING=0, VERSION=0, LIBPOD_PING=0, LIBPOD_VERSION=0`, Docker socket mounted read-only, `read_only: true` with `tmpfs: /run`, only on the internal network `rw_proxy_net`, no published ports, healthcheck `nc -z 127.0.0.1 2375`. Memory limit **64 MiB** (added after A2.2: the proxy uses about 22 MiB, and 32 MiB would be too tight for a burst of requests).
 
 Checked on the running container: no published ports, read-only root filesystem, only network `oncallpilot_rw_proxy_net`, and that network is `internal=true`.
 
