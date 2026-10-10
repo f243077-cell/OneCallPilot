@@ -163,11 +163,37 @@ class MetricPoint(ContractModel):
     value: float
 
 
+MetricUnit = Literal[
+    "ratio", "seconds", "bytes", "cores", "requests_per_second", "per_second", "count"
+]
+
+# The y-axis unit of each query_metrics template, for the app's metric card (MOB-005).
+METRIC_UNITS: dict[MetricTemplate, MetricUnit] = {
+    "error_rate": "ratio",
+    "p95_latency": "seconds",
+    "request_rate": "requests_per_second",
+    "memory_rss": "bytes",
+    "cpu_usage": "cores",
+    "process_restarts": "count",
+    "db_pool_in_use": "count",
+    "db_pool_wait_p95": "seconds",
+    "cache_errors": "per_second",
+    "upstream_latency_p95": "seconds",
+    "job_failure_rate": "ratio",
+    "job_latency_p95": "seconds",
+}
+
+
 class MetricQueryPayload(ContractModel):
-    """``kind = metric_query``: result of ``query_metrics`` (AI-006)."""
+    """``kind = metric_query``: result of ``query_metrics`` (AI-006).
+
+    Only ``api`` and ``worker`` expose metrics (C7 §2.1); ``upstream_latency_p95``
+    is measured on ``api``. ``unit`` always equals ``METRIC_UNITS[template]``.
+    """
 
     template: MetricTemplate
-    service: ServiceName
+    service: Literal["api", "worker"]
+    unit: MetricUnit
     step_seconds: int = Field(ge=5)
     points: list[MetricPoint] = Field(max_length=120)
     baseline_mean: float | None
@@ -176,9 +202,18 @@ class MetricQueryPayload(ContractModel):
     change_point_at: UtcDatetime | None
     note: str | None = Field(max_length=200, description="For example, why the series is empty")
 
+    @model_validator(mode="after")
+    def _unit_matches_template(self) -> Self:
+        if self.unit != METRIC_UNITS[self.template]:
+            raise ValueError(f"template {self.template!r} has unit {METRIC_UNITS[self.template]!r}")
+        return self
+
 
 class DeployListItem(ContractModel):
-    """One deploy-ledger record as ``get_recent_deploys`` returns it (C6 fields)."""
+    """One deploy-ledger record as ``get_recent_deploys`` returns it (C6 fields).
+
+    Every agent-visible C6 field; ``deploy_id`` and ``image_tag`` stay out (TB-010).
+    """
 
     service: LedgerService
     release: Semver
@@ -188,6 +223,8 @@ class DeployListItem(ContractModel):
     deployed_at: UtcDatetime
     deployed_by: DeployedBy
     kind: DeployKind
+    replicas: int = Field(ge=1, le=5, description="Desired replicas after the event")
+    reason: str = Field(min_length=1, max_length=200)
 
 
 class DeployListPayload(ContractModel):
@@ -651,7 +688,8 @@ class MonitorSettings(ContractModel):
 
     ``thresholds`` maps detector setting names (``backend/config/detector.yaml``,
     for example ``error_rate.z``) to values. ``locked`` is true while
-    ``BENCHMARK_LOCK`` is on, when ``PUT /settings`` answers ``423``.
+    ``BENCHMARK_LOCK`` is on, when ``PUT /settings`` answers ``423``;
+    ``lock_reason`` is then the text the app shows beside the read-only fields.
     """
 
     version: int = Field(ge=1)
@@ -659,5 +697,12 @@ class MonitorSettings(ContractModel):
     thresholds: dict[ThresholdName, float]
     notify: NotifySettings
     locked: bool
+    lock_reason: str | None = Field(max_length=200)
     updated_by: UUID | None
     updated_at: UtcDatetime
+
+    @model_validator(mode="after")
+    def _reason_when_locked(self) -> Self:
+        if self.locked != (self.lock_reason is not None):
+            raise ValueError("lock_reason is set exactly when locked is true")
+        return self

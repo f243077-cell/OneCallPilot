@@ -2,7 +2,7 @@
   "$defs": {
     "DeployListItem": {
       "additionalProperties": false,
-      "description": "One deploy-ledger record as ``get_recent_deploys`` returns it (C6 fields).",
+      "description": "One deploy-ledger record as ``get_recent_deploys`` returns it (C6 fields).\n\nEvery agent-visible C6 field; ``deploy_id`` and ``image_tag`` stay out (TB-010).",
       "properties": {
         "commit_message": {
           "maxLength": 200,
@@ -44,10 +44,23 @@
           "title": "Kind",
           "type": "string"
         },
+        "reason": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
         "release": {
           "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
           "title": "Release",
           "type": "string"
+        },
+        "replicas": {
+          "description": "Desired replicas after the event",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Replicas",
+          "type": "integer"
         },
         "service": {
           "enum": [
@@ -66,7 +79,9 @@
         "config_hash",
         "deployed_at",
         "deployed_by",
-        "kind"
+        "kind",
+        "replicas",
+        "reason"
       ],
       "title": "DeployListItem",
       "type": "object"

@@ -11,20 +11,20 @@
     "kind": "log_query",
     "purpose": "gather",
     "tool_name": "query_logs",
-    "summary": "41 ERROR lines on /checkout, all KeyError: 'unit_price'",
+    "summary": "41 ERROR lines on /checkout, all IndexError: tuple index out of range",
     "payload": {
       "lines": [
         {
           "ts": "2026-10-14T09:00:12Z",
           "level": "ERROR",
-          "msg": "POST /checkout 500",
-          "exc_type": "KeyError"
+          "msg": "unhandled error while serving the request",
+          "exc_type": "IndexError"
         }
       ],
       "total_count": 41,
       "top_exception_types": [
         {
-          "exc_type": "KeyError",
+          "exc_type": "IndexError",
           "count": 41
         }
       ]

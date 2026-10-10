@@ -21,8 +21,20 @@
     }
   },
   "additionalProperties": false,
-  "description": "Monitor settings (§8.2 ``monitor_settings``; FR-023, MOB-013).\n\n``thresholds`` maps detector setting names (``backend/config/detector.yaml``,\nfor example ``error_rate.z``) to values. ``locked`` is true while\n``BENCHMARK_LOCK`` is on, when ``PUT /settings`` answers ``423``.",
+  "description": "Monitor settings (§8.2 ``monitor_settings``; FR-023, MOB-013).\n\n``thresholds`` maps detector setting names (``backend/config/detector.yaml``,\nfor example ``error_rate.z``) to values. ``locked`` is true while\n``BENCHMARK_LOCK`` is on, when ``PUT /settings`` answers ``423``;\n``lock_reason`` is then the text the app shows beside the read-only fields.",
   "properties": {
+    "lock_reason": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Lock Reason"
+    },
     "locked": {
       "title": "Locked",
       "type": "boolean"
@@ -84,6 +96,7 @@
     "thresholds",
     "notify",
     "locked",
+    "lock_reason",
     "updated_by",
     "updated_at"
   ],

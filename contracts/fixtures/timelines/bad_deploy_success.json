@@ -43,26 +43,26 @@
           "kind": "log_query",
           "purpose": "gather",
           "tool_name": "query_logs",
-          "summary": "41 ERROR lines on /checkout, all KeyError: 'unit_price'",
+          "summary": "41 ERROR lines on /checkout, all IndexError: tuple index out of range",
           "payload": {
             "lines": [
               {
                 "ts": "2026-10-14T09:00:12Z",
                 "level": "ERROR",
-                "msg": "POST /checkout 500",
-                "exc_type": "KeyError"
+                "msg": "unhandled error while serving the request",
+                "exc_type": "IndexError"
               },
               {
-                "ts": "2026-10-14T09:00:13Z",
+                "ts": "2026-10-14T09:00:12Z",
                 "level": "ERROR",
-                "msg": "checkout failed: 'unit_price'",
-                "exc_type": "KeyError"
+                "msg": "POST /checkout 500",
+                "exc_type": null
               }
             ],
             "total_count": 41,
             "top_exception_types": [
               {
-                "exc_type": "KeyError",
+                "exc_type": "IndexError",
                 "count": 41
               }
             ]
@@ -88,10 +88,11 @@
           "kind": "metric_query",
           "purpose": "gather",
           "tool_name": "query_metrics",
-          "summary": "api error rate rose from 0.4% to 31% at 09:00:05",
+          "summary": "api error rate rose from 0.4% to 31%, starting 85 s after the deploy",
           "payload": {
             "template": "error_rate",
             "service": "api",
+            "unit": "ratio",
             "step_seconds": 15,
             "points": [
               {
@@ -146,28 +147,32 @@
           "kind": "deploy_list",
           "purpose": "gather",
           "tool_name": "get_recent_deploys",
-          "summary": "api 1.5.0 deployed at 08:58:40, 90 s before the errors",
+          "summary": "api 1.5.0 was deployed 90 s before the errors began",
           "payload": {
             "records": [
               {
                 "service": "api",
                 "release": "1.5.0",
-                "commit_sha": "e264a50743fd6430492bbb66ed573b64a42124f3",
+                "commit_sha": "e56a282e7523212fea82c73f9157b41d5ba1743b",
                 "commit_message": "checkout: compute totals with new pricing rounding",
-                "config_hash": "d74e7e806e0e8f537c720167c9ffea46b4c199359e7b8856302b73d8bf05e1f4",
+                "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
                 "deployed_at": "2026-10-14T08:58:40Z",
                 "deployed_by": "ci",
-                "kind": "deploy"
+                "kind": "deploy",
+                "replicas": 1,
+                "reason": "scheduled release"
               },
               {
                 "service": "api",
                 "release": "1.4.0",
-                "commit_sha": "e0ac48020087e3b8c9d00fd5bed2a254c7057eca",
-                "commit_message": "orders: paginate order history",
-                "config_hash": "214396ea0744354de84eb93fca9cdedd006cae5fd395ea0104a9762bcf58dc49",
-                "deployed_at": "2026-10-13T16:20:00Z",
+                "commit_sha": "606c2674b8e32ec226c88019db05b426594a08f6",
+                "commit_message": "cart: cache price lookups",
+                "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
+                "deployed_at": "2026-10-05T09:05:00Z",
                 "deployed_by": "setup",
-                "kind": "deploy"
+                "kind": "deploy",
+                "replicas": 1,
+                "reason": "scheduled release"
               }
             ]
           },
@@ -699,26 +704,26 @@
         "kind": "log_query",
         "purpose": "gather",
         "tool_name": "query_logs",
-        "summary": "41 ERROR lines on /checkout, all KeyError: 'unit_price'",
+        "summary": "41 ERROR lines on /checkout, all IndexError: tuple index out of range",
         "payload": {
           "lines": [
             {
               "ts": "2026-10-14T09:00:12Z",
               "level": "ERROR",
-              "msg": "POST /checkout 500",
-              "exc_type": "KeyError"
+              "msg": "unhandled error while serving the request",
+              "exc_type": "IndexError"
             },
             {
-              "ts": "2026-10-14T09:00:13Z",
+              "ts": "2026-10-14T09:00:12Z",
               "level": "ERROR",
-              "msg": "checkout failed: 'unit_price'",
-              "exc_type": "KeyError"
+              "msg": "POST /checkout 500",
+              "exc_type": null
             }
           ],
           "total_count": 41,
           "top_exception_types": [
             {
-              "exc_type": "KeyError",
+              "exc_type": "IndexError",
               "count": 41
             }
           ]
@@ -732,10 +737,11 @@
         "kind": "metric_query",
         "purpose": "gather",
         "tool_name": "query_metrics",
-        "summary": "api error rate rose from 0.4% to 31% at 09:00:05",
+        "summary": "api error rate rose from 0.4% to 31%, starting 85 s after the deploy",
         "payload": {
           "template": "error_rate",
           "service": "api",
+          "unit": "ratio",
           "step_seconds": 15,
           "points": [
             {
@@ -778,28 +784,32 @@
         "kind": "deploy_list",
         "purpose": "gather",
         "tool_name": "get_recent_deploys",
-        "summary": "api 1.5.0 deployed at 08:58:40, 90 s before the errors",
+        "summary": "api 1.5.0 was deployed 90 s before the errors began",
         "payload": {
           "records": [
             {
               "service": "api",
               "release": "1.5.0",
-              "commit_sha": "e264a50743fd6430492bbb66ed573b64a42124f3",
+              "commit_sha": "e56a282e7523212fea82c73f9157b41d5ba1743b",
               "commit_message": "checkout: compute totals with new pricing rounding",
-              "config_hash": "d74e7e806e0e8f537c720167c9ffea46b4c199359e7b8856302b73d8bf05e1f4",
+              "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
               "deployed_at": "2026-10-14T08:58:40Z",
               "deployed_by": "ci",
-              "kind": "deploy"
+              "kind": "deploy",
+              "replicas": 1,
+              "reason": "scheduled release"
             },
             {
               "service": "api",
               "release": "1.4.0",
-              "commit_sha": "e0ac48020087e3b8c9d00fd5bed2a254c7057eca",
-              "commit_message": "orders: paginate order history",
-              "config_hash": "214396ea0744354de84eb93fca9cdedd006cae5fd395ea0104a9762bcf58dc49",
-              "deployed_at": "2026-10-13T16:20:00Z",
+              "commit_sha": "606c2674b8e32ec226c88019db05b426594a08f6",
+              "commit_message": "cart: cache price lookups",
+              "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
+              "deployed_at": "2026-10-05T09:05:00Z",
               "deployed_by": "setup",
-              "kind": "deploy"
+              "kind": "deploy",
+              "replicas": 1,
+              "reason": "scheduled release"
             }
           ]
         },

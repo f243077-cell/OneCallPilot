@@ -293,3 +293,54 @@ def test_approval_rules() -> None:
     rejection = {**approval(), "decision": "rejected", "challenge_id": None, "auth_method": "tap"}
     rejects(domain.Approval, {**rejection, "reason": "no"})
     domain.Approval.model_validate({**rejection, "reason": "wrong service"})
+
+
+# --- review fixes (contract-review-a.md issues 2–5) ----------------------------
+
+
+def test_metric_unit_follows_template() -> None:
+    item = metric_evidence()
+    item["payload"]["unit"] = "seconds"
+    rejects(domain.Evidence, item)
+    assert set(domain.METRIC_UNITS) == set(get_args(enums.MetricTemplate))
+
+
+@pytest.mark.parametrize("service", ["redis", "payments", "lb", "postgres"])
+def test_metrics_only_for_api_and_worker(service: str) -> None:
+    item = metric_evidence()
+    item["payload"]["service"] = service
+    rejects(domain.Evidence, item)
+
+
+@pytest.mark.parametrize(
+    "overrides", [{"replicas": 0}, {"replicas": 6}, {"reason": ""}, {"image_tag": "x"}]
+)
+def test_deploy_list_item_carries_replicas_and_reason(overrides: dict[str, Any]) -> None:
+    item = deploy_evidence()
+    item["payload"]["records"][0].update(overrides)
+    rejects(domain.Evidence, item)
+    item = deploy_evidence()
+    del item["payload"]["records"][0]["reason"]
+    rejects(domain.Evidence, item)
+
+
+def monitor_settings() -> dict[str, Any]:
+    return {
+        "version": 3,
+        "services": ["api", "worker"],
+        "thresholds": {"error_rate.z": 4.0},
+        "notify": {"min_push_severity": "sev2"},
+        "locked": True,
+        "lock_reason": "Benchmark lock is on",
+        "updated_by": None,
+        "updated_at": "2026-10-14T08:00:00Z",
+    }
+
+
+def test_lock_reason_exactly_when_locked() -> None:
+    domain.MonitorSettings.model_validate(monitor_settings())
+    domain.MonitorSettings.model_validate(
+        {**monitor_settings(), "locked": False, "lock_reason": None}
+    )
+    rejects(domain.MonitorSettings, {**monitor_settings(), "lock_reason": None})
+    rejects(domain.MonitorSettings, {**monitor_settings(), "locked": False})

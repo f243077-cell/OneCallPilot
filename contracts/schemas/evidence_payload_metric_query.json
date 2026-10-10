@@ -22,7 +22,7 @@
     }
   },
   "additionalProperties": false,
-  "description": "``kind = metric_query``: result of ``query_metrics`` (AI-006).",
+  "description": "``kind = metric_query``: result of ``query_metrics`` (AI-006).\n\nOnly ``api`` and ``worker`` expose metrics (C7 §2.1); ``upstream_latency_p95``\nis measured on ``api``. ``unit`` always equals ``METRIC_UNITS[template]``.",
   "properties": {
     "baseline_mean": {
       "anyOf": [
@@ -93,11 +93,7 @@
     "service": {
       "enum": [
         "api",
-        "worker",
-        "lb",
-        "payments",
-        "redis",
-        "postgres"
+        "worker"
       ],
       "title": "Service",
       "type": "string"
@@ -124,11 +120,25 @@
       ],
       "title": "Template",
       "type": "string"
+    },
+    "unit": {
+      "enum": [
+        "ratio",
+        "seconds",
+        "bytes",
+        "cores",
+        "requests_per_second",
+        "per_second",
+        "count"
+      ],
+      "title": "Unit",
+      "type": "string"
     }
   },
   "required": [
     "template",
     "service",
+    "unit",
     "step_seconds",
     "points",
     "baseline_mean",

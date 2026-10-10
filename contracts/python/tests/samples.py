@@ -11,6 +11,8 @@ from typing import Any
 
 INCIDENT_ID = "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01"
 PROPOSAL_ID = "8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02"
+# chaos-shop/releases.yaml: config_hash of every api release.
+API_CONFIG_HASH = "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324"
 
 
 def uid(n: int) -> str:
@@ -56,18 +58,18 @@ def log_evidence() -> dict[str, Any]:
         "kind": "log_query",
         "purpose": "gather",
         "tool_name": "query_logs",
-        "summary": "41 ERROR lines on /checkout, all KeyError: 'unit_price'",
+        "summary": "41 ERROR lines on /checkout, all IndexError: tuple index out of range",
         "payload": {
             "lines": [
                 {
                     "ts": "2026-10-14T09:00:12Z",
                     "level": "ERROR",
-                    "msg": "POST /checkout 500",
-                    "exc_type": "KeyError",
+                    "msg": "unhandled error while serving the request",
+                    "exc_type": "IndexError",
                 }
             ],
             "total_count": 41,
-            "top_exception_types": [{"exc_type": "KeyError", "count": 41}],
+            "top_exception_types": [{"exc_type": "IndexError", "count": 41}],
         },
         "suspicious_content": False,
         "created_at": "2026-10-14T09:00:31Z",
@@ -81,10 +83,11 @@ def metric_evidence() -> dict[str, Any]:
         "kind": "metric_query",
         "purpose": "gather",
         "tool_name": "query_metrics",
-        "summary": "api error rate rose from 0.4% to 31% at 09:00:05",
+        "summary": "api error rate rose from 0.4% to 31%, starting 85 s after the deploy",
         "payload": {
             "template": "error_rate",
             "service": "api",
+            "unit": "ratio",
             "step_seconds": 15,
             "points": [
                 {"ts": "2026-10-14T08:59:45Z", "value": 0.004},
@@ -110,28 +113,32 @@ def deploy_evidence() -> dict[str, Any]:
         "kind": "deploy_list",
         "purpose": "gather",
         "tool_name": "get_recent_deploys",
-        "summary": "api 1.5.0 deployed at 08:58:40, 90 s before the error spike",
+        "summary": "api 1.5.0 was deployed 90 s before the error spike",
         "payload": {
             "records": [
                 {
                     "service": "api",
                     "release": "1.5.0",
-                    "commit_sha": sha("api 1.5.0")[:40],
+                    "commit_sha": "e56a282e7523212fea82c73f9157b41d5ba1743b",
                     "commit_message": "checkout: compute totals with new pricing rounding",
-                    "config_hash": sha("api config 1.5.0"),
+                    "config_hash": API_CONFIG_HASH,
                     "deployed_at": "2026-10-14T08:58:40Z",
                     "deployed_by": "ci",
                     "kind": "deploy",
+                    "replicas": 1,
+                    "reason": "scheduled release",
                 },
                 {
                     "service": "api",
                     "release": "1.4.0",
-                    "commit_sha": sha("api 1.4.0")[:40],
-                    "commit_message": "orders: paginate order history",
-                    "config_hash": sha("api config 1.4.0"),
-                    "deployed_at": "2026-10-13T16:20:00Z",
+                    "commit_sha": "606c2674b8e32ec226c88019db05b426594a08f6",
+                    "commit_message": "cart: cache price lookups",
+                    "config_hash": API_CONFIG_HASH,
+                    "deployed_at": "2026-10-05T09:05:00Z",
                     "deployed_by": "setup",
                     "kind": "deploy",
+                    "replicas": 1,
+                    "reason": "scheduled release",
                 },
             ]
         },
