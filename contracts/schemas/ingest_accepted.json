@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "description": "``202`` of ``POST /ingest/alert``.",
+  "properties": {
+    "deduplicated": {
+      "title": "Deduplicated",
+      "type": "boolean"
+    },
+    "incident_id": {
+      "format": "uuid",
+      "title": "Incident Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "incident_id",
+    "deduplicated"
+  ],
+  "title": "IngestAccepted",
+  "type": "object"
+}

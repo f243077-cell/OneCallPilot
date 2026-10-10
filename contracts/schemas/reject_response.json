@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "description": "``200`` of ``POST /proposals/{id}/reject``.",
+  "properties": {
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "status": {
+      "const": "rejected",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "status"
+  ],
+  "title": "RejectResponse",
+  "type": "object"
+}

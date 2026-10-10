@@ -1,0 +1,241 @@
+{
+  "description": "C5 HMAC-SHA256 test vectors (SEC-003). TEST-ONLY keys: they decode to ASCII text that says so, and must never be used anywhere else. sig = lower-case hex HMAC-SHA256(key, canonical), where canonical is the message without sig, serialised with sorted keys, no whitespace, UTF-8. Keys are hex-encoded, as in the env vars.",
+  "keys": {
+    "ACTION_SIGNING_KEY": "54455354204f4e4c5920616374696f6e207369676e696e67206b657920303121",
+    "RUNNER_LINK_KEY": "54455354204f4e4c592072756e6e6572206c696e6b206b657920303030322121"
+  },
+  "vectors": [
+    {
+      "name": "execute_signed_with_action_key",
+      "note": "An execute request from backend-api.",
+      "verify_with": "ACTION_SIGNING_KEY",
+      "valid": true,
+      "canonical": "{\"action\":\"rollback_deploy\",\"approved_at\":\"2026-10-14T09:01:58Z\",\"approved_by\":\"7e3a1c9b-2d5f-4b8e-a6c0-4f1d8b2e7a95\",\"catalogue_version\":\"1.0.0\",\"execution_id\":\"5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37\",\"expires_at\":\"2026-10-14T09:02:58Z\",\"idempotency_key\":\"d4f8a2c6-3e1b-4a9d-8c75-1b6e0f3a9d28\",\"issued_at\":\"2026-10-14T09:01:58Z\",\"params\":{\"service\":\"api\",\"target_release\":\"1.4.0\"},\"proposal_id\":\"8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02\",\"request_id\":\"3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13\",\"state_fingerprint\":\"b94ac02137f28bc69ac0d32c382537a31d9477b6dde2dedc27c1a734c3fcaf42\",\"type\":\"execute\"}",
+      "message": {
+        "type": "execute",
+        "request_id": "3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13",
+        "execution_id": "5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37",
+        "proposal_id": "8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02",
+        "action": "rollback_deploy",
+        "params": {
+          "service": "api",
+          "target_release": "1.4.0"
+        },
+        "state_fingerprint": "b94ac02137f28bc69ac0d32c382537a31d9477b6dde2dedc27c1a734c3fcaf42",
+        "idempotency_key": "d4f8a2c6-3e1b-4a9d-8c75-1b6e0f3a9d28",
+        "approved_by": "7e3a1c9b-2d5f-4b8e-a6c0-4f1d8b2e7a95",
+        "approved_at": "2026-10-14T09:01:58Z",
+        "issued_at": "2026-10-14T09:01:58Z",
+        "expires_at": "2026-10-14T09:02:58Z",
+        "catalogue_version": "1.0.0",
+        "sig": "5d941358c74f014dda30944fbcc7dd9c20c883c5164d5a0c994dd54e39433dec"
+      }
+    },
+    {
+      "name": "dry_run_signed_with_link_key",
+      "note": "A dry_run request from backend-worker.",
+      "verify_with": "RUNNER_LINK_KEY",
+      "valid": true,
+      "canonical": "{\"action\":\"rollback_deploy\",\"approved_at\":null,\"approved_by\":null,\"catalogue_version\":\"1.0.0\",\"execution_id\":null,\"expires_at\":\"2026-10-14T09:01:29Z\",\"idempotency_key\":null,\"issued_at\":\"2026-10-14T09:00:59Z\",\"params\":{\"service\":\"api\",\"target_release\":\"1.4.0\"},\"proposal_id\":null,\"request_id\":\"1f6c8e3a-9b2d-4c7e-a5f1-6d0b3e8c2a47\",\"state_fingerprint\":null,\"type\":\"dry_run\"}",
+      "message": {
+        "type": "dry_run",
+        "request_id": "1f6c8e3a-9b2d-4c7e-a5f1-6d0b3e8c2a47",
+        "execution_id": null,
+        "proposal_id": null,
+        "action": "rollback_deploy",
+        "params": {
+          "service": "api",
+          "target_release": "1.4.0"
+        },
+        "state_fingerprint": null,
+        "idempotency_key": null,
+        "approved_by": null,
+        "approved_at": null,
+        "issued_at": "2026-10-14T09:00:59Z",
+        "expires_at": "2026-10-14T09:01:29Z",
+        "catalogue_version": "1.0.0",
+        "sig": "d6a4d6f44229785d48edafdd63a9a2159ab639ad71de7aaecddc1c93028f8a01"
+      }
+    },
+    {
+      "name": "dry_run_result_signed_with_link_key",
+      "note": "The runner's answer to the dry run.",
+      "verify_with": "RUNNER_LINK_KEY",
+      "valid": true,
+      "canonical": "{\"captured\":null,\"dry_run\":{\"current\":{\"active_release\":\"1.5.0\",\"cache_keys\":null,\"containers\":[{\"health\":\"healthy\",\"name\":\"cs-api-150-1\",\"state\":\"running\"},{\"health\":\"none\",\"name\":\"cs-api-140-1\",\"state\":\"exited\"}],\"running_replicas\":1},\"preconditions\":{\"cooldown_ok\":true,\"rate_limit_ok\":true,\"slots_available\":true},\"predicted_effect\":\"1 replica of api 1.4.0 serves traffic; 1.5.0 is stopped\",\"state_fingerprint\":\"b94ac02137f28bc69ac0d32c382537a31d9477b6dde2dedc27c1a734c3fcaf42\",\"warnings\":[],\"would_change\":[{\"change\":\"start\",\"target\":\"cs-api-140-1\"},{\"change\":\"stop\",\"target\":\"cs-api-150-1\"}]},\"error_code\":null,\"execution_id\":null,\"health_after\":null,\"request_id\":\"1f6c8e3a-9b2d-4c7e-a5f1-6d0b3e8c2a47\",\"status\":\"ok\",\"step\":null,\"ts\":\"2026-10-14T09:01:02Z\",\"type\":\"dry_run_result\"}",
+      "message": {
+        "type": "dry_run_result",
+        "request_id": "1f6c8e3a-9b2d-4c7e-a5f1-6d0b3e8c2a47",
+        "execution_id": null,
+        "status": "ok",
+        "error_code": null,
+        "dry_run": {
+          "would_change": [
+            {
+              "target": "cs-api-140-1",
+              "change": "start"
+            },
+            {
+              "target": "cs-api-150-1",
+              "change": "stop"
+            }
+          ],
+          "current": {
+            "active_release": "1.5.0",
+            "running_replicas": 1,
+            "containers": [
+              {
+                "name": "cs-api-150-1",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-140-1",
+                "state": "exited",
+                "health": "none"
+              }
+            ],
+            "cache_keys": null
+          },
+          "preconditions": {
+            "rate_limit_ok": true,
+            "cooldown_ok": true,
+            "slots_available": true
+          },
+          "predicted_effect": "1 replica of api 1.4.0 serves traffic; 1.5.0 is stopped",
+          "warnings": [],
+          "state_fingerprint": "b94ac02137f28bc69ac0d32c382537a31d9477b6dde2dedc27c1a734c3fcaf42"
+        },
+        "step": null,
+        "health_after": null,
+        "captured": null,
+        "ts": "2026-10-14T09:01:02Z",
+        "sig": "dd72edac7b157327921c6cbcb343012c40a9f24c6a8f72f15b702289d8e17045"
+      }
+    },
+    {
+      "name": "progress_with_non_ascii_message",
+      "note": "The message ends with U+2026; canonical JSON keeps it as UTF-8 bytes, not ….",
+      "verify_with": "RUNNER_LINK_KEY",
+      "valid": true,
+      "canonical": "{\"captured\":null,\"dry_run\":null,\"error_code\":null,\"execution_id\":\"5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37\",\"health_after\":null,\"request_id\":\"3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13\",\"status\":\"ok\",\"step\":{\"message\":\"waiting for cs-api-140-1 to report healthy …\",\"name\":\"starting cs-api-140-1\",\"status\":\"running\"},\"ts\":\"2026-10-14T09:02:03Z\",\"type\":\"progress\"}",
+      "message": {
+        "type": "progress",
+        "request_id": "3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13",
+        "execution_id": "5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37",
+        "status": "ok",
+        "error_code": null,
+        "dry_run": null,
+        "step": {
+          "name": "starting cs-api-140-1",
+          "status": "running",
+          "message": "waiting for cs-api-140-1 to report healthy …"
+        },
+        "health_after": null,
+        "captured": null,
+        "ts": "2026-10-14T09:02:03Z",
+        "sig": "4b1ca6914976c31fc4b2730efa5643dff1fbe1a0c9751f950c1a25bcd23ab889"
+      }
+    },
+    {
+      "name": "execution_result_signed_with_link_key",
+      "note": "The final result, with captured values for the rollback step.",
+      "verify_with": "RUNNER_LINK_KEY",
+      "valid": true,
+      "canonical": "{\"captured\":{\"previous_release\":\"1.5.0\"},\"dry_run\":null,\"error_code\":null,\"execution_id\":\"5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37\",\"health_after\":{\"structural\":{\"checked_at\":\"2026-10-14T09:02:29Z\",\"containers\":[{\"health\":\"healthy\",\"name\":\"cs-api-140-1\",\"state\":\"running\"},{\"health\":\"none\",\"name\":\"cs-api-150-1\",\"state\":\"exited\"}],\"passed\":true,\"probes\":[{\"error\":null,\"latency_ms\":3.2,\"ok\":true,\"status_code\":200,\"url\":\"http://cs-lb/healthz\"}]}},\"request_id\":\"3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13\",\"status\":\"succeeded\",\"step\":null,\"ts\":\"2026-10-14T09:02:30Z\",\"type\":\"execution_result\"}",
+      "message": {
+        "type": "execution_result",
+        "request_id": "3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13",
+        "execution_id": "5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37",
+        "status": "succeeded",
+        "error_code": null,
+        "dry_run": null,
+        "step": null,
+        "health_after": {
+          "structural": {
+            "passed": true,
+            "checked_at": "2026-10-14T09:02:29Z",
+            "containers": [
+              {
+                "name": "cs-api-140-1",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-150-1",
+                "state": "exited",
+                "health": "none"
+              }
+            ],
+            "probes": [
+              {
+                "url": "http://cs-lb/healthz",
+                "ok": true,
+                "status_code": 200,
+                "latency_ms": 3.2,
+                "error": null
+              }
+            ]
+          }
+        },
+        "captured": {
+          "previous_release": "1.5.0"
+        },
+        "ts": "2026-10-14T09:02:30Z",
+        "sig": "3ce63348909ba2a9e81f896a1a9119aa02347eb882567315e9842e8511bff892"
+      }
+    },
+    {
+      "name": "execute_signed_with_link_key_is_refused",
+      "note": "Well-formed, but signed with RUNNER_LINK_KEY: the runner verifies execute only with ACTION_SIGNING_KEY (BAD_SIGNATURE).",
+      "verify_with": "ACTION_SIGNING_KEY",
+      "valid": false,
+      "canonical": "{\"action\":\"rollback_deploy\",\"approved_at\":\"2026-10-14T09:01:58Z\",\"approved_by\":\"7e3a1c9b-2d5f-4b8e-a6c0-4f1d8b2e7a95\",\"catalogue_version\":\"1.0.0\",\"execution_id\":\"5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37\",\"expires_at\":\"2026-10-14T09:02:58Z\",\"idempotency_key\":\"d4f8a2c6-3e1b-4a9d-8c75-1b6e0f3a9d28\",\"issued_at\":\"2026-10-14T09:01:58Z\",\"params\":{\"service\":\"api\",\"target_release\":\"1.4.0\"},\"proposal_id\":\"8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02\",\"request_id\":\"3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13\",\"state_fingerprint\":\"b94ac02137f28bc69ac0d32c382537a31d9477b6dde2dedc27c1a734c3fcaf42\",\"type\":\"execute\"}",
+      "message": {
+        "type": "execute",
+        "request_id": "3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13",
+        "execution_id": "5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37",
+        "proposal_id": "8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02",
+        "action": "rollback_deploy",
+        "params": {
+          "service": "api",
+          "target_release": "1.4.0"
+        },
+        "state_fingerprint": "b94ac02137f28bc69ac0d32c382537a31d9477b6dde2dedc27c1a734c3fcaf42",
+        "idempotency_key": "d4f8a2c6-3e1b-4a9d-8c75-1b6e0f3a9d28",
+        "approved_by": "7e3a1c9b-2d5f-4b8e-a6c0-4f1d8b2e7a95",
+        "approved_at": "2026-10-14T09:01:58Z",
+        "issued_at": "2026-10-14T09:01:58Z",
+        "expires_at": "2026-10-14T09:02:58Z",
+        "catalogue_version": "1.0.0",
+        "sig": "72e6a34de5715adfd6621408dd73bb2de16e4e3103ccea27686fa8f78ccd738c"
+      }
+    },
+    {
+      "name": "execute_with_tampered_params_is_refused",
+      "note": "Signed correctly, then params.target_release was changed (BAD_SIGNATURE).",
+      "verify_with": "ACTION_SIGNING_KEY",
+      "valid": false,
+      "canonical": "{\"action\":\"rollback_deploy\",\"approved_at\":\"2026-10-14T09:01:58Z\",\"approved_by\":\"7e3a1c9b-2d5f-4b8e-a6c0-4f1d8b2e7a95\",\"catalogue_version\":\"1.0.0\",\"execution_id\":\"5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37\",\"expires_at\":\"2026-10-14T09:02:58Z\",\"idempotency_key\":\"d4f8a2c6-3e1b-4a9d-8c75-1b6e0f3a9d28\",\"issued_at\":\"2026-10-14T09:01:58Z\",\"params\":{\"service\":\"api\",\"target_release\":\"1.5.0\"},\"proposal_id\":\"8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02\",\"request_id\":\"3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13\",\"state_fingerprint\":\"b94ac02137f28bc69ac0d32c382537a31d9477b6dde2dedc27c1a734c3fcaf42\",\"type\":\"execute\"}",
+      "message": {
+        "type": "execute",
+        "request_id": "3b9d6a1e-5f2c-4e8a-9d71-0c4b8e2f6a13",
+        "execution_id": "5c7e9b2d-8a41-4f63-b0d5-2e6a9c1f4b37",
+        "proposal_id": "8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02",
+        "action": "rollback_deploy",
+        "params": {
+          "service": "api",
+          "target_release": "1.5.0"
+        },
+        "state_fingerprint": "b94ac02137f28bc69ac0d32c382537a31d9477b6dde2dedc27c1a734c3fcaf42",
+        "idempotency_key": "d4f8a2c6-3e1b-4a9d-8c75-1b6e0f3a9d28",
+        "approved_by": "7e3a1c9b-2d5f-4b8e-a6c0-4f1d8b2e7a95",
+        "approved_at": "2026-10-14T09:01:58Z",
+        "issued_at": "2026-10-14T09:01:58Z",
+        "expires_at": "2026-10-14T09:02:58Z",
+        "catalogue_version": "1.0.0",
+        "sig": "5d941358c74f014dda30944fbcc7dd9c20c883c5164d5a0c994dd54e39433dec"
+      }
+    }
+  ]
+}

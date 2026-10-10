@@ -1,0 +1,139 @@
+{
+  "$defs": {
+    "AuditEntry": {
+      "additionalProperties": false,
+      "description": "One append-only audit row (§7.9; DB-008). ``payload`` is stored already redacted.",
+      "properties": {
+        "actor": {
+          "pattern": "^(user:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|agent|detector|runner|system)$",
+          "title": "Actor",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "event": {
+          "enum": [
+            "incident.opened",
+            "incident.status_changed",
+            "evidence.added",
+            "hypothesis.created",
+            "hypothesis.reflected",
+            "llm.call",
+            "agent.interrupted",
+            "proposal.created",
+            "proposal.rejected_by_validator",
+            "proposal.expired",
+            "proposal.superseded",
+            "challenge.issued",
+            "approval.approved",
+            "approval.rejected",
+            "execution.queued",
+            "execution.started",
+            "execution.finished",
+            "health.verified",
+            "incident.resolved",
+            "settings.updated",
+            "device.registered"
+          ],
+          "title": "Event",
+          "type": "string"
+        },
+        "id": {
+          "minimum": 1,
+          "title": "Id",
+          "type": "integer"
+        },
+        "incident_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Incident Id"
+        },
+        "payload": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Payload",
+          "type": "object"
+        },
+        "ref_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ref Id"
+        },
+        "ref_type": {
+          "anyOf": [
+            {
+              "maxLength": 50,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ref Type"
+        }
+      },
+      "required": [
+        "id",
+        "actor",
+        "event",
+        "ref_type",
+        "ref_id",
+        "incident_id",
+        "payload",
+        "created_at"
+      ],
+      "title": "AuditEntry",
+      "type": "object"
+    },
+    "JsonValue": {}
+  },
+  "additionalProperties": false,
+  "description": "``200`` of ``GET /audit``: newest first (API-012).",
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/AuditEntry"
+      },
+      "maxItems": 100,
+      "title": "Items",
+      "type": "array"
+    },
+    "next_cursor": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Opaque; null on the last page",
+      "title": "Next Cursor"
+    }
+  },
+  "required": [
+    "items",
+    "next_cursor"
+  ],
+  "title": "AuditPage",
+  "type": "object"
+}

@@ -430,3 +430,32 @@ When reporting back: what changed, which requirement IDs are satisfied, which te
 ### 10.3 Environments
 - Development: each developer's laptop, Supabase `ocp-dev`.
 - Integration and benchmark: **Tanzeel's laptop (16 GB RAM; Docker gets 10 GB via `.wslconfig`)**, Supabase `ocp-bench`. The Android phone reaches `backend-api` over the **same Wi‑Fi network** (a network the team controls, not campus Wi‑Fi). Windows Firewall allows inbound TCP 8000 on the private profile only.
+
+---
+
+## 11. Usman's working rules
+
+These rules apply to every session run for **Usman** (Stream B); determine the developer as §1 says. Sessions for Tanzeel skip this section. For Usman's work they take precedence over §8.1 until Usman says otherwise.
+
+### 11.1 Branch
+- Day-to-day work is committed to the `usman` branch and pushed with `git push origin usman` (`https://github.com/f243077-cell/OneCallPilot`).
+- **Pull-request branches** (approved by Usman on 2026-10-10): to bring work into `main`, Usman's short-lived branches from §8.1 may also be pushed: `contract/*`, `feat/b-*`, `fix/*`, `chore/*`, `docs/*`, `test/*`, `bench/*`. Create one only when Usman asks for that PR.
+- **Never** push, force-push, or merge directly into `main` or `tanzeel`, never push `feat/a-*` (Tanzeel's), and never push tags. Work reaches `main` only through a PR with green CI. A local `.git/hooks/pre-push` hook (not committed) refuses every other target; never bypass it with `--no-verify`.
+- A pull request into `main`, or a merge of one, happens only when Usman explicitly asks for it, and for Phase 0 only after Tanzeel has said go.
+
+### 11.2 Staying in sync with Tanzeel
+- Tanzeel works on `tanzeel`. Bring his work in with `git fetch origin`, then `git merge origin/tanzeel` into `usman`.
+- Never rebase `usman`: it is published, and rewriting it breaks the copy on GitHub.
+- Fetch and merge before editing a shared file (§1), so Tanzeel's latest edits are never overwritten.
+
+### 11.3 Contract commits
+A contract commit touches only `contracts/` (plus the regenerated schemas and fixtures), so it can later move into its own `contract/*` PR (§8.4).
+
+### 11.4 Session files (repository root)
+| File | What it holds | When |
+|---|---|---|
+| `context.md` | The current state: phase and task IDs, what is on `usman`, blockers, machine setup, decisions | Read right after this file; rewrite it at the end of the session so it matches reality |
+| `handoff.md` | The session log: one dated entry per session, newest first, with four parts: **Done** (with commits), **Next** (in order), **Waiting on** (Usman or Tanzeel), and **Message for Tanzeel** (when there is one). Old entries are never edited | Read after `context.md`; add the entry at the end of every session |
+| `learn.md` | Plain-language explanations of what happened and why, written for someone new to the project, plus a glossary | Append a dated entry every session; never rewrite old entries |
+
+Before a session ends, update all three files, commit them, and push `usman`.

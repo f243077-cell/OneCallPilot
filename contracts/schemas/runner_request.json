@@ -1,0 +1,150 @@
+{
+  "additionalProperties": false,
+  "description": "A signed request on ``ocp:runner:requests`` (§9.5).",
+  "properties": {
+    "action": {
+      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+      "title": "Action",
+      "type": "string"
+    },
+    "approved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Approved At"
+    },
+    "approved_by": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Approved By"
+    },
+    "catalogue_version": {
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "title": "Catalogue Version",
+      "type": "string"
+    },
+    "execution_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Execution Id"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Idempotency Key"
+    },
+    "issued_at": {
+      "format": "date-time",
+      "title": "Issued At",
+      "type": "string"
+    },
+    "params": {
+      "patternProperties": {
+        "^[a-z][a-z0-9_]{0,63}$": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        }
+      },
+      "title": "Params",
+      "type": "object"
+    },
+    "proposal_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Proposal Id"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "sig": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Sig",
+      "type": "string"
+    },
+    "state_fingerprint": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "State Fingerprint"
+    },
+    "type": {
+      "enum": [
+        "dry_run",
+        "execute"
+      ],
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "request_id",
+    "execution_id",
+    "proposal_id",
+    "action",
+    "params",
+    "state_fingerprint",
+    "idempotency_key",
+    "approved_by",
+    "approved_at",
+    "issued_at",
+    "expires_at",
+    "catalogue_version",
+    "sig"
+  ],
+  "title": "RunnerRequest",
+  "type": "object"
+}

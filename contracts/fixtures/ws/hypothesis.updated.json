@@ -1,0 +1,27 @@
+{
+  "type": "event",
+  "event": "hypothesis.updated",
+  "event_id": "1791968452000-0",
+  "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+  "state_version": 7,
+  "ts": "2026-10-14T09:00:52Z",
+  "data": {
+    "hypotheses": [
+      {
+        "id": "00000000-0000-4000-8000-000000000021",
+        "rank": 1,
+        "summary": "Release 1.5.0 of the api fails at checkout, starting right after its deploy",
+        "root_cause_category": "bad_deploy",
+        "confidence": 0.86,
+        "confidence_initial": 0.9,
+        "evidence_refs": [
+          "E2",
+          "E3",
+          "E4"
+        ],
+        "status": "active",
+        "reflection_notes": "Citations support the claim; the disproof query found no error before the deploy."
+      }
+    ]
+  }
+}

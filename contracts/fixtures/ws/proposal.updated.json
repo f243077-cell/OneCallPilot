@@ -1,0 +1,14 @@
+{
+  "type": "event",
+  "event": "proposal.updated",
+  "event_id": "1791968518000-0",
+  "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+  "state_version": 10,
+  "ts": "2026-10-14T09:01:58Z",
+  "data": {
+    "proposal_id": "8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02",
+    "status": "approved",
+    "status_reason": null,
+    "superseded_by": null
+  }
+}

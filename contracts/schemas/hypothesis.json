@@ -1,0 +1,99 @@
+{
+  "additionalProperties": false,
+  "description": "A ranked root-cause hypothesis (§5.4, §5.5, §9.3; DB-004).",
+  "properties": {
+    "confidence": {
+      "description": "After reflection (AI-016)",
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "confidence_initial": {
+      "description": "Before reflection",
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence Initial",
+      "type": "number"
+    },
+    "evidence_refs": {
+      "items": {
+        "pattern": "^E[0-9]{1,3}$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "rank": {
+      "maximum": 3,
+      "minimum": 1,
+      "title": "Rank",
+      "type": "integer"
+    },
+    "reflection_notes": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reflection Notes"
+    },
+    "root_cause_category": {
+      "enum": [
+        "bad_deploy",
+        "config_error",
+        "memory_leak",
+        "resource_saturation",
+        "traffic_surge",
+        "dependency_unavailable",
+        "dependency_slow",
+        "db_connection_exhaustion",
+        "cache_failure",
+        "application_bug",
+        "network_issue",
+        "disk_pressure",
+        "unknown"
+      ],
+      "title": "Root Cause Category",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "dropped"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "summary": {
+      "maxLength": 400,
+      "minLength": 10,
+      "title": "Summary",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "rank",
+    "summary",
+    "root_cause_category",
+    "confidence",
+    "confidence_initial",
+    "evidence_refs",
+    "status",
+    "reflection_notes"
+  ],
+  "title": "Hypothesis",
+  "type": "object"
+}

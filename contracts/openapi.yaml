@@ -1,0 +1,457 @@
+# C2 — REST API of backend-api (contracts/openapi.yaml)
+#
+# Drafter: Usman · Reader: Tanzeel · Source: docs/architecture.md §9.1, §9.2, §9.8
+# Requirements: API-001…API-013, API-018, SEC-010, SEC-011
+#
+# Request and response bodies refer to the JSON Schemas generated from the
+# Pydantic models (contracts/schemas/*.json), so the models are the single
+# source of every shape. The live event stream /ws/incidents is a WebSocket,
+# not an OpenAPI operation: see ws-protocol.md (C3). The approval steps are
+# in approval-protocol.md (C8).
+#
+# backend-api must serve exactly these operations with these bodies
+# (API-018). Changing anything here is a contract change (CLAUDE.md §8.4);
+# keep info.version equal to contracts/VERSION.
+openapi: 3.1.0
+info:
+  title: OnCallPilot backend-api
+  version: 0.1.0
+  description: >-
+    REST API for the OnCallPilot app and for alert sources. JSON is
+    snake_case; timestamps are UTC ISO 8601 with a Z suffix; identifiers are
+    UUIDs. Every error on every route is the error envelope
+    (schemas/error_envelope.json) with a code from architecture §9.8. Paths
+    have no version prefix: GET /healthz and the WebSocket hello report the
+    contracts version.
+servers:
+  - url: "http://{host}:8000"
+    description: backend-api on the host laptop, reached over the LAN (cleartext in debug builds only, ADR-16)
+    variables:
+      host:
+        default: 192.168.0.100
+security:
+  - bearerAuth: []
+tags:
+  - name: health
+  - name: ingest
+  - name: incidents
+  - name: proposals
+  - name: devices
+  - name: audit
+  - name: settings
+
+paths:
+  /healthz:
+    get:
+      tags: [health]
+      operationId: getHealthz
+      summary: Status of backend-api and its dependencies (API-002)
+      security: []
+      responses:
+        "200":
+          description: Database and Redis are reachable.
+          content:
+            application/json:
+              schema: {$ref: "schemas/healthz.json"}
+        "503":
+          description: The database or Redis is unreachable (status degraded).
+          content:
+            application/json:
+              schema: {$ref: "schemas/healthz.json"}
+
+  /ingest/alert:
+    post:
+      tags: [ingest]
+      operationId: ingestAlert
+      summary: Turn an alert into an incident, one active incident per service (FR-004, FR-005, API-003)
+      description: >-
+        Creates the incident with seed evidence E1, or attaches the signals to
+        the service's open incident (deduplicated: true). With the optional
+        adapter (FR-008) it also accepts Alertmanager webhook v4 payloads.
+      security:
+        - ingestToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "schemas/alert_in.json"}
+      responses:
+        "202":
+          description: Accepted.
+          content:
+            application/json:
+              schema: {$ref: "schemas/ingest_accepted.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+
+  /incidents:
+    get:
+      tags: [incidents]
+      operationId: listIncidents
+      summary: Incidents, newest first, with cursor pagination (API-004)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [investigating, awaiting_approval, escalated, executing, verifying, resolved, action_failed]
+        - name: service
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [api, worker, lb, payments, redis, postgres]
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: One page of incident summaries.
+          content:
+            application/json:
+              schema: {$ref: "schemas/incident_page.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+
+  /incidents/{id}:
+    get:
+      tags: [incidents]
+      operationId: getIncident
+      summary: One incident with evidence, hypotheses, proposals, executions and agent_meta (API-005)
+      parameters:
+        - $ref: "#/components/parameters/IncidentId"
+      responses:
+        "200":
+          description: The incident.
+          content:
+            application/json:
+              schema: {$ref: "schemas/incident_detail.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /incidents/{id}/log-tail:
+    get:
+      tags: [incidents]
+      operationId: getIncidentLogTail
+      summary: Recent redacted log lines of the incident's service (API-006)
+      parameters:
+        - $ref: "#/components/parameters/IncidentId"
+        - name: since
+          in: query
+          required: false
+          description: Return lines after this time. Default the last 60 s. Pass the previous response's until.
+          schema: {type: string, format: date-time}
+        - name: limit
+          in: query
+          required: false
+          schema: {type: integer, minimum: 1, maximum: 50, default: 50}
+      responses:
+        "200":
+          description: Up to 50 redacted lines.
+          content:
+            application/json:
+              schema: {$ref: "schemas/log_tail.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429":
+          description: "RATE_LIMITED: at most 1 request per 2 s per user (details.retry_after)."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+
+  /incidents/{id}/resolve:
+    post:
+      tags: [incidents]
+      operationId: resolveIncident
+      summary: Resolve an incident by hand with a reason (FR-012, API-007). Safe to repeat.
+      parameters:
+        - $ref: "#/components/parameters/IncidentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "schemas/resolve_request.json"}
+      responses:
+        "200":
+          description: The incident, now resolved (resolution manual).
+          content:
+            application/json:
+              schema: {$ref: "schemas/incident_summary.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409":
+          description: "INCIDENT_BUSY: an execution is queued or running."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+
+  /proposals/{id}/challenge:
+    post:
+      tags: [proposals]
+      operationId: challengeProposal
+      summary: Get a single-use, 120 s approval challenge (API-008, SEC-012, C8 §3)
+      parameters:
+        - $ref: "#/components/parameters/ProposalId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "schemas/challenge_request.json"}
+      responses:
+        "200":
+          description: The challenge.
+          content:
+            application/json:
+              schema: {$ref: "schemas/challenge_response.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409":
+          description: "PROPOSAL_NOT_PENDING, PROPOSAL_EXPIRED, or STALE_PROPOSAL (the fingerprint is not the latest)."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+
+  /proposals/{id}/approve:
+    post:
+      tags: [proposals]
+      operationId: approveProposal
+      summary: Approve with a fresh challenge; queues one signed execution (API-009, C8 §5)
+      description: The server runs the checks of approval-protocol.md §5 in that order and returns the first failure.
+      parameters:
+        - $ref: "#/components/parameters/ProposalId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "schemas/approve_request.json"}
+      responses:
+        "202":
+          description: Approved; the execution is queued.
+          content:
+            application/json:
+              schema: {$ref: "schemas/approve_accepted.json"}
+        "400": {$ref: "#/components/responses/IdempotencyKeyRequired"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403":
+          description: "BIOMETRIC_REQUIRED: a medium or high tier needs auth_method biometric."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409":
+          description: "CHALLENGE_INVALID, STALE_PROPOSAL, PROPOSAL_NOT_PENDING, or PROPOSAL_EXPIRED."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+        "422":
+          description: "IDEMPOTENCY_CONFLICT (same key, different body) or VALIDATION_ERROR."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+        "429":
+          description: "RATE_LIMITED or COOLDOWN_ACTIVE, with details.retry_after in seconds."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+
+  /proposals/{id}/reject:
+    post:
+      tags: [proposals]
+      operationId: rejectProposal
+      summary: Reject with a reason; the incident escalates (API-010, C8 §6)
+      parameters:
+        - $ref: "#/components/parameters/ProposalId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "schemas/reject_request.json"}
+      responses:
+        "200":
+          description: Rejected.
+          content:
+            application/json:
+              schema: {$ref: "schemas/reject_response.json"}
+        "400": {$ref: "#/components/responses/IdempotencyKeyRequired"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409":
+          description: "PROPOSAL_NOT_PENDING."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+        "422":
+          description: "IDEMPOTENCY_CONFLICT or VALIDATION_ERROR (reason must be 3–500 characters)."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+
+  /devices:
+    post:
+      tags: [devices]
+      operationId: registerDevice
+      summary: Register or update this phone's FCM token, upserted by token (API-011)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "schemas/device_register.json"}
+      responses:
+        "200":
+          description: The device ID, which the app stores in secure storage.
+          content:
+            application/json:
+              schema: {$ref: "schemas/device_registered.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+
+  /devices/{id}:
+    delete:
+      tags: [devices]
+      operationId: deleteDevice
+      summary: Remove a device; owner only (API-011). Safe to repeat.
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
+      responses:
+        "204":
+          description: Deleted.
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /audit:
+    get:
+      tags: [audit]
+      operationId: listAudit
+      summary: Audit entries, newest first, optionally for one incident (API-012)
+      parameters:
+        - name: incident_id
+          in: query
+          required: false
+          schema: {type: string, format: uuid}
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: One page of audit entries; payloads are stored already redacted.
+          content:
+            application/json:
+              schema: {$ref: "schemas/audit_page.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+
+  /settings:
+    get:
+      tags: [settings]
+      operationId: getSettings
+      summary: Monitor settings (API-013)
+      responses:
+        "200":
+          description: The current settings, with locked while BENCHMARK_LOCK is on.
+          content:
+            application/json:
+              schema: {$ref: "schemas/monitor_settings.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+    put:
+      tags: [settings]
+      operationId: updateSettings
+      summary: Update monitor settings with optimistic locking (FR-023, API-013)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "schemas/monitor_settings_update.json"}
+      responses:
+        "200":
+          description: The new settings; version is bumped.
+          content:
+            application/json:
+              schema: {$ref: "schemas/monitor_settings.json"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "409":
+          description: "VERSION_CONFLICT: version is not the current one."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+        "423":
+          description: "BENCHMARK_LOCKED: settings cannot change while BENCHMARK_LOCK is on."
+          content:
+            application/json:
+              schema: {$ref: "schemas/error_envelope.json"}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        Supabase access token in the Authorization header, verified locally
+        through the project's JWKS (SEC-010). Never accepted in a URL (SEC-011).
+    ingestToken:
+      type: apiKey
+      in: header
+      name: X-Ingest-Token
+      description: INGEST_TOKEN, compared in constant time (API-003).
+
+  parameters:
+    IncidentId:
+      name: id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    ProposalId:
+      name: id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    DeviceId:
+      name: id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque; the next_cursor of the previous page.
+      schema: {type: string, maxLength: 500}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: >-
+        A UUID v4 generated once per attempt and reused only when retrying
+        after a network error (approval-protocol.md §5).
+      schema: {type: string, format: uuid}
+
+  responses:
+    Unauthorized:
+      description: "UNAUTHORIZED: missing, invalid, or expired credentials."
+      content:
+        application/json:
+          schema: {$ref: "schemas/error_envelope.json"}
+    NotFound:
+      description: "NOT_FOUND."
+      content:
+        application/json:
+          schema: {$ref: "schemas/error_envelope.json"}
+    ValidationError:
+      description: "VALIDATION_ERROR: the body or a parameter does not match the schema."
+      content:
+        application/json:
+          schema: {$ref: "schemas/error_envelope.json"}
+    IdempotencyKeyRequired:
+      description: "IDEMPOTENCY_KEY_REQUIRED: the Idempotency-Key header is missing."
+      content:
+        application/json:
+          schema: {$ref: "schemas/error_envelope.json"}
