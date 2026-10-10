@@ -173,9 +173,9 @@ Within the §12.4 estimate (Chaos Shop baseline ≈ 0.6 GB); A1.2 adds `cs-lb` a
 
 Injects took 0.3–9.7 s and resets 9.9–16.0 s. After the run, `chaos status` shows the baseline; the running containers use about 254 MiB, and Windows had 2.85 GB free.
 
-Two observations, no change made:
-- **Scenario 5 after 15 minutes** was broken by latency (p95 4.5 s, 4.5× the check's 1 s floor), but its 5xx share had fallen to 0.1 % (4–8 % in the first minutes). The detector's p95 rule (≥ 300 ms) still fires; its error-rate rule (≥ 2 %) may not at that point.
-- **Scenario 1** is checked between OOM kills, so rss can be low at the moment of the check. The check counts restarts, which is what keeps it broken.
+Two observations, both accepted as they are (ruling of 2026-10-10):
+- **Scenario 5 after 15 minutes** was broken by latency (p95 4.5 s, 4.5× the check's 1 s floor), but its 5xx share had fallen to 0.1 % (4–8 % in the first minutes). The detector's p95 rule (≥ 300 ms) still fires; its error-rate rule (≥ 2 %) may not at that point. This is expected: the loadgen sheds requests at its in-flight cap under saturation, so fewer requests reach the api to fail. **Note for the detector (Usman):** scenario 5 must be detected by the `p95_latency` rule; it must not depend on the `error_rate` rule, whose 5xx share drops below 2 % within 15 minutes.
+- **Scenario 1** is checked between OOM kills, so rss can be low at the moment of the check. The check counts restarts (`restart_count` is the signal), which is what keeps it broken.
 
 ### A1.4 — traffic spike calibration (TB-005, scenario 5)
 

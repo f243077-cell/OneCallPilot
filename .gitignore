@@ -36,6 +36,9 @@ mobile/android/app/debug/
 mobile/android/app/profile/
 mobile/android/app/release/
 
+# --- Local run logs (results go to docs/checks/) ---
+verify-*.log
+
 # --- Editors and OS ---
 .idea/
 .vscode/
