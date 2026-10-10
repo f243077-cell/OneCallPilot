@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/application/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/incident_detail/presentation/incident_detail_screen.dart';
 import '../../features/incident_feed/presentation/incident_feed_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../shared/widgets/placeholder_screen.dart';
@@ -42,11 +43,8 @@ GoRouter buildRouter(AuthSession session) => GoRouter(
     GoRoute(path: homePath, builder: (_, _) => const IncidentFeedScreen()),
     GoRoute(
       path: '/incidents/:id',
-      builder: (_, state) => PlaceholderScreen(
-        title: 'Incident',
-        task: 'A1.6',
-        id: state.pathParameters['id'],
-      ),
+      builder: (_, state) =>
+          IncidentDetailScreen(incidentId: state.pathParameters['id']!),
     ),
     GoRoute(
       path: '/proposals/:id',

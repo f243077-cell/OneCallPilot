@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oncallpilot/core/router/app_router.dart';
 import 'package:oncallpilot/features/auth/presentation/login_screen.dart';
+import 'package:oncallpilot/features/incident_detail/presentation/incident_detail_screen.dart';
 import 'package:oncallpilot/features/incident_feed/presentation/incident_feed_screen.dart';
 
 import '../../support/sample_timeline.dart';
@@ -71,7 +72,8 @@ void main() {
       router.routeInformationProvider.value.uri.path,
       '/incidents/$incidentId',
     );
-    expect(find.textContaining(incidentId), findsOneWidget);
+    expect(find.byType(IncidentDetailScreen), findsOneWidget);
+    expect(find.text('api error rate above baseline'), findsOneWidget);
   });
 
   testWidgets('a refused sign-in shows the error and stays on /login', (

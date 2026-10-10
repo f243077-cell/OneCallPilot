@@ -79,3 +79,7 @@ class ApiError implements Exception {
   @override
   String toString() => 'ApiError($status ${code.wire}: $message)';
 }
+
+/// Text for any error a screen shows: the ApiError's message, or a generic one.
+String describeError(Object error) =>
+    error is ApiError ? error.userMessage : 'Something went wrong';
