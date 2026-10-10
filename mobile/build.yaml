@@ -1,0 +1,10 @@
+# json_serializable settings for the DTOs in lib/data/models (CLAUDE.md §4.5).
+# Regenerate with: dart run build_runner build
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          field_rename: snake
+          create_to_json: false
+          disallow_unrecognized_keys: false

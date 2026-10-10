@@ -8,10 +8,17 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oncallpilot/data/models/approval.dart';
+import 'package:oncallpilot/data/models/enums.dart' as dto;
+import 'package:oncallpilot/data/models/incident.dart';
+import 'package:oncallpilot/data/models/ws_event.dart';
+import 'package:oncallpilot/data/repositories/mock_incident_repository.dart';
 
 import '../support/contract_fixtures.dart';
+import '../support/fakes.dart';
 
 void main() {
   final dir = contractFixturesDir();
@@ -63,6 +70,67 @@ void main() {
       },
       skip: file.existsSync() ? false : 'no ledger fixture in ${dir.path}',
     );
+  });
+
+  // A1.5: the real DTOs (lib/data/models) parse the same fixtures, and every
+  // timeline replays to its final state through MockIncidentRepository.
+  group('DTOs and mock replay', skip: skip, () {
+    for (final file in jsonFiles(Directory('${dir.path}/ws'))) {
+      final name = file.uri.pathSegments.last;
+      final json = readJsonObject(file);
+      if (json['type'] != 'event') continue;
+      test('WsEvent parses $name', () {
+        expect(WsEvent.fromJson(json).event, isNot(dto.WsEventName.unknown));
+      });
+    }
+    for (final file in jsonFiles(Directory('${dir.path}/timelines'))) {
+      final name = file.uri.pathSegments.last;
+      test('$name replays to its final IncidentDetail', () async {
+        final json = readJsonObject(file);
+        final approvals = (json['steps'] as List)
+            .where((s) => (s as Map)['await_approval'] == true)
+            .length;
+        final repo = MockIncidentRepository(
+          [json],
+          delay: (_) async {},
+          random: Random(3),
+        )..start();
+        final incidentId = json['incident_id'] as String;
+        for (var approved = 0; approved < approvals; approved++) {
+          await settle();
+          final pending = (await repo.getIncident(incidentId)).proposals
+              .firstWhere((p) => p.status == dto.ProposalStatus.pending);
+          final challenge = await repo.challenge(
+            pending.id,
+            proposalFingerprint: pending.fingerprint,
+          );
+          await repo.approve(
+            pending.id,
+            ApproveRequest(
+              challengeId: challenge.challengeId,
+              nonce: challenge.nonce,
+              proposalFingerprint: pending.fingerprint,
+              authMethod: dto.AuthMethod.biometric,
+              deviceId: null,
+            ),
+            idempotencyKey: 'key-$approved',
+          );
+        }
+        await settle();
+        final detail = await repo.getIncident(incidentId);
+        final expected = IncidentDetail.fromJson(
+          json['final'] as Map<String, dynamic>,
+        );
+        expect(detail.stateVersion, expected.stateVersion);
+        expect(detail.status, expected.status);
+        expect(detail.status, isNot(dto.IncidentStatus.unknown));
+        expect(
+          detail.evidence.map((e) => e.ref),
+          expected.evidence.map((e) => e.ref),
+        );
+        repo.dispose();
+      });
+    }
   });
 
   test('unknown enum values map to unknown (MOB-020)', () {
