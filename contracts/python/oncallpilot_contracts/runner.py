@@ -38,13 +38,31 @@ Runner checks, in order (§5.10)
     1. signature, with the key for the message type → ``BAD_SIGNATURE``
     2. message shape (this model) → ``VALIDATION_ERROR``
     3. ``expires_at`` not yet passed → ``REQUEST_EXPIRED``
-    4. action enabled in the catalogue, with a handler → ``ACTION_NOT_ALLOWED``
-    5. parameters valid against the catalogue → ``VALIDATION_ERROR``
-    6. targets allowlisted in ``runner/targets.yaml`` → ``TARGET_NOT_ALLOWED``
-    7. ``execute`` only: ``SET NX ocp:runner:idem:{execution_id}`` (a
+    4. ``catalogue_version`` equals the version of the catalogue the runner
+       loaded → ``VALIDATION_ERROR`` (fail closed: a proposal built from
+       another catalogue is never acted on)
+    5. action enabled in the catalogue, with a handler → ``ACTION_NOT_ALLOWED``
+    6. parameters valid against the catalogue → ``VALIDATION_ERROR``
+    7. targets allowlisted in ``runner/targets.yaml`` → ``TARGET_NOT_ALLOWED``
+    8. ``execute`` only: ``SET NX ocp:runner:idem:{execution_id}`` (a
        duplicate is acknowledged and ignored, with no result); rate limit →
        ``RATE_LIMITED``; cooldown → ``COOLDOWN_ACTIVE``; then the state
        fingerprint, where a mismatch gives ``aborted`` with ``STATE_DRIFT``.
+
+    **Every final answer to an ``execute`` claims its ID first.** Before it
+    sends any ``refused`` or ``aborted`` result for an ``execute`` (checks 1–7
+    included), the runner sets ``ocp:runner:idem:{execution_id}`` with
+    ``SET NX``; if the key already exists, the message is a duplicate and gets
+    no result. So a forged message that borrows a real ``execution_id`` ends
+    that execution as refused, and the genuine ``execute`` arriving later is
+    a duplicate that never runs: nothing executes, which matches the
+    incident's ``escalated`` (``runner_refused``) state.
+
+    **A message that cannot be answered gets no result.** If a message has no
+    usable ``type``, no UUID ``request_id``, or (for ``execute``) no UUID
+    ``execution_id``, no valid ``RunnerResult`` can be built. The runner logs
+    it, acknowledges it, and sends nothing; for an ``execute``, the worker's
+    sweeper ends the execution with ``RUNNER_TIMEOUT`` (FR-024).
 
 Results
     ``dry_run_result``
