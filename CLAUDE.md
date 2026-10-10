@@ -438,9 +438,10 @@ When reporting back: what changed, which requirement IDs are satisfied, which te
 These rules apply to every session run for **Usman** (Stream B); determine the developer as §1 says. Sessions for Tanzeel skip this section. For Usman's work they take precedence over §8.1 until Usman says otherwise.
 
 ### 11.1 Branch
-- Commit only to the `usman` branch, and push only with `git push origin usman` (`https://github.com/f243077-cell/OneCallPilot`).
-- **Never** push, force-push, or merge into `tanzeel` or `main`, and never push tags. A local `.git/hooks/pre-push` hook (not committed) refuses every other target; never bypass it with `--no-verify`.
-- A pull request into `main`, or any merge into `main`, happens only when Usman explicitly asks for it.
+- Day-to-day work is committed to the `usman` branch and pushed with `git push origin usman` (`https://github.com/f243077-cell/OneCallPilot`).
+- **Pull-request branches** (approved by Usman on 2026-10-10): to bring work into `main`, Usman's short-lived branches from §8.1 may also be pushed: `contract/*`, `feat/b-*`, `fix/*`, `chore/*`, `docs/*`, `test/*`, `bench/*`. Create one only when Usman asks for that PR.
+- **Never** push, force-push, or merge directly into `main` or `tanzeel`, never push `feat/a-*` (Tanzeel's), and never push tags. Work reaches `main` only through a PR with green CI. A local `.git/hooks/pre-push` hook (not committed) refuses every other target; never bypass it with `--no-verify`.
+- A pull request into `main`, or a merge of one, happens only when Usman explicitly asks for it, and for Phase 0 only after Tanzeel has said go.
 
 ### 11.2 Staying in sync with Tanzeel
 - Tanzeel works on `tanzeel`. Bring his work in with `git fetch origin`, then `git merge origin/tanzeel` into `usman`.
