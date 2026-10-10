@@ -148,7 +148,7 @@ The exact PromQL lives with the consumers (`backend/`); this table only shows wh
 | `logger` | string | always | Logger name: `shop.<area>` for Chaos Shop code, e.g. `shop.checkout`; nginx uses `nginx.access`. Neutral (TB-010): never names a fault or the injector |
 | `msg` | string | always | Human-readable message |
 | `request_id` | string | request lines | 32-character lower-case hex; taken from `X-Request-ID` if valid, else generated. `cs-lb` forwards it. |
-| `route` | string | request lines | Route template, same values as the `route` metric label |
+| `route` | string | `api` request lines | Route template, same values as the `route` metric label. `lb` and `payments` request lines have no `route` (§3.3) |
 | `status` | integer | request lines | HTTP status code |
 | `duration_ms` | number | request lines | Request duration in milliseconds |
 | `exc_type` | string | exception lines | Exception class name, e.g. `KeyError` |
@@ -156,14 +156,15 @@ The exact PromQL lives with the consumers (`backend/`); this table only shows wh
 | `stacktrace` | string | exception lines | Full Python traceback text, **starting with `Traceback (most recent call last):`** (the detector's `stack_traces` signal matches the literal `Traceback`) |
 
 - Exceptions are logged at `ERROR` (or `CRITICAL` for a crash on startup) and always include `exc_type`, `exc_message`, and `stacktrace`.
-- `api` writes one access line per request (`logger` = `shop.access`), at `INFO` for status < 500 and `ERROR` for ≥ 500.
+- `api` writes one access line per request (`logger` = `shop.access`), at `INFO` for status < 500 and `ERROR` for ≥ 500, **except** `/metrics` and `/internal/*`, which are not access-logged (they have no `route` value, and admin calls stay out of agent-visible logs). The same holds for `payments` (`/internal/*` and `/metrics`) and for `/internal/*` through `lb`.
 - Services may add other keys. Consumers must ignore unknown keys; no consumer may depend on a key not listed above.
 
 ### 3.3 Per-service sources
 
 | Service | Format |
 |---|---|
-| `api`, `worker`, `payments` | Chaos Shop JSON logger, all fields as above |
+| `api`, `worker` | Chaos Shop JSON logger, all fields as above |
+| `payments` | Chaos Shop JSON logger, all fields as above except `route`: its request lines carry `request_id`, `status` and `duration_ms` but no `route` (the `route` values name `api` routes only) |
 | `lb` | nginx access log in JSON (`log_format … escape=json`) with `ts`, `level` (`INFO` for status < 500, `ERROR` otherwise), `service`, `release`, `instance`, `logger` = `nginx.access`, `msg` (`"<method> <uri> <status>"`), `request_id`, `status`, `duration_ms`. The nginx **error** log is plain text. |
 | `redis`, `postgres` | The images' native **plain-text** logs, unchanged |
 
