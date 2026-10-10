@@ -10,15 +10,17 @@ message the server sends. Both are discriminated by ``type``. Events
 ``data`` has its own checked shape.
 """
 
+import json
 from typing import Annotated, Literal, Self
 from uuid import UUID
 
-from pydantic import Field, RootModel, StringConstraints, model_validator
+from pydantic import Field, JsonValue, RootModel, StringConstraints, model_validator
 
 from oncallpilot_contracts.common import ContractModel, Semver, UtcDatetime
 from oncallpilot_contracts.domain import Evidence, Hypothesis, IncidentSummary, Proposal
 from oncallpilot_contracts.enums import (
     EscalationReason,
+    EvidenceKind,
     IncidentStatus,
     ProposalStatus,
     Resolution,
@@ -106,8 +108,56 @@ class IncidentUpdatedData(ContractModel):
         return self
 
 
+EVIDENCE_EVENT_PAYLOAD_LIMIT = 4096
+"""Largest ``payload`` in an ``evidence.added`` event, in bytes of compact UTF-8 JSON."""
+
+# The list each payload kind is cut from, and how many items must stay.
+_CUT_LIST: dict[EvidenceKind, tuple[str, int]] = {
+    "detector_signal": ("signals", 1),
+    "log_query": ("lines", 0),
+    "metric_query": ("points", 0),
+    "deploy_list": ("records", 0),
+    "service_health": ("containers", 0),
+    "runbook_hit": ("chunks", 0),
+}
+
+
+def _payload_size(payload: dict[str, JsonValue]) -> int:
+    return len(json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
+
+
+def cut_evidence_payload(
+    kind: EvidenceKind, payload: dict[str, JsonValue]
+) -> tuple[dict[str, JsonValue], bool]:
+    """Fit ``payload`` into an ``evidence.added`` event; return it and ``payload_truncated``.
+
+    The cut keeps the payload's shape valid: it drops items from the **end** of
+    the kind's list (``lines``, ``points``, ``records``, ``containers``,
+    ``chunks``; ``signals`` keeps at least one) until the compact JSON is at
+    most ``EVIDENCE_EVENT_PAYLOAD_LIMIT`` bytes. Every other field, such as
+    ``total_count``, stays as it was, so the app can tell that more exists.
+    The full payload is always available from ``GET /incidents/{id}``.
+    """
+    if _payload_size(payload) <= EVIDENCE_EVENT_PAYLOAD_LIMIT:
+        return payload, False
+    field, keep = _CUT_LIST[kind]
+    items = payload[field]
+    if not isinstance(items, list):
+        raise ValueError(f"payload field {field!r} must be a list")
+    cut = list(items)
+    while len(cut) > keep:
+        cut.pop()
+        candidate = {**payload, field: cut}
+        if _payload_size(candidate) <= EVIDENCE_EVENT_PAYLOAD_LIMIT:
+            return candidate, True
+    return {**payload, field: cut}, True
+
+
 class EvidenceAddedData(Evidence):
-    """An evidence item; ``payload`` is cut to 4 KB when needed, with ``payload_truncated``."""
+    """An evidence item, with ``payload`` cut by ``cut_evidence_payload`` when it is too large.
+
+    A cut payload still has its kind's shape, so it validates like any other.
+    """
 
     payload_truncated: bool
 

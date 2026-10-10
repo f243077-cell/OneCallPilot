@@ -120,3 +120,49 @@ def test_doc_names_close_codes_and_events() -> None:
         assert str(code) in text
     for event in EVENTS:
         assert f"`{event}`" in text, event
+
+
+# --- issue 1 of contract-review-a.md: cutting a payload keeps it valid -----------
+
+
+def big_log_payload() -> dict[str, Any]:
+    line = {"ts": "2026-10-14T09:00:12Z", "level": "ERROR", "msg": "x" * 200, "exc_type": "E"}
+    return {
+        "lines": [line] * 50,
+        "total_count": 412,
+        "top_exception_types": [{"exc_type": "E", "count": 412}],
+    }
+
+
+def test_a_50_line_payload_is_cut_and_still_validates() -> None:
+    payload, truncated = ws.cut_evidence_payload("log_query", big_log_payload())
+    assert truncated
+    assert 0 < len(payload["lines"]) < 50  # type: ignore[arg-type]
+    assert payload["total_count"] == 412
+    assert len(json.dumps(payload, separators=(",", ":")).encode()) <= 4096
+    event = fixture("evidence.added")
+    event["data"] = {**event["data"], "payload": payload, "payload_truncated": True}
+    ws.WsServerMessage.model_validate(event)
+
+
+def test_small_payload_is_untouched() -> None:
+    data = fixture("evidence.added")["data"]
+    payload, truncated = ws.cut_evidence_payload("log_query", data["payload"])
+    assert (payload, truncated) == (data["payload"], False)
+
+
+def test_signals_keep_at_least_one() -> None:
+    signal = {
+        "name": "error_rate",
+        "value": 0.3,
+        "baseline": 0.01,
+        "zscore": 9.0,
+        "first_anomalous_at": "2026-10-14T09:00:10Z",
+    }
+    payload: dict[str, Any] = {
+        "service": "api",
+        "signals": [signal] * 400,
+        "observed_at": "2026-10-14T09:00:25Z",
+    }
+    cut, truncated = ws.cut_evidence_payload("detector_signal", payload)
+    assert truncated and len(cut["signals"]) >= 1  # type: ignore[arg-type]

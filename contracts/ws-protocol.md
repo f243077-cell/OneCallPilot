@@ -56,12 +56,22 @@
 |---|---|---|
 | `incident.opened` | `IncidentSummary`; its `id` and `state_version` equal the envelope's | `IncidentSummary` |
 | `incident.updated` | `{status, status_reason, severity}` | `IncidentUpdatedData` |
-| `evidence.added` | an `Evidence` item plus `payload_truncated`; the payload is cut to 4 KB when needed | `EvidenceAddedData` |
+| `evidence.added` | an `Evidence` item plus `payload_truncated`; a large payload is cut as §4.1 says | `EvidenceAddedData` |
 | `hypothesis.updated` | `{hypotheses: Hypothesis[]}`: the full current set | `HypothesisUpdatedData` |
 | `proposal.created` | `Proposal` (also for rollback proposals) | `Proposal` |
 | `proposal.updated` | `{proposal_id, status, status_reason, superseded_by}` | `ProposalUpdatedData` |
 | `execution.progress` | `{execution_id, proposal_id, step, status, message}` | `ExecutionProgressData` |
 | `incident.resolved` | `{resolution, resolved_at}` | `IncidentResolvedData` |
+
+### 4.1 Cutting an evidence payload
+
+An `evidence.added` event carries at most **4,096 bytes** of payload, measured as compact UTF-8 JSON. A larger payload is cut so that it keeps its shape and still validates:
+
+- Items are dropped from the **end** of the kind's list until the payload fits: `lines` (log_query), `points` (metric_query), `records` (deploy_list), `containers` (service_health), `chunks` (runbook_hit). For `detector_signal`, at least one entry of `signals` stays.
+- Every other field stays as it was. For example, `total_count` still counts every matching line, so the app can tell that more exist.
+- `payload_truncated` is `true` when anything was dropped. The full payload is always in `GET /incidents/{id}`.
+
+`cut_evidence_payload()` in `ws.py` implements the rule, and the backend uses it.
 
 The shapes of `IncidentSummary`, `Evidence`, `Hypothesis`, and `Proposal` are C1 (`schemas/incident_summary.json` and so on). An evidence payload has one shape per `kind` (`schemas/evidence_payload_<kind>.json`).
 

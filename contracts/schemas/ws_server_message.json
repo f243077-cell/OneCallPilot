@@ -175,7 +175,7 @@
     },
     "EvidenceAddedData": {
       "additionalProperties": false,
-      "description": "An evidence item; ``payload`` is cut to 4 KB when needed, with ``payload_truncated``.",
+      "description": "An evidence item, with ``payload`` cut by ``cut_evidence_payload`` when it is too large.\n\nA cut payload still has its kind's shape, so it validates like any other.",
       "properties": {
         "created_at": {
           "format": "date-time",
