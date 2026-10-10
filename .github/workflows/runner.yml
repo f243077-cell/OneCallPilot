@@ -6,10 +6,13 @@
 # that never reports blocks merges. Keep the job name stable, since branch
 # protection requires it by name.
 #
-# Not here: the proxy security test (TEST-015) and the live runner test need
-# Docker on the integration host (runner/tests/security/run_proxy_test.sh,
-# `uv run pytest -m live`). The shared signing-vector tests run once the vector
-# is in contracts/fixtures/signing/ on this branch; until then they skip.
+# The runner-proxy job runs the socket-proxy-rw security test (TEST-015,
+# RUN-017) against the real proxy: GitHub-hosted runners have Docker and the
+# host socket, so the proxy starts and the test container reaches it.
+# Not here: the live runner test (`uv run pytest -m live`) needs the built
+# runner image on the integration host. The shared signing-vector tests run
+# once the vector is in contracts/fixtures/signing/ on this branch; until then
+# they skip.
 name: runner
 
 on:
@@ -58,3 +61,20 @@ jobs:
       - name: Runner image builds
         working-directory: .
         run: docker build --build-context contracts=contracts -t oncallpilot/runner:ci runner
+
+  runner-proxy:
+    name: runner-proxy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Dummy env (socket-proxy-rw reads only its own non-secret vars)
+        run: cp .env.example .env
+
+      # TEST-015, RUN-017: through the real socket-proxy-rw, only container reads,
+      # start, stop, restart and kill are allowed; everything else is 403. The
+      # script derives the API version from the host's `docker version`.
+      - name: Proxy security test
+        run: bash runner/tests/security/run_proxy_test.sh
