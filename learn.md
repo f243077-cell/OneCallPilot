@@ -152,3 +152,14 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 5. **Found that a change of ours broke a check of his.** Our contracts package gained a test-only library (`pyyaml`). Tanzeel's chaos tool depends on that package, so its lockfile (the file listing exact library versions) went out of date, and CI's strict install would fail. We refreshed that file, as Usman asked, and told Tanzeel to do the same in his merge.
 
 **Why not just push everything to `main`?** `main` is the shared, always-working version. The team's rule is that changes reach it only through pull requests whose automatic checks (CI) pass, with contracts in their own small PRs. Tanzeel also asked to wait. One of his CI checks is red right now, and pushing straight to `main` would skip all of these safety steps.
+
+### 2026-10-10 — Session 3: getting ready to merge, and why Docker won't start yet
+
+**A rule changed.** Until now this laptop could push only the `usman` branch. Bringing work into `main` "the proper way" means **pull requests**: you push a small branch (for example `contract/c1-domain`), open a PR on GitHub, let CI test it, and merge it only when everything is green. Usman agreed, so `CLAUDE.md` now allows his own PR branches, and the safety script was updated to match. Pushing straight to `main` or to Tanzeel's branch is still blocked.
+
+**Docker is installed, but its engine isn't running.** Docker on Windows needs a small Linux system underneath it: WSL 2, the "Windows Subsystem for Linux" (see "Docker, in more detail" above). This laptop doesn't have WSL 2 yet, so Docker Desktop has nowhere to run its containers. Installing it takes one command in an administrator terminal (`wsl --install --no-distribution`) and a restart. The steps are in `handoff.md`.
+
+**Is Phase 0 finished? Not yet.** Phase 0 means "agree on everything before building". The paperwork part is done: both developers have read and reviewed each other's contracts, the samples pass the tests in Python and in the phone app's language (Dart), and the phone reached the laptop. Three kinds of things are still open:
+- **Usman's setup:** Docker running, a Gemini key, and the Supabase projects.
+- **The three checks (S0.7) that need that setup:** the read-only proxy, the embeddings, and the login.
+- **The merge into `main`,** which waits for Tanzeel's red CI check to be fixed and for his go-ahead.

@@ -2,6 +2,57 @@
 
 > One dated entry per session, **newest first**, each with four parts: **Done** (with commits), **Next** (in order), **Waiting on** (Usman or Tanzeel), and **Message for Tanzeel** (when there is one). Old entries are never edited (`CLAUDE.md` §11.4).
 
+## 2026-10-10 — Session 3: PR branches allowed, Docker check, Phase 0 status
+
+### Done
+- **Merged `origin/tanzeel`** (`0ca3034`): one new commit, `b71ed6b`, runner coverage measured with pytest-cov (CI enforces 85 %). Clean merge.
+- **Relaxed `CLAUDE.md` §11.1, as Usman approved** (`406a8bb`). Besides `usman`, his PR branches from §8.1 (`contract/*`, `feat/b-*`, `fix/*`, `chore/*`, `docs/*`, `test/*`, `bench/*`) may now be pushed. Direct pushes or merges to `main` or `tanzeel`, `feat/a-*`, and tags stay forbidden; a PR is opened only when Usman asks, and for Phase 0 only after Tanzeel's go. The local pre-push hook was updated to match and tested against each kind of target.
+- **Checked Docker.** Docker Desktop is installed (client 29.8.2, Compose v5.5.1, in `%LOCALAPPDATA%\Programs\DockerDesktop`), but **the engine is not running.** WSL 2 is not installed (`wsl.exe` offers only `--install`), and Docker Desktop on Windows Home needs it. Its `bin` folder is also not on this terminal's PATH yet.
+- **CI on `tanzeel`:** the `chaos-shop` job is still red on his newest commit `b71ed6b`; the other five jobs are green.
+
+### Phase 0 status (definition of done, `phases.md` §5)
+| Item | Status |
+|---|---|
+| All contracts C1–C9 read by the other developer | ✅ both written reviews done (`contract-review-a.md`, `contract-review-b.md`); a written review replaced the walkthrough, as Tanzeel decided |
+| All contracts merged into `main`, tag `contracts-v0.1.0` | ❌ waits for Tanzeel's go, his red chaos-shop job, and the PRs |
+| Python fixtures validate against the schemas | ✅ 259 contract tests |
+| Dart parses the fixtures | ✅ Tanzeel's `mobile/test/contracts/fixtures_test.dart`; mobile CI green |
+| Phone reached the laptop (S0.5) | ✅ |
+| CI skeleton green | ⚠️ 5 of 6 jobs green; chaos-shop red (Tanzeel) |
+| S0.6 Docker Desktop on Usman's laptop | ⚠️ installed, not running: needs WSL 2 |
+| B0.1 Supabase projects · B0.3 API keys | ❌ Usman, by hand |
+| S0.7 (a) ro proxy + Alloy · (c) embeddings · (d) Supabase JWKS | ❌ need Docker · the Gemini key · Supabase |
+
+**Phase 0 is not complete.** What closes it: WSL 2 → Docker running → S0.7 (a); the Gemini key → S0.7 (c); Supabase → S0.7 (d); Tanzeel fixes chaos-shop CI and says go → PRs into `main` → tag `contracts-v0.1.0`.
+
+### Next
+**`next.md` has the step-by-step version.**
+1. **Usman:** install WSL 2 and start Docker Desktop (steps below). Then get a Gemini key and create the Supabase projects (the steps in the session 1 entry).
+2. **Next session:** run S0.7 (a) once `docker version` shows a server; (c) and (d) once the key and Supabase exist.
+3. **When Tanzeel says go:** open the Phase 0 PRs into `main` as `next.md` §2 says.
+
+### Waiting on
+- **Usman:** WSL 2 + Docker Desktop running; the Gemini key; Supabase.
+- **Tanzeel:**
+  - the red chaos-shop CI job;
+  - his go-ahead for the merge;
+  - the C7 deviations written into `telemetry.md`;
+  - the C5 issue-9 rule in the runner;
+  - the `chaos-shop/cli/uv.lock` refresh in the contracts PR.
+
+### Usman's steps: get Docker running (Windows 10 Home)
+1. Open PowerShell **as Administrator** and run `wsl --install --no-distribution`. Restart the laptop when it finishes.
+2. Start **Docker Desktop** from the Start menu. Accept the licence and choose the WSL 2 backend if asked, then wait until it shows "Engine running".
+3. Open a **new** terminal (so PATH picks up Docker) and check:
+   - `docker version` shows a *Server* section;
+   - `docker compose version` shows v2.20 or newer;
+   - `docker run --rm hello-world` prints its greeting.
+4. In the repository root, copy `.env.example` to `.env` and replace the four testbed values with your own random hex (`python -c "import secrets; print(secrets.token_hex(24))"`).
+5. Tell Claude "Docker is running".
+
+### Message for Tanzeel
+> Quick update from my side: I merged your `b71ed6b` (clean). Your **chaos-shop CI job is still red** on it, the same as on `1a4f03a`; the other five are green. Can you check that log? Once it's green and you say go, I'll open my contract PRs into `main`. My rules now allow PR branches (`contract/*` and so on); nothing goes to `main` directly.
+
 ## 2026-10-10 — Session 2: merged Tanzeel's work, answered his contract review
 
 ### Done
