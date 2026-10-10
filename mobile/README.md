@@ -23,7 +23,7 @@ fixtures the app starts with a message naming the sync command.
 ```sh
 flutter run --dart-define=DATA_SOURCE=live \
   --dart-define=API_BASE_URL=http://<laptop LAN IP>:8000 \
-  --dart-define=WS_URL=ws://<laptop LAN IP>:8000/ws \
+  --dart-define=WS_URL=ws://<laptop LAN IP>:8000/ws/incidents \
   --dart-define=SUPABASE_URL=https://<project>.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=<public anon key>
 ```

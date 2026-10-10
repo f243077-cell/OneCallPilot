@@ -3,7 +3,7 @@
 //   flutter run --dart-define=DATA_SOURCE=mock
 //   flutter run --dart-define=DATA_SOURCE=live \
 //     --dart-define=API_BASE_URL=http://192.168.1.20:8000 \
-//     --dart-define=WS_URL=ws://192.168.1.20:8000/ws \
+//     --dart-define=WS_URL=ws://192.168.1.20:8000/ws/incidents \
 //     --dart-define=SUPABASE_URL=https://<project>.supabase.co \
 //     --dart-define=SUPABASE_ANON_KEY=<public anon key>
 //
