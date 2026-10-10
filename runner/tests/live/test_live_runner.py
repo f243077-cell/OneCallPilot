@@ -87,6 +87,10 @@ def stack(keys: Keys) -> Iterator[dict[str, Any]]:
             "-e", f"ACTION_SIGNING_KEY={keys.action.hex()}",
             "-e", f"RUNNER_LINK_KEY={keys.link.hex()}",
             "-e", "LEDGER_PATH=/ledger/deploys.jsonl",
+            # Required at start; no proxy on this network, and these tests make no Docker call.
+            "-e", "DOCKER_HOST=tcp://socket-proxy-rw:2375",
+            "-e", "DOCKER_API_VERSION=1.48",
+            "-e", f"RUNNER_ADMIN_TOKEN={secrets.token_hex(24)}",
             IMAGE,
         )  # fmt: skip
         backend = redis.Redis(

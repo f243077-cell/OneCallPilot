@@ -1,8 +1,9 @@
 """Target allowlist (runner/targets.yaml, architecture §7.4, RUN-004).
 
 `container_allowed` is the check every Docker call must pass immediately
-before it is made (handlers arrive in tasks A2.3 and A2.4): the container
-matches its service's labels AND the name regex.
+before it is made: the container matches its service's labels AND the name
+regex. Dry runs (A2.3) apply it to every container they list; the execute
+handlers (A2.4) will apply it before each write.
 """
 
 import re

@@ -41,3 +41,23 @@ def refused(
     }
     result["sig"] = sign(result, link_key)
     return result
+
+
+def dry_run_ok(
+    *, request_id: str, dry_run: dict[str, Any], now: datetime, link_key: bytes
+) -> dict[str, Any]:
+    """The answer to a dry run that read the state: `ok` with C1's `DryRunResult`."""
+    result: dict[str, Any] = {
+        "type": "dry_run_result",
+        "request_id": request_id,
+        "execution_id": None,
+        "status": "ok",
+        "error_code": None,
+        "dry_run": dry_run,
+        "step": None,
+        "health_after": None,
+        "captured": None,
+        "ts": timestamp(now),
+    }
+    result["sig"] = sign(result, link_key)
+    return result

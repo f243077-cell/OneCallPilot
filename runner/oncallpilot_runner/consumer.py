@@ -8,6 +8,8 @@
   `XAUTOCLAIM`. Idempotency (`SET NX`) makes a redelivered execute harmless.
 - An entry is acknowledged after its result is written, so a crash in between
   repeats the result, never loses it.
+- An accepted dry run is answered with its preview, signed (RUN-007,
+  dry_run.py). If the state cannot be read it is refused (fail closed).
 - Nothing escapes the loop: a Redis error waits and retries without
   acknowledging; an unexpected error answers with a refusal (fail closed).
 """
@@ -16,12 +18,16 @@ import json
 import logging
 import time
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from redis.exceptions import RedisError
 
 from oncallpilot_runner.checks import Accepted, Checker, Decision, Dropped, Duplicate, Refused
+from oncallpilot_runner.dry_run import DryRunner, DryRunUnavailable
+from oncallpilot_runner.request import Request
+from oncallpilot_runner.results import dry_run_ok
 from oncallpilot_runner.streams import Streams
 
 log = logging.getLogger("runner.consumer")
@@ -35,6 +41,17 @@ BATCH = 10
 HEARTBEAT = Path("/tmp/runner-heartbeat")
 
 
+@dataclass(frozen=True)
+class Previewed:
+    """A dry run answered with its preview."""
+
+    request: Request
+    result: dict[str, Any]
+
+
+Handled = Decision | Previewed
+
+
 class Consumer:
     def __init__(
         self,
@@ -42,11 +59,13 @@ class Consumer:
         checker: Checker,
         consumer_name: str,
         *,
+        dry_runner: DryRunner | None = None,
         heartbeat: Path | None = HEARTBEAT,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self.client = client
         self.checker = checker
+        self.dry_runner = dry_runner
         self.name = consumer_name
         self.heartbeat = heartbeat
         self.sleep = sleep
@@ -86,13 +105,18 @@ class Consumer:
         self.beat()
         return len(entries)
 
-    def handle(self, entry_id: str, fields: dict[str, str]) -> Decision:
+    def handle(self, entry_id: str, fields: dict[str, str]) -> Handled:
+        decision: Handled
         try:
             decision = self.checker.check(fields)
-        except Exception:  # a bug in a check must still fail closed, never execute
-            log.exception("check failed unexpectedly", extra={"entry_id": entry_id})
+            if isinstance(decision, Accepted) and decision.request.type == "dry_run":
+                decision = self._dry_run(decision.request)
+        except RedisError:
+            raise  # not acknowledged: retried after the wait in run_forever
+        except Exception:  # a bug must still fail closed, never execute
+            log.exception("handling failed unexpectedly", extra={"entry_id": entry_id})
             decision = self.checker.refuse_unexpected(fields)
-        if isinstance(decision, Refused):
+        if isinstance(decision, Refused | Previewed):
             self.client.add(
                 RESULTS_STREAM,
                 {"msg": json.dumps(decision.result, separators=(",", ":"), ensure_ascii=False)},
@@ -100,6 +124,23 @@ class Consumer:
         self.client.ack(REQUESTS_STREAM, REQUESTS_GROUP, entry_id)
         _log(entry_id, decision)
         return decision
+
+    def _dry_run(self, request: Request) -> Previewed | Refused | Duplicate:
+        if self.dry_runner is None:
+            return self.checker.refuse_request(request, "VALIDATION_ERROR", "no dry runner")
+        try:
+            preview = self.dry_runner.run(request)
+        except DryRunUnavailable as exc:
+            return self.checker.refuse_request(
+                request, "VALIDATION_ERROR", f"state unreadable: {exc}"
+            )
+        result = dry_run_ok(
+            request_id=request.request_id,
+            dry_run=preview,
+            now=self.checker.now(),
+            link_key=self.checker.keys.link,
+        )
+        return Previewed(request, result)
 
     def beat(self) -> None:
         if self.heartbeat is not None:
@@ -126,13 +167,21 @@ class Consumer:
                 backoff = min(backoff * 2, 30.0)
 
 
-def _log(entry_id: str, decision: Decision) -> None:
+def _log(entry_id: str, decision: Handled) -> None:
     extra: dict[str, Any] = {"entry_id": entry_id, "decision": type(decision).__name__.lower()}
     if isinstance(decision, Accepted):
         r = decision.request
         extra |= {"request_id": r.request_id, "execution_id": r.execution_id, "action": r.action}
-        # Nothing runs yet: dry-run and execute handlers arrive in tasks A2.3 and A2.4.
-        log.info(f"{r.type} accepted; no handler runs in this build", extra=extra)
+        # Nothing executes yet: the execute handlers arrive in task A2.4.
+        log.info(f"{r.type} accepted; no execute handler runs in this build", extra=extra)
+    elif isinstance(decision, Previewed):
+        r, dry_run = decision.request, decision.result["dry_run"]
+        extra |= {
+            "request_id": r.request_id,
+            "action": r.action,
+            "state_fingerprint": dry_run["state_fingerprint"],
+        }
+        log.info(f"dry run answered: {len(dry_run['would_change'])} changes", extra=extra)
     elif isinstance(decision, Refused):
         result = decision.result
         extra |= {

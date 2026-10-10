@@ -5,14 +5,17 @@ Environment (architecture §7.3; values are never logged):
     ACTION_SIGNING_KEY   hex, >= 32 bytes: verifies execute requests
     RUNNER_LINK_KEY      hex, >= 32 bytes: verifies dry_run requests, signs results
     LEDGER_PATH          the deploy ledger (default /ledger/deploys.jsonl)
-DOCKER_HOST, DOCKER_API_VERSION and RUNNER_ADMIN_TOKEN are used from task A2.3 on.
+    DOCKER_HOST          tcp://socket-proxy-rw:2375; a socket path is refused
+    DOCKER_API_VERSION   pinned API version, passed as `version=` (the proxy blocks /version)
+    RUNNER_ADMIN_TOKEN   bearer token for the store's cache endpoints (clear_cache)
 
-It refuses to start without both keys, the catalogue or the target allowlist.
+It refuses to start without any of these, the catalogue or the target allowlist.
 """
 
 import argparse
 import logging
 import os
+import re
 import socket
 import sys
 from datetime import UTC, datetime
@@ -22,13 +25,40 @@ from oncallpilot_runner import log
 from oncallpilot_runner.catalogue import Catalogue, CatalogueError
 from oncallpilot_runner.checks import Checker
 from oncallpilot_runner.consumer import Consumer
+from oncallpilot_runner.docker_client import SdkDockerReader
+from oncallpilot_runner.dry_run import DryRunner
 from oncallpilot_runner.handlers import REGISTERED
 from oncallpilot_runner.ledger import ledger_releases
+from oncallpilot_runner.shop_admin import fetch_cache_stats
 from oncallpilot_runner.signing import Keys, SigningKeyError, key_from_hex
 from oncallpilot_runner.streams import RedisStreams, Streams
 from oncallpilot_runner.targets import Targets, TargetsError
 
 logger = logging.getLogger("runner.main")
+
+API_VERSION = re.compile(r"^1\.[0-9]{2}$")
+MIN_ADMIN_TOKEN = 16
+
+
+class SettingError(ValueError):
+    """A required setting is missing or unsafe: the runner refuses to start."""
+
+
+def docker_settings(environ: dict[str, str]) -> tuple[str, str]:
+    host = environ.get("DOCKER_HOST", "")
+    version = environ.get("DOCKER_API_VERSION", "")
+    if not host.startswith("tcp://"):  # never the socket (CLAUDE.md §6.5)
+        raise SettingError("DOCKER_HOST must be tcp://socket-proxy-rw:2375")
+    if not API_VERSION.fullmatch(version):
+        raise SettingError("DOCKER_API_VERSION must be pinned, e.g. 1.48")
+    return host, version
+
+
+def admin_token(environ: dict[str, str]) -> str:
+    token = environ.get("RUNNER_ADMIN_TOKEN", "")
+    if len(token) < MIN_ADMIN_TOKEN:
+        raise SettingError(f"RUNNER_ADMIN_TOKEN must have at least {MIN_ADMIN_TOKEN} characters")
+    return token
 
 
 def build_checker(
@@ -65,7 +95,9 @@ def main(argv: list[str] | None = None) -> None:
         catalogue = Catalogue.load(args.catalogue)
         targets = Targets.load(args.targets)
         url = os.environ["RUNNER_REDIS_URL"]
-    except (SigningKeyError, CatalogueError, TargetsError) as exc:
+        docker_host, api_version = docker_settings(dict(os.environ))
+        token = admin_token(dict(os.environ))
+    except (SigningKeyError, CatalogueError, TargetsError, SettingError) as exc:
         logger.critical(f"cannot start: {exc}")
         sys.exit(2)
     except KeyError:
@@ -77,8 +109,16 @@ def main(argv: list[str] | None = None) -> None:
     streams = RedisStreams.from_url(url)
     ledger = Path(os.environ.get("LEDGER_PATH", "/ledger/deploys.jsonl"))
     checker = build_checker(streams, catalogue, targets, keys, ledger)
-    logger.info(f"runner starting; catalogue {catalogue.version}")
-    Consumer(streams, checker, socket.gethostname()).run_forever()
+    dry_runner = DryRunner(
+        docker=SdkDockerReader.connect(docker_host, api_version),
+        targets=targets,
+        ledger_path=ledger,
+        counters=streams,
+        cache_stats=lambda: fetch_cache_stats(token),
+        now=lambda: datetime.now(UTC),
+    )
+    logger.info(f"runner starting; catalogue {catalogue.version}, Docker API {api_version}")
+    Consumer(streams, checker, socket.gethostname(), dry_runner=dry_runner).run_forever()
 
 
 if __name__ == "__main__":

@@ -20,6 +20,8 @@ class Streams(Protocol):
     def ack(self, stream: str, group: str, entry_id: str) -> None: ...
     def add(self, stream: str, fields: dict[str, str]) -> str: ...
     def set_nx(self, key: str, ttl_seconds: int) -> bool: ...
+    def zcount(self, key: str, min_score: float, max_score: float) -> int: ...
+    def exists(self, key: str) -> bool: ...
 
 
 class RedisStreams:
@@ -67,3 +69,9 @@ class RedisStreams:
 
     def set_nx(self, key: str, ttl_seconds: int) -> bool:
         return bool(self.client.set(key, "1", nx=True, ex=ttl_seconds))
+
+    def zcount(self, key: str, min_score: float, max_score: float) -> int:
+        return int(cast(Any, self.client.zcount(key, min_score, max_score)))
+
+    def exists(self, key: str) -> bool:
+        return bool(cast(Any, self.client.exists(key)))
