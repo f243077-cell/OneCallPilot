@@ -142,6 +142,31 @@ enum DockerState {
 
 enum DockerHealth { healthy, unhealthy, starting, none, unknown }
 
+@JsonEnum(fieldRename: FieldRename.screamingSnake)
+enum LogLevel { debug, info, warning, error, critical, unknown }
+
+@JsonEnum(fieldRename: FieldRename.snake)
+enum MetricTemplate {
+  errorRate,
+  p95Latency,
+  requestRate,
+  memoryRss,
+  cpuUsage,
+  processRestarts,
+  dbPoolInUse,
+  dbPoolWaitP95,
+  cacheErrors,
+  upstreamLatencyP95,
+  jobFailureRate,
+  jobLatencyP95,
+  unknown,
+}
+
+/// C6 ledger record kinds and writers.
+enum DeployKind { deploy, rollback, scale, reset, unknown }
+
+enum DeployedBy { ci, runner, setup, unknown }
+
 /// C3 event names.
 enum WsEventName {
   @JsonValue('incident.opened')
