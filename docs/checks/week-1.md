@@ -413,6 +413,58 @@ Architecture §12.1 lists four profiles (`testbed`, `obs`, `copilot`, `runner`).
 
 **Merge notes for later:** `origin/usman` is built on `tanzeel` at `6cac236` (A1.1). Merging both into `main` will conflict in `compose.yaml` (each branch adds one `include:` line) and in `docs/checks/week-1.md` (both add sections); both are simple to resolve.
 
+### S1.1 — `ocp` CLI, Tanzeel's side (2026-10-10)
+
+**Found first:** no branch has an `ocp` command. `origin/usman` (0582f37) and `origin/main` have only `tools/ocp/.gitkeep`, and no `ocp` script entry anywhere; `ocp seed-incident` and `ocp smoke` appear only in docs and contract docstrings. So `tools/ocp` is new, with one entry point.
+
+**Layout** (`tools/ocp/`, its own uv project):
+- `ocp_cli/main.py` is the only entry point (`ocp = "ocp_cli.main:main"`). It loads every module in `ocp_cli/commands/`; each module defines `NAME`, `HELP`, `add_arguments()` and `run(args, stack)`.
+  - So Usman's `seed_incident.py` and `smoke.py` are new files there and need no edit to `main.py` or to my modules.
+- `ocp_cli/stack.py`: finds the repository root (`$OCP_ROOT`, or upwards from the current folder), runs the `docker` and `uv` CLIs, and reads `docker inspect`.
+- `ocp_cli/policy.py`: the §3 port table and the rules as pure functions.
+- `ocp_cli/lan.py`: the Wi-Fi or Ethernet address.
+- **Dependencies:** the standard library only, so nothing new at run time. The dev tools are the ones `chaos-shop/cli` locks (pytest 9.1.1, mypy 2.4.0, ruff 0.16.10).
+
+**Commands:**
+- **`ocp up [--no-build] [--timeout 240]`:**
+  1. Checks Compose ≥ 2.20 and that the root `.env` exists.
+  2. `docker compose --profile testbed --profile obs --profile copilot --profile runner up -d --wait --build`. A profile without services yet selects nothing.
+  3. `docker compose --profile testbed-slots create` (the slots are created stopped, never started).
+  4. `chaos reset`.
+  5. Waits until every service of the four profiles is running and healthy.
+  6. Prints `API_BASE_URL` and `WS_URL` (`/ws/incidents`) for the app with the LAN address, and says when `backend-api` is not in the stack yet.
+- **`ocp down`:** removes every container of the five profiles, slots included. Volumes stay (store database, deploy ledger).
+- **`ocp doctor`:** exits 1 on any failed check:
+  - Docker and Compose versions;
+  - every expected service running and healthy (every service has a health check, §12.1);
+  - every port published by a project container against the §3 table (SEC-013), read from each container's configured bindings, so stopped slots count too;
+  - any container other than `socket-proxy-ro` and `socket-proxy-rw` that mounts the Docker socket;
+  - an image without a pinned tag.
+  - It also warns about running containers of other projects that are open to the LAN.
+
+**Live on the integration laptop (2026-10-10):**
+- The first `ocp doctor` failed correctly: `socket-proxy-rw` (profile `runner`) had never been started.
+- `ocp up` with a build: 49 s. Then `ocp doctor`: all checks passed. A repeat `ocp up --no-build`: 14 s.
+- `ocp down`: 0 containers left; volumes `oncallpilot_cs_postgres_data` and `oncallpilot_deploy_ledger` kept. Then `ocp up --no-build`: **8 services healthy in 37 s**, reset 11.9 s, slots created and stopped; `ocp doctor`: all checks passed.
+- Published ports: only `cs-lb` on 127.0.0.1:8080. Nothing is open to the LAN, because `backend-api:8000` does not exist yet.
+- LAN address printed: 192.168.0.100.
+- Memory: running containers about 211 MiB, including `socket-proxy-rw`; limits unchanged. Docker has 9.7 GiB; Windows had 3.1 GB free.
+
+**Fixes found while testing:**
+- doctor printed `§` as `�` in the Windows console, so its output is now ASCII.
+- The LAN warning listed stopped containers of other projects (bioguard, mongo and others); it now lists running ones only.
+- The nested `uv run` for `chaos reset` warned about the outer `VIRTUAL_ENV`; subprocesses no longer inherit it.
+- Not an `ocp` bug: the app's README and the `env.dart` comment gave `WS_URL` as `…/ws`; they now say `…/ws/incidents` (architecture §9.4).
+
+**Tests:**
+- `tools/ocp`: 24 unit tests against a fake Docker, all passed; ruff and `mypy --strict` clean.
+  - Entry point and module discovery; root discovery.
+  - `up`: profile flags, step order, no build, missing `.env`, old Compose, a failing step, a service that never becomes healthy.
+  - `down`: keeps volumes.
+  - `doctor`: baseline passes; it fails on a non-loopback `cs-lb`, a wrong port, a port on a service that may publish nothing, a socket mount, an exited service, a service without a health check, and an unpinned image; another project's LAN port only warns.
+- Live (`uv run pytest -m live`): 2 passed (`ocp up` healthy, `ocp doctor` passes).
+- CI: a step in `chaos-shop.yml` runs the `tools/ocp` checks.
+
 ## Phase 1 status — Stream A (2026-10-10)
 
 | Item | Status | Evidence |
@@ -424,9 +476,9 @@ Architecture §12.1 lists four profiles (`testbed`, `obs`, `copilot`, `runner`).
 | A1.5 Flutter skeleton, mock mode | Done on `tanzeel` | A1.5 above. Open: MOB-001 on a device against Supabase (needs B0.1) |
 | A1.6 Feed and Detail | Done on `tanzeel`, checked on the phone | A1.6 above |
 | TB-008 15-minute persistence | Done: 8/8 PASS overnight | "Overnight persistence run, result" above |
-| S1.1 root `compose.yaml` and `ocp up` (shared) | `compose.yaml` includes testbed and runner; `ocp` CLI not started | `docs/checks/gate-g1.md`, criterion 1 |
-| S1.2 first runbooks (shared) | Not started (`runbooks/` is empty) | TB-013; the TB-010 grep already covers `runbooks/` |
-| Gate G1 | Criteria 2 and 3 met on `tanzeel`; 1, 4 and 5 open | `docs/checks/gate-g1.md` |
+| S1.1 root `compose.yaml` and `ocp up` (shared) | Tanzeel's side done on `tanzeel`: `ocp up`, `down`, `doctor`. Usman's side open: `observability.yml`, `copilot.yml`, `seed-incident`, `smoke` | S1.1 below; `gate-g1.md`, criterion 1 |
+| S1.2 first runbooks (shared) | Not started: split proposed to Usman; waiting for his final list and format (`runbooks/` is empty) | TB-013; the TB-010 grep already covers `runbooks/` |
+| Gate G1 | Criteria 2 and 3 met on `tanzeel`; 1 partly (testbed and runner); 4 and 5 open | `docs/checks/gate-g1.md` |
 
 **Proposed split of the shared Phase 1 work** (proposal, not agreed yet):
 - **S1.1, Tanzeel:**
