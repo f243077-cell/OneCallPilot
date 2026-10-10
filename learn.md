@@ -135,3 +135,20 @@ He also left Usman a decision. In two small places his code differs from the tel
 Git checked that his new work merges cleanly into `usman`; the merge itself is the first step of the next session.
 
 **A to-do list for the next session.** We wrote `next.md`: an ordered list of exactly what the next Claude session should do. It covers what to check first, which questions to ask Usman, what each check (S0.7) needs, and what must wait. A new session starts with no memory of this one, so these files are how the work carries on without anything being lost.
+
+### 2026-10-10 — Session 2: reviewing each other's contracts in writing
+
+**Where things stood.** Tanzeel had read Usman's contracts and written down 11 problems (`docs/checks/contract-review-a.md`). He asked Usman to read his three contracts (C4, C6, C7), answer each problem, and push, but **not** to merge into `main` yet. Meanwhile he had pushed 44 more commits: the load balancer, all faults working, the first screens of the phone app, and the start of the runner.
+
+**What we did, step by step.**
+1. **Brought his work in.** Git merged his 44 commits into `usman` with no conflicts, because the two of them mostly work in different folders.
+2. **Read his contracts.** The action menu (C4) and the deploy history (C6) are fine. The telemetry contract (C7) is fine too, except that it still promises a log line for *every* request, while his code skips admin requests on purpose. We asked him to write that into the contract, so the document matches the code.
+3. **Fixed the problems he found in Usman's contracts.** The two important ones, in plain words:
+   - *"Cut to 4 KB" broke its own checker.* Live updates to the phone shorten big evidence to 4 KB. Cutting text in the middle produces broken data, which the checker then rejects. Now the rule is to drop whole items from the end of a list (whole log lines, whole graph points) until the evidence fits. The data stays well-formed, and a flag says some was left out.
+   - *The deploy history the AI sees was missing two fields*: how many copies were running, and why the deploy happened. Without them, a "scale" record says nothing useful.
+
+   Smaller fixes: graphs now say their unit (seconds, bytes, …) so the app can label the axis; only the API and the worker have graphs; the settings screen gets a reason when it is locked; the sample incidents now use the testbed's real version history and the real error of the broken release.
+4. **Wrote three safety rules for the runner** that came from Tanzeel building it. The most interesting: if someone forges a "refused" answer using a real job ID, the real job must not run afterwards. Now every final answer "uses up" the job ID first, so a forged or late copy of the order is ignored.
+5. **Found that a change of ours broke a check of his.** Our contracts package gained a test-only library (`pyyaml`). Tanzeel's chaos tool depends on that package, so its lockfile (the file listing exact library versions) went out of date, and CI's strict install would fail. We refreshed that file, as Usman asked, and told Tanzeel to do the same in his merge.
+
+**Why not just push everything to `main`?** `main` is the shared, always-working version. The team's rule is that changes reach it only through pull requests whose automatic checks (CI) pass, with contracts in their own small PRs. Tanzeel also asked to wait. One of his CI checks is red right now, and pushing straight to `main` would skip all of these safety steps.

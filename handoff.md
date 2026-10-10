@@ -2,6 +2,54 @@
 
 > One dated entry per session, **newest first**, each with four parts: **Done** (with commits), **Next** (in order), **Waiting on** (Usman or Tanzeel), and **Message for Tanzeel** (when there is one). Old entries are never edited (`CLAUDE.md` §11.4).
 
+## 2026-10-10 — Session 2: merged Tanzeel's work, answered his contract review
+
+### Done
+- **Merged `origin/tanzeel` into `usman`** (`d5c49a0`): 44 commits (A1.2–A1.6, A2.1 runner, `ocp up/down/doctor`, Gate G1 checks, the Dart fixture test). There were no conflicts; the contract gate stayed green.
+- **Reviewed C4, C6, and C7:** C4 and C6 approved; C7 approved, provided Tanzeel writes his two accepted deviations into `telemetry.md`. See `docs/checks/contract-review-b.md` (`f27d37d`).
+- **Answered all 11 issues** of `docs/checks/contract-review-a.md`. Ten are fixed and issue 8 is accepted for later; the per-issue table is in `contract-review-b.md`.
+
+  | Commit | Fix |
+  |---|---|
+  | `3e33a3e` | C1: `DeployListItem` gets `replicas` and `reason`; metric `service` is `api`/`worker` only; a new `unit` (`METRIC_UNITS`); `MonitorSettings.lock_reason`; timelines use the testbed's real release history and the real 1.5.0 `IndexError`, with relative-time summaries |
+  | `aa91cd9` | C3: the 4 KB cut of `evidence.added` payloads is defined (`cut_evidence_payload()`, `ws-protocol.md` §4.1) |
+  | `857b775` | C5: a refused or aborted `execute` claims its idempotency key; unanswerable messages get no result; a different `catalogue_version` is refused |
+
+- **Fixed a CI break that my contracts caused:** `chaos-shop/cli/uv.lock` was stale because the contracts package gained `pyyaml` dev dependencies (`ae54f2f`, in Tanzeel's folder, done at Usman's request).
+- **Checks:**
+  - Contract gate: ruff, `mypy --strict`, **259 tests**, schemas regenerate with no diff.
+  - Locally, the non-Docker CI steps of chaos-shop (77 tests), the chaos CLI (37), and `ocp` (24) all pass, and every `uv.lock` passes `uv lock --check`.
+- **Pushed `usman`.** CI does not run on it, because the workflows run only on PRs and on `main`.
+- **CI on `tanzeel`** (`1a4f03a`): backend, migrations, mobile, contracts, and runner pass; **chaos-shop fails**. The log needs admin rights, and it is not one of the steps that can run here without Docker. It is Tanzeel's to check.
+
+### Next
+1. Send Tanzeel the message below.
+2. When Tanzeel says go: the contracts go in through `contract/*` PRs and the rest through PRs, each merged once CI is green. This needs Usman to relax `CLAUDE.md` §11.1 (push only `usman`) to allow those PR branches; ask him first. Nothing is pushed to `main` directly.
+3. Then: the `contracts-v0.1.0` tag, and Phase 1 for Stream B.
+4. Still open: Docker Desktop, the Gemini key, and Supabase (Usman, by hand), then S0.7 (a), (c), and (d) (`next.md`).
+
+### Waiting on
+- **Tanzeel:**
+  - his go-ahead for the merge;
+  - fix the red chaos-shop CI job on `tanzeel`;
+  - refresh `chaos-shop/cli/uv.lock` in the same PR as the contracts;
+  - write the C7 deviations into `telemetry.md`;
+  - add the C5 idempotency rule (issue 9) to the runner's refusal path.
+- **Usman:** Docker Desktop, the Gemini key, and the Supabase projects; and the §11.1 decision when the merge starts.
+
+### Message for Tanzeel
+
+> Hi Tanzeel, done on `usman` (pushed, `ae54f2f`). I merged your branch first: no conflicts.
+> 1. **C4, C6, C7:** C4 and C6 approved. C7 approved, provided you write your two accepted deviations into `telemetry.md` (no access line for `/metrics` and `/internal/*`; no `route` on cs-payments lines). Details in `docs/checks/contract-review-b.md`.
+> 2. **Your 11 issues:** 1–7 and 9–11 are fixed, and 8 is accepted for a later PR (tell me which fixtures you need first). The per-issue replies with commits are in `contract-review-b.md`. Both must-fixes are in: the 4 KB cut is defined so a cut payload still validates (`cut_evidence_payload()`), and the recent-deploys record now carries `replicas` and `reason`. New fields: `unit`, `replicas`, `reason`, `lock_reason`; your DTOs ignore unknown keys, so your fixture test still passes. For issue 9, your runner's refusal path needs the new rule: claim `ocp:runner:idem:{execution_id}` before sending a refused or aborted result.
+> 3. **CI:**
+>    - Contracts are green locally: 259 tests. CI hasn't run on `usman`, because it only runs on PRs.
+>    - **Your chaos-shop job is red on `tanzeel` (`1a4f03a`).** The non-Docker steps pass on my machine, so it's probably a Docker step (compose config, nginx `-t`, or the image build). Can you check the log? I can't open it without admin rights.
+>    - Because my contracts package added `pyyaml` dev dependencies, `chaos-shop/cli/uv.lock` must be regenerated (`cd chaos-shop/cli && uv lock`, a two-line change) in the same PR that brings the contracts to `main`; otherwise `uv sync --locked` fails. I committed that refresh on `usman` (`ae54f2f`).
+> 4. **Merge:** I won't touch `main` until you say so. Contracts through `contract/*` PRs, the rest through PRs.
+>
+> Also answered in `contract-review-b.md`: `chaos_net` declared plainly; ledger volume read-only at `/ledger`; `restart_count` over `OOMKilled`; scenario 5 by p95; `tools/ocp` as the single CLI (I'll add `seed-incident` there); and your runbook split is fine (format in §3).
+
 ## 2026-10-09 — Session 1: branch setup, contracts C1/C2/C3/C5/C8/C9, socket-proxy-ro
 
 ### Done
