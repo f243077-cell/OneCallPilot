@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oncallpilot/data/models/evidence.dart';
 import 'package:oncallpilot/shared/widgets/evidence_card.dart';
+import 'package:oncallpilot/shared/widgets/metric_chart.dart';
 
 import '../support/sample_incident.dart';
 
@@ -119,5 +120,39 @@ void main() {
       find.text('Compare the error start with the last deploy time.'),
       findsOneWidget,
     );
+  });
+
+  test('the y axis ends on a nice multiple of its interval', () {
+    YAxis axis(List<double> v) => YAxis.forValues(v);
+    expect((axis([0.004, 0.31]).max, axis([0.004, 0.31]).interval), (0.4, 0.1));
+    expect((axis([0.12, 2.9]).max, axis([0.12, 2.9]).interval), (3.0, 1.0));
+    expect((axis([0.05, 2.6]).max, axis([0.05, 2.6]).interval), (3.0, 1.0));
+    expect((axis([0.11, 0.5]).max, axis([0.11, 0.5]).interval), (0.6, 0.2));
+    expect((axis([5, 38]).max, axis([5, 38]).interval), (40.0, 10.0));
+    expect((axis([0, 0]).min, axis([0, 0]).max), (0.0, 1.0));
+    expect(YAxis.niceStep(0.0775), closeTo(0.1, 1e-12));
+    expect(YAxis.niceStep(0.23), closeTo(0.25, 1e-12));
+  });
+
+  testWidgets('metric: y labels sit on grid lines only, none crowded', (
+    tester,
+  ) async {
+    await pumpCard(tester, byRef('E3'));
+    final chart = tester.widget<LineChart>(find.byType(LineChart)).data;
+    expect((chart.minY, chart.maxY), (0.0, 0.4));
+    expect(chart.titlesData.leftTitles.sideTitles.interval, 0.1);
+    expect(chart.gridData.horizontalInterval, 0.1);
+    final labels = tester
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byType(LineChart),
+            matching: find.byType(Text),
+          ),
+        )
+        .map((t) => t.data)
+        .toList();
+    // Before the fix fl_chart also labelled the peak (31.0 %) and the lowest
+    // value (0.30 %), right next to the 30.0 % and 0 % grid labels.
+    expect(labels, ['0 %', '10.0 %', '20.0 %', '30.0 %', '40.0 %']);
   });
 }

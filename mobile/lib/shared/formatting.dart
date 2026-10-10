@@ -51,7 +51,9 @@ String formatMetric(MetricTemplate template, double value) =>
       _ => _trim(value),
     };
 
-String _trim(double value) => value.abs() >= 100
+String _trim(double value) => value == 0
+    ? '0'
+    : value.abs() >= 100
     ? value.toStringAsFixed(0)
     : value.abs() >= 10
     ? value.toStringAsFixed(1)
