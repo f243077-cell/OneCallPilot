@@ -384,7 +384,7 @@ Two observations, both accepted as they are (ruling of 2026-10-10):
 
 ## C7 deviations (accepted for now, 2026-10-09)
 
-Both are in the implementation; `contracts/telemetry.md` is unchanged. Usman decides whether the contract is tightened or amended in a separate `contract/*` PR.
+Both are in the implementation, and since 2026-10-10 also in `contracts/telemetry.md` (`3df4d5d`), Usman's condition for approving C7.
 
 1. **No access-log line for `/metrics` and `/internal/*`** in cs-api (and cs-payments, and `/internal/*` in cs-lb). C7 §3.2 says the api writes one access line per request, but these paths have no C7 route value, and admin calls should not appear in agent-visible logs.
 2. **No `route` field on cs-payments request lines.** C7 route values name cs-api routes only. cs-payments lines carry `request_id`, `status` and `duration_ms`. (cs-lb lines have no `route` either, which C7 §3.3 already specifies.)

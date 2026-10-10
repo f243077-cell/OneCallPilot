@@ -126,3 +126,65 @@
 
 **Gate:** TEST-015 is Gate G2 criterion 3: `docs/checks/gate-g2.md` (created) records it as green for socket-proxy-rw.
 
+## Phase 0 close-out, part 2 (2026-10-10): one PR into `main`
+
+**Ruling:** merging `origin/usman` into `tanzeel` is allowed; Phase 0 from both streams goes into `main` through one PR from `tanzeel`.
+
+### 1. CI was red: chaos-shop, step "Images build (every release)"
+
+- **Red from `1a4f03a`, green at `3539d80`.** The step failed in 1 s (12 s when green).
+- **Cause:** A2.1 added `DOCKER_API_VERSION=1.56` to `.env.example`. GitHub's `ubuntu-24.04` image has **Docker 28.0.4 (API 1.48), Compose v2.38.2, buildx 0.37.2**. That Compose passes `--env-file` values into the `buildx bake` subprocess, so buildx sent API 1.56 to a 1.48 daemon: `Error response from daemon: client version 1.56 is too new. Maximum supported API version is 1.48`.
+- **Why it did not reproduce locally:** Compose v2.40.3 and v5.x do not pass env-file values to bake. Checked from scratch with docker-in-docker on Docker 28 / Compose v2.40.3 and Docker 29 / Compose v5.6.0: both build.
+- **How it was found:** the job log needs repository admin rights, so the step now prints the tool versions as a `::notice::` and, on failure, the last lines as an `::error::` annotation, which the public checks API shows (`1f8dba0`).
+- **Fix** (`9ff85a0`): `DOCKER_API_VERSION` is a comment in `.env.example` (like `LEDGER_PATH`); the runner service will set it in `runner.yml`. With an active value, anyone with a Docker older than API 1.56 who copied `.env.example` would have hit the same failure. chaos-shop was green again at `9ff85a0`.
+
+### 2. Lockfiles
+
+- `uv lock --check` and `uv sync --locked` pass in `contracts/python`, `chaos-shop`, `chaos-shop/cli`, `runner` and `tools/ocp`, before and after the merge.
+- `uv lock` in `chaos-shop/cli` changed nothing: Usman's new pyyaml dev dependency belongs to the contracts package's dev group, which a path dependency does not bring into the CLI's lock.
+- `flutter pub get --enforce-lockfile` passes. `backend/` has no lockfile yet (skeleton).
+
+### 3. C7 deviations into the contract
+
+`3df4d5d` (only `contracts/telemetry.md`):
+- §3.2: one access line per request **except** `/metrics` and `/internal/*` (api, payments, and `/internal/*` through lb).
+- §3.2/§3.3: cs-payments request lines have no `route`.
+
+This is Usman's condition for approving C7 (`contract-review-b.md` §1).
+
+### 4. Runner: C5 issue 9, and check 4 (`e50ba21`)
+
+- **Every final answer to an execute claims its ID first.** Before any refused result for an `execute` (checks 1–7 included), the runner sets `ocp:runner:idem:{execution_id}` with SET NX. If the key exists, the message is a duplicate and gets no result.
+  - A forged message that borrows a real `execution_id` therefore ends that execution as refused, and the genuine execute arriving later is a duplicate that never runs.
+  - A forgery that arrives **after** the genuine execute gets no answer, so it cannot mark a running execution as refused.
+  - A refused dry run claims nothing.
+- **`catalogue_version` must equal the loaded catalogue's** (C5 check 4) → `VALIDATION_ERROR`, before the action check.
+- **Tests:**
+  - unit: forged-then-genuine, genuine-then-forged, every refused execute claims its ID, dry run claims nothing, catalogue version;
+  - consumer: forged-then-genuine through the stream gives one refusal and one duplicate;
+  - live: the real image handled a forgery with a borrowed ID and then the genuine execute. The genuine one was a duplicate, never accepted.
+  - Two older tests re-used one message after a refusal and now expect a duplicate. The vector cross-check judges each vector with fresh claims, because the vector's executes share one `execution_id`.
+
+### 5. Merge of `origin/usman` (`9e8dd52`, normal merge commit)
+
+- **Read first:** `docs/checks/contract-review-b.md`. C4 and C6 approved; C7 approved with the change in item 3; review-A issues 1–7 and 9–11 fixed in contracts; issue 8 (more fixtures) later.
+- **No conflicts:** `usman` had already merged `tanzeel` up to `b71ed6b` and resolved `compose.yaml` and `week-1.md`. `compose.yaml` now includes `testbed.yml`, `runner.yml` and `observability.yml`.
+- **Results on the merged tree:**
+
+  | Suite | Result |
+  |---|---|
+  | contracts (Usman's suite) | ruff and `mypy --strict` clean; **259 passed**; schemas regenerate with no diff |
+  | chaos-shop | ruff and mypy clean; **77 passed** |
+  | chaos CLI | ruff and mypy clean; **37 passed** (including the ledger fixture against `releases.yaml`) |
+  | `tools/ocp` | ruff and mypy clean; **24 passed** |
+  | runner | ruff and mypy clean; **88 passed, no skips**: the vector cross-check runs on the branch now. Coverage **91.7 %**. Live **3/3** |
+  | runner output vs C5 models | 40 refusals validate as `RunnerResult`, 8 requests from `publish_signed.py` validate as `RunnerRequest`, and the runner's signing gives the same canonical bytes and signatures as `oncallpilot_contracts.signing` (one-off check in the contracts environment) |
+  | proxy security test (TEST-015) | **54/54** |
+  | app | `flutter analyze` clean; **90 passed, no skips** (the fixture groups run against the merged C1/C3 fixtures; the new `unit`, `replicas`, `reason`, `lock_reason` fields are ignored by the DTOs, no UI added); generated code unchanged |
+  | `ocp up` / `ocp doctor` | 9 services healthy in 30 s (now with `socket-proxy-ro`); doctor all checks passed |
+
+- **On Usman's side, for information:**
+  - `handoff.md`, `learn.md` and `next.md` are new files in the repository root (his session notes).
+  - `backend/` is still the CI skeleton.
+  - The extra fixtures of review-A issue 8 are still to come.
+

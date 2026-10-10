@@ -37,6 +37,8 @@ Read from `origin/usman` at `0582f37`. The signing vector itself is correct: eve
 | 10 | `runner.py` (`RunnerResult`) | A message without a usable `type`, a UUID `request_id`, or (for `execute`) a UUID `execution_id` cannot be answered with a valid `RunnerResult`. The runner logs and acknowledges it with no result, and the worker's sweeper ends a real execution with `runner_timeout`. | State in C5 that such messages get no result. |
 | 11 | `runner.py` (`RunnerRequest.catalogue_version`) | C5 does not say what the runner does when `catalogue_version` differs from the catalogue it loaded. The runner does not compare them yet. | Decide: refuse with `VALIDATION_ERROR` (fail closed), or accept and log. |
 
+**Status of issues 9–11 (2026-10-10):** resolved. Usman wrote the rules into C5 (`857b775`, `contract-review-b.md` §2), and the runner implements them (`e50ba21`, `docs/checks/week-3.md`).
+
 ## For information
 
 - **C7 change on `tanzeel`:** logger names are now `shop.<area>` (`shop.access`, `shop.checkout`, …) instead of `chaosshop.*` (TB-010; `logger` is agent-visible). Nothing on `origin/usman` refers to `chaosshop`, so no contract file needs changing; Loki and Grafana queries must filter on `shop.*`.
