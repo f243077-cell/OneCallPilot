@@ -143,7 +143,7 @@ Within the §12.4 estimate (Chaos Shop baseline ≈ 0.6 GB); A1.2 adds `cs-lb` a
   | 8 | log-injection | 1.4 s | 20 checkout 500s in 10 s | none (escalate) | — |
 
   Reset takes 10–21 s per run. **Scenario 5 fails until A1.4:** the spike rate is still the placeholder (40 rps, which the loadgen reaches), and one api slot handles it with p95 8 ms. A1.4 calibrates `CS_LOADGEN_SPIKE_RPS`. (Done: see A1.4. The old check, a `GET /products` probe, could not have seen the spike either; A1.4 replaced it.)
-- **15-minute persistence** (`verify 1 --hold 900`): still broken after 900 s and fixed 17 s after a graceful restart. The other 7 scenarios still need their 15-minute run before Gate G1.
+- **15-minute persistence** (`verify 1 --hold 900`): still broken after 900 s and fixed 17 s after a graceful restart. All 8 then passed the 15-minute run on 2026-10-09; see the overnight run below.
 
 **Memory (baseline after reset, 2026-10-09):** about **227 MiB** used, limits unchanged at **1,088 MiB**. During scenario 1 the worker climbs to its 256 MiB limit and is killed. The helper container (limit 64 MiB) lives about 1–2 s per command. The Windows host had 1.7 GB free of 15.9 GB, with no other containers running.
 
@@ -157,6 +157,25 @@ Within the §12.4 estimate (Chaos Shop baseline ≈ 0.6 GB); A1.2 adds `cs-lb` a
 **Logger names (C7 change, 2026-10-09):** `logger` is agent-visible, so Chaos Shop code now logs as `shop.<area>` (`shop.access`, `shop.checkout`, `shop.jobs`, …) instead of `chaosshop.*`; nginx keeps `nginx.access`. Contract commit `2910d52` changes only `contracts/telemetry.md`; the code and the C7 checks (`chaos-shop/tests/contract.py` now rejects a non-neutral `logger`; the CLI's TB-010 grep checks every logger name in the services and `nginx.conf`) are a separate commit. `contracts/VERSION` stays 0.1.0 while the contracts are unreleased drafts (no `contracts-v0.1.0` tag yet).
 
 **Overnight persistence run (TB-008, before Gate G1, after A1.4):** `uv run --project chaos-shop/cli chaos verify --all --hold 900 > verify-overnight.log` runs all 8 scenarios in a row (about 2.5 hours), prints progress as it goes and ends with a PASS/FAIL table. Run it with nothing else on the host.
+
+**Overnight persistence run, result (2026-10-09, 16:08–18:15):** `chaos verify --all --hold 900`, run unattended with only the baseline testbed on the host: **8/8 PASS in 127 minutes** (TB-008: each fault persists for 15 minutes; 1–6 are fixed by their expected action within the 120 s limit). The log is `verify-overnight.log` in the repository root; it is not committed.
+
+| # | Scenario | Still broken after 900 s | Recovered after fix |
+|---|---|---|---|
+| 1 | memory-leak | retention on, 4 OOM restarts during the hold (rss 81 MiB just after a restart) | 15 s |
+| 2 | bad-deploy | 10/10 checkouts 500 | 2 s |
+| 3 | db-pool | 7 pool timeouts in 10 s, pool 5/5, `/orders` 503s | 12 s |
+| 4 | cache-outage | cs-redis exited, checkouts 503 | 8 s |
+| 5 | traffic-spike | 1 slot: 107 rps, p95 4.5 s, 5xx 0.1 % | 43 s (3 slots: 103 rps, p95 99 ms, 5xx 0 %) |
+| 6 | config-crash | cs-worker-220 restarting, 21 restarts | 10 s |
+| 7 | slow-dependency | checkouts 201 in 2.55–2.60 s | persists (escalate) |
+| 8 | log-injection | 20 checkout 500s in 10 s | persists (escalate) |
+
+Injects took 0.3–9.7 s and resets 9.9–16.0 s. After the run, `chaos status` shows the baseline; the running containers use about 254 MiB, and Windows had 2.85 GB free.
+
+Two observations, no change made:
+- **Scenario 5 after 15 minutes** was broken by latency (p95 4.5 s, 4.5× the check's 1 s floor), but its 5xx share had fallen to 0.1 % (4–8 % in the first minutes). The detector's p95 rule (≥ 300 ms) still fires; its error-rate rule (≥ 2 %) may not at that point.
+- **Scenario 1** is checked between OOM kills, so rss can be low at the moment of the check. The check counts restarts, which is what keeps it broken.
 
 ### A1.4 — traffic spike calibration (TB-005, scenario 5)
 
