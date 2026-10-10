@@ -1,5 +1,8 @@
 # Owner: Tanzeel. Runner and socket-proxy-rw (architecture §2.10, §2.11, §3, §7.3).
-# The runner service itself is added in task A2.1.
+# The runner service is added once copilot-redis exists (Usman's copilot.yml,
+# task B1.3): without it the runner cannot consume, and `ocp up` starts this
+# profile. The image is built from runner/Dockerfile and tested in A2.1
+# (docs/checks/week-3.md).
 #
 # SAFETY (CLAUDE.md §6.5, RUN-017, TEST-015): socket-proxy-rw allows exactly
 # CONTAINERS (GET), ALLOW_START, ALLOW_STOP and ALLOW_RESTARTS, with POST=0.

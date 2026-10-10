@@ -12,6 +12,7 @@ import random
 import re
 import time
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Request, Response
@@ -20,13 +21,14 @@ from pydantic import BaseModel, ConfigDict, Field
 from common.auth import bearer_guard
 from common.identity import Identity
 from common.jsonlog import request_id_var
+from common.state import load_state, save_state, state_dir
 
 REQUEST_ID = re.compile(r"^[0-9a-f]{32}$")
 BASE_LATENCY_SECONDS = (0.02, 0.06)
 MAX_DELAY_MS = 10_000
 
-log_access = logging.getLogger("chaosshop.access")
-log_admin = logging.getLogger("chaosshop.admin")
+log_access = logging.getLogger("shop.access")
+log_admin = logging.getLogger("shop.admin")
 
 
 class ChargeIn(BaseModel):
@@ -46,8 +48,12 @@ def create_app(
     chaos_token: str,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     rng: random.Random | None = None,
+    state_file: Path | None = None,
 ) -> FastAPI:
-    state = {"delay_ms": 0}
+    # The delay survives a restart of cs-payments (ADR-19); chaos reset sets it to 0.
+    state_path = state_file or state_dir() / "payments.json"
+    saved = load_state(state_path).get("delay_ms", 0)
+    state = {"delay_ms": saved if isinstance(saved, int) and 0 <= saved <= MAX_DELAY_MS else 0}
     jitter = rng or random.Random()
     chaos = Depends(bearer_guard(chaos_token))
     app = FastAPI(
@@ -102,6 +108,7 @@ def create_app(
     @app.put("/internal/delay", dependencies=[chaos])
     async def set_delay(body: DelayIn) -> dict[str, int]:
         state["delay_ms"] = body.delay_ms
+        save_state(state_path, {"delay_ms": body.delay_ms})
         # DEBUG (off by default): operator changes are not part of the provider's log.
         log_admin.debug("extra delay set to %d ms", body.delay_ms)
         return {"delay_ms": body.delay_ms}

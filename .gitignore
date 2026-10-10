@@ -35,6 +35,11 @@ mobile/android/local.properties
 mobile/android/app/debug/
 mobile/android/app/profile/
 mobile/android/app/release/
+# Contract fixtures copied by mobile/tool/sync_fixtures.dart (contracts/ is the source)
+mobile/assets/fixtures/**/*.json
+
+# --- Local run logs (results go to docs/checks/) ---
+verify-*.log
 
 # --- Editors and OS ---
 .idea/

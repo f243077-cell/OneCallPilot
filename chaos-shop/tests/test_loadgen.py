@@ -4,15 +4,18 @@ import asyncio
 import json
 import random
 from collections import Counter
+from pathlib import Path
 
 import httpx
 import pytest
+import yaml
 from fastapi.testclient import TestClient
 
 from common.identity import Identity
 from loadgen.app import create_app
 from loadgen.traffic import MIX, RateSchedule, TrafficGenerator, choose
 
+TESTBED = Path(__file__).resolve().parents[2] / "infrastructure" / "compose" / "testbed.yml"
 TOKEN = "l" * 32
 AUTH = {"Authorization": f"Bearer {TOKEN}"}
 ALLOWED = {
@@ -80,7 +83,8 @@ def test_generated_requests_use_only_store_routes() -> None:
     assert generator.counters.errors == 0
 
 
-def test_run_loop_sends_at_the_scheduled_rate() -> None:
+def simulate(schedule: RateSchedule, seconds: float, spike_at: float | None = None) -> list[float]:
+    """Run the traffic loop on a fake clock; returns the time each request was sent."""
     now = [0.0]
     sent: list[float] = []
 
@@ -92,28 +96,61 @@ def test_run_loop_sends_at_the_scheduled_rate() -> None:
         client = httpx.AsyncClient(transport=httpx.MockTransport(handler), base_url="http://target")
         generator: TrafficGenerator
 
-        async def sleep(seconds: float) -> None:
-            now[0] += seconds
+        async def sleep(duration: float) -> None:
+            now[0] += duration
             await asyncio.sleep(0)
-            if now[0] >= 60:
+            if spike_at is not None and now[0] >= spike_at:
+                schedule.set_mode("spike", spike_at)
+            if now[0] >= seconds:
                 generator.stop()
 
         generator = TrafficGenerator(
-            client,
-            RateSchedule(5, 40, 30),
-            rng=random.Random(1),
-            clock=lambda: now[0],
-            sleep=sleep,
+            client, schedule, rng=random.Random(1), clock=lambda: now[0], sleep=sleep
         )
         await generator.run()
         await asyncio.sleep(0.01)
         await client.aclose()
 
     asyncio.run(scenario())
+    return sent
+
+
+def test_run_loop_sends_at_the_scheduled_rate() -> None:
+    sent = simulate(RateSchedule(5, 40, 30), 60)
     assert len(sent) == pytest.approx(300, abs=2)  # 5 rps for 60 s
 
 
-def test_control_api_needs_the_chaos_token() -> None:
+def compose_schedule() -> RateSchedule:
+    """The rates cs-loadgen runs with on the testbed (infrastructure/compose/testbed.yml)."""
+    env = yaml.safe_load(TESTBED.read_text(encoding="utf-8"))["services"]["cs-loadgen"][
+        "environment"
+    ]
+    return RateSchedule(
+        baseline_rps=float(env["CS_LOADGEN_BASELINE_RPS"]),
+        spike_rps=float(env["CS_LOADGEN_SPIKE_RPS"]),
+        ramp_seconds=float(env["CS_LOADGEN_RAMP_SECONDS"]),
+    )
+
+
+def test_testbed_baseline_is_5_rps_within_1() -> None:
+    """TB-005 acceptance: 5 ± 1 rps at baseline, over the one-minute window of a rate()."""
+    sent = simulate(compose_schedule(), 120)
+    per_minute = [sum(1 for t in sent if start <= t < start + 60) / 60 for start in (0, 60)]
+    assert all(4 <= rate <= 6 for rate in per_minute), per_minute
+
+
+def test_testbed_spike_is_the_calibrated_rate() -> None:
+    """A1.4: 100 rps saturates one api slot (cpus 0.5) and three carry it; see
+    docs/checks/week-1.md. cs-loadgen tops out near 100 rps at cpus 1.0."""
+    schedule = compose_schedule()
+    assert (schedule.spike_rps, schedule.ramp_seconds) == (100, 30)
+    sent = simulate(schedule, 120, spike_at=30)
+    held = sum(1 for t in sent if 90 <= t < 120) / 30  # after the 30 s ramp
+    assert held == pytest.approx(100, abs=2)
+
+
+def test_control_api_needs_the_chaos_token(tmp_path: Path) -> None:
+    state_file = tmp_path / "loadgen.json"
     client = httpx.AsyncClient(base_url="http://target")
     generator = TrafficGenerator(client, RateSchedule(5, 40, 30))
     app = create_app(
@@ -122,6 +159,7 @@ def test_control_api_needs_the_chaos_token() -> None:
         client,
         chaos_token=TOKEN,
         start_traffic=False,
+        state_file=state_file,
     )
     with TestClient(app) as control:
         assert control.get("/healthz").status_code == 200

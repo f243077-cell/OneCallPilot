@@ -8,6 +8,7 @@ from prometheus_client.parser import text_string_to_metric_families
 
 from api.app import create_app
 from api.deps import Deps
+from api.faults import Faults
 from api.metrics import ApiMetrics
 from tests.conftest import ADMIN_TOKEN, API_IDENTITY, ApiHarness
 from tests.fakes import FakeCache, FakePayments, FakeStore, store_unavailable
@@ -24,7 +25,7 @@ def sample_value(api: ApiHarness, name: str, **labels: str) -> float:
 
 def access_lines(api: ApiHarness) -> list[dict[str, Any]]:
     records = [json.loads(line) for line in api.logs.lines]
-    return [r for r in records if r["logger"] == "chaosshop.access"]
+    return [r for r in records if r["logger"] == "shop.access"]
 
 
 def new_cart(api: ApiHarness) -> str:
@@ -56,7 +57,7 @@ def test_products_fall_back_to_database_when_cache_is_down(api: ApiHarness) -> N
     assert response.status_code == 200
     assert sample_value(api, "cache_operations_total", cache="catalog", result="error") == 1
     errors = [json.loads(line) for line in api.logs.lines if '"level":"ERROR"' in line]
-    assert errors and errors[0]["logger"] == "chaosshop.catalog"
+    assert errors and errors[0]["logger"] == "shop.catalog"
     assert errors[0]["exc_type"] == "CacheUnavailable"
     assert errors[0]["route"] == "/products"
 
@@ -188,6 +189,8 @@ def test_internal_endpoints_refuse_without_a_configured_token() -> None:
         Deps(FakeStore(), FakeCache(), FakePayments()),
         metrics,
         runner_admin_token="",
+        chaos_token="",
+        faults=Faults(),
     )
     with TestClient(app) as client:
         response = client.get("/internal/cache/stats", headers={"Authorization": "Bearer "})

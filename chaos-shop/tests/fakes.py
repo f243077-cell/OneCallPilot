@@ -60,13 +60,9 @@ class FakeStore:
         self._op()
         return self.carts.get(cart_id)
 
-    async def create_order(self, cart_id: UUID) -> Order | None:
+    async def create_order(self, cart_id: UUID, total_cents: int) -> Order:
         self._op()
-        lines = self.carts.get(cart_id)
-        if not lines:
-            return None
-        total = sum(line.quantity * line.price_cents for line in lines)
-        order = Order(uuid4(), cart_id, total, "pending", "2026-10-09T10:00:00.000Z")
+        order = Order(uuid4(), cart_id, total_cents, "pending", "2026-10-09T10:00:00.000Z")
         self.orders[order.id] = order
         return order
 

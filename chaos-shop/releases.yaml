@@ -1,20 +1,96 @@
-# Chaos Shop releases (architecture §11.1, C6 deploy ledger, C7 telemetry).
+# Chaos Shop releases and seeded deploy history (architecture §11, C6 deploy ledger,
+# C7 telemetry).
 #
-# One entry per release that has an image. The images read their own entry at
-# start-up, so `app_info{commit}` (C7) is the first 12 characters of
-# `commit_sha`, the same value the deploy ledger records for that release.
-# Task A1.2 adds releases 1.5.0 and 2.2.0; task A1.3 adds the seeded deploy
-# history that `chaos reset` writes to the ledger.
+# releases: one entry per release that has an image and slot containers
+#   (infrastructure/compose/testbed.yml). The images read their own entry at
+#   start-up, so `app_info{commit}` (C7) is the first 12 characters of
+#   `commit_sha`, the same value the deploy ledger records for that release.
+#   `config` is the release's non-secret slot configuration; the ledger's
+#   `config_hash` is SHA-256 over it as compact JSON with sorted keys, and a test
+#   checks that testbed.yml runs each slot with exactly this configuration.
+# baseline: the release each service runs after `chaos reset`.
+# history: the seeded deploy history that `chaos reset` writes to the ledger
+#   before its `kind=reset` records. Each entry gives every C6 field except
+#   `deploy_id` (generated), `kind` (= deploy) and `deployed_by` (= setup).
+#   Older releases have no slots, so the runner can never roll back to them.
 #
-# Neutral naming (TB-010): release numbers and commit messages are visible to
-# the agent. They must never name a fault or the tool that injects one.
+# Commit SHAs are 40-character lower-case hex. The release history is simulated,
+# so they do not point at commits in this repository.
+#
+# Neutral naming (TB-010): release numbers, commit messages and reasons are
+# visible to the agent. They must never name a fault or the tool that injects one.
 
 releases:
   api:
     "1.4.0":
       commit_sha: "606c2674b8e32ec226c88019db05b426594a08f6"
       commit_message: "cart: cache price lookups"
+      config:
+        CS_PAYMENTS_URL: "http://cs-payments:8002"
+    "1.5.0":
+      commit_sha: "e56a282e7523212fea82c73f9157b41d5ba1743b"
+      commit_message: "checkout: compute totals with new pricing rounding"
+      config:
+        CS_PAYMENTS_URL: "http://cs-payments:8002"
   worker:
     "2.1.0":
       commit_sha: "69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45"
       commit_message: "jobs: batch receipt emails"
+      config:
+        QUEUE_BATCH_SIZE: "10"
+    "2.2.0":
+      commit_sha: "16cbd593f8ac567df18cb3d2a3b884c3dc7b455b"
+      commit_message: "jobs: read queue batch size from deploy config"
+      config:
+        QUEUE_BATCH_SIZE: "250"
+
+baseline:
+  api: "1.4.0"
+  worker: "2.1.0"
+
+history:
+  - service: api
+    release: "1.2.0"
+    commit_sha: "ad7fe550f520d3422c3b0876a964f60973a88e9e"
+    commit_message: "orders: add pagination to order history"
+    image_tag: "chaos-shop/api:1.2.0"
+    config_hash: "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324"
+    replicas: 1
+    deployed_at: "2026-09-14T10:20:00Z"
+    reason: "scheduled release"
+  - service: worker
+    release: "2.0.0"
+    commit_sha: "10a2829e09250668d2ef5d99256c74a95564fee3"
+    commit_message: "jobs: move receipts to the job queue"
+    image_tag: "chaos-shop/worker:2.0.0"
+    config_hash: "d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb"
+    replicas: 1
+    deployed_at: "2026-09-21T13:05:00Z"
+    reason: "scheduled release"
+  - service: api
+    release: "1.3.0"
+    commit_sha: "3e0cc25e2fbaaca6def8ac985a3dee8d0e161ce5"
+    commit_message: "catalog: paginate product listing"
+    image_tag: "chaos-shop/api:1.3.0"
+    config_hash: "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324"
+    replicas: 1
+    deployed_at: "2026-09-28T09:40:00Z"
+    reason: "scheduled release"
+  - service: worker
+    release: "2.1.0"
+    commit_sha: "69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45"
+    commit_message: "jobs: batch receipt emails"
+    image_tag: "chaos-shop/worker:2.1.0"
+    config_hash: "d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb"
+    replicas: 1
+    deployed_at: "2026-10-01T14:40:00Z"
+    reason: "scheduled release"
+  - service: api
+    release: "1.4.0"
+    commit_sha: "606c2674b8e32ec226c88019db05b426594a08f6"
+    commit_message: "cart: cache price lookups"
+    image_tag: "chaos-shop/api:1.4.0"
+    config_hash: "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324"
+    replicas: 1
+    deployed_at: "2026-10-05T09:05:00Z"
+    reason: "scheduled release"

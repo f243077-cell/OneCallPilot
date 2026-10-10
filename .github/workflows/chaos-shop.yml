@@ -1,6 +1,7 @@
-# Chaos Shop checks (TB-001, TB-003, TB-004, TB-005, TEST-012): lint, type-check
-# and unit-test chaos-shop/, including the C7 metric and log contract tests, then
-# check that the testbed Compose file is valid and its images build.
+# Chaos Shop checks (TB-001..TB-010, TEST-012): lint, type-check and unit-test
+# chaos-shop/ (C7 metric and log contract tests, fault behaviour) and the chaos
+# CLI in chaos-shop/cli/ (ledger validity, TB-010 naming grep, inject and reset
+# logic), then check that the testbed Compose file is valid and its images build.
 # The live checks (tests/live, `pytest -m live`) need the running testbed and
 # run on the integration host only.
 #
@@ -53,10 +54,43 @@ jobs:
       - name: Pytest (unit and contract tests)
         run: uv run pytest -q
 
+      - name: chaos CLI - install (locked)
+        working-directory: chaos-shop/cli
+        run: uv sync --locked
+
+      - name: chaos CLI - ruff, mypy, pytest
+        working-directory: chaos-shop/cli
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy
+          uv run pytest -q
+
+      # tools/ocp is the testbed's operator CLI (S1.1); its unit tests use a fake Docker.
+      - name: ocp CLI - ruff, mypy, pytest (locked)
+        working-directory: tools/ocp
+        run: |
+          uv sync --locked
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy
+          uv run pytest -q
+
       - name: Compose file is valid (dummy values from .env.example)
         working-directory: .
-        run: docker compose --env-file .env.example --profile testbed config --quiet
+        run: >-
+          docker compose --env-file .env.example
+          --profile testbed --profile testbed-slots config --quiet
 
-      - name: Images build
+      - name: cs-lb nginx config is valid
         working-directory: .
-        run: docker compose --env-file .env.example --profile testbed build
+        run: >-
+          docker run --rm --entrypoint nginx
+          -v "$PWD/chaos-shop/lb/nginx.conf:/etc/nginx/nginx.conf:ro"
+          nginx:1.30.5-alpine -t
+
+      - name: Images build (every release)
+        working-directory: .
+        run: >-
+          docker compose --env-file .env.example
+          --profile testbed --profile testbed-slots build

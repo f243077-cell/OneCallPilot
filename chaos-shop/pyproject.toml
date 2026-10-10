@@ -28,8 +28,10 @@ package = false
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-# Tests marked `live` need the running testbed and run only through
-# tests/run_live_checks.sh. A later `-m live` overrides this.
+# cli/ is its own uv project with its own tests.
+testpaths = ["tests"]
+# Tests marked `live` need the running testbed and run only on the integration
+# host (`uv run pytest -m live`). A later `-m live` overrides this.
 addopts = "-m 'not live'"
 markers = [
     "live: runs against the running testbed containers (TB-003, TB-004, TB-005)",

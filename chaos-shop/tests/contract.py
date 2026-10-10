@@ -109,6 +109,8 @@ def metric_problems(
 # --- Logs (contracts/telemetry.md §3) ---
 
 LEVELS = frozenset({"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"})
+# TB-010: agent-visible fields such as `logger` never name a fault or the injector.
+BANNED_WORDS = re.compile(r"bad|leak|broken|chaos|fault|inject", re.IGNORECASE)
 TS = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
 REQUEST_ID = re.compile(r"^[0-9a-f]{32}$")
 ALWAYS: dict[str, type] = {
@@ -128,8 +130,9 @@ def log_problems(line: str, base: dict[str, str] | None = None) -> list[str]:
     """Every contract problem in one log line; an empty list means it conforms.
 
     Request lines (lines with ``status``) need ``request_id``, ``status`` and
-    ``duration_ms``, and ``route`` from the C7 route values, except on
-    cs-payments, whose request lines carry no ``route``.
+    ``duration_ms``. Only cs-api request lines need ``route`` (C7 route values):
+    cs-lb lines have none by contract (C7 §3.3), and cs-payments lines have none
+    (accepted deviation, docs/checks/week-1.md).
     """
     problems: list[str] = []
     if len(line.encode("utf-8")) + 1 > MAX_LINE_BYTES:
@@ -152,6 +155,8 @@ def log_problems(line: str, base: dict[str, str] | None = None) -> list[str]:
         problems.append(f"ts {record['ts']!r} is not RFC 3339 UTC with milliseconds")
     if record.get("level") not in LEVELS:
         problems.append(f"level {record.get('level')!r}")
+    if isinstance(record.get("logger"), str) and BANNED_WORDS.search(record["logger"]):
+        problems.append(f"logger {record['logger']!r} is not neutral (TB-010)")
     for key, value in (base or {}).items():
         if record.get(key) != value:
             problems.append(f"{key}={record.get(key)!r}, expected {value!r}")
@@ -164,7 +169,7 @@ def log_problems(line: str, base: dict[str, str] | None = None) -> list[str]:
             record["request_id"]
         ):
             problems.append("request_id missing or not 32 lower-case hex")
-        if record.get("service") != "payments" and record.get("route") not in LABEL_VALUES["route"]:
+        if record.get("service") == "api" and record.get("route") not in LABEL_VALUES["route"]:
             problems.append(f"route {record.get('route')!r}")
     if "route" in record and record["route"] not in LABEL_VALUES["route"]:
         problems.append(f"route {record['route']!r}")

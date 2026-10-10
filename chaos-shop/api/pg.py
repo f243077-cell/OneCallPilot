@@ -16,6 +16,7 @@ from uuid import UUID, uuid4
 import asyncpg
 
 from api.deps import CartLine, Order, Product, StoreUnavailable
+from api.faults import SLOW_QUERY_SECONDS, Faults
 from api.metrics import ApiMetrics
 
 DB_ERRORS = (OSError, TimeoutError, asyncpg.PostgresError, asyncpg.InterfaceError)
@@ -44,6 +45,7 @@ class PgStore:
         self,
         dsn: str,
         metrics: ApiMetrics,
+        faults: Faults,
         *,
         max_size: int = 5,
         acquire_timeout: float = 5.0,
@@ -52,6 +54,7 @@ class PgStore:
     ) -> None:
         self._dsn = dsn
         self._metrics = metrics
+        self._faults = faults
         self._max_size = max_size
         self._acquire_timeout = acquire_timeout
         self._command_timeout = command_timeout
@@ -150,23 +153,17 @@ class PgStore:
             )
         return [CartLine(r["product_id"], r["quantity"], r["price_cents"]) for r in rows]
 
-    async def create_order(self, cart_id: UUID) -> Order | None:
+    async def create_order(self, cart_id: UUID, total_cents: int) -> Order:
         async with self._connection() as conn, conn.transaction():
-            total = await conn.fetchval(
-                "SELECT sum(ci.quantity * p.price_cents)"
-                " FROM cart_items ci JOIN products p ON p.id = ci.product_id"
-                " WHERE ci.cart_id = $1",
-                cart_id,
-            )
-            if total is None:
-                return None
+            if self._faults.slow_checkout_queries:
+                await conn.execute("SELECT pg_sleep($1)", float(SLOW_QUERY_SECONDS))
             row = await conn.fetchrow(
                 "INSERT INTO orders (id, cart_id, total_cents, status)"
                 " VALUES ($1, $2, $3, 'pending')"
                 " RETURNING id, cart_id, total_cents, status, created_at",
                 uuid4(),
                 cart_id,
-                int(total),
+                total_cents,
             )
         return _order(row)
 

@@ -1,11 +1,15 @@
-# CI skeleton (phases.md S0.3, TEST-012). Placeholder job that always passes;
-# the owner replaces the step with real checks in the task that adds code.
+# Runner checks (TEST-012, CLAUDE.md §4.4): ruff, mypy --strict and the unit
+# tests of runner/, and the runner image builds. Covers runner/ and
+# infrastructure/compose/runner.yml.
 #
-# Path filtering (TEST-012): this workflow covers runner/, infrastructure/compose/runner.yml.
 # The trigger is deliberately NOT path-filtered, because a required check
-# that never reports blocks merges. When real steps arrive, filter inside
-# the job (skip expensive steps when no covered path changed) and keep the
-# job name stable, since branch protection requires it by name.
+# that never reports blocks merges. Keep the job name stable, since branch
+# protection requires it by name.
+#
+# Not here: the proxy security test (TEST-015) and the live runner test need
+# Docker on the integration host (runner/tests/security/run_proxy_test.sh,
+# `uv run pytest -m live`). The shared signing-vector tests run once the vector
+# is in contracts/fixtures/signing/ on this branch; until then they skip.
 name: runner
 
 on:
@@ -25,7 +29,32 @@ jobs:
   runner:
     name: runner
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: runner
     steps:
-      - name: Placeholder
-        run: echo "runner - no checks yet (CI skeleton, S0.3)"
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pipx install uv==0.12.7
+
+      - name: Install dependencies (locked)
+        run: uv sync --locked
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Mypy (strict)
+        run: uv run mypy
+
+      - name: Pytest (unit tests, fake Redis)
+        run: uv run pytest -q
+
+      - name: Runner image builds
+        working-directory: .
+        run: docker build --build-context contracts=contracts -t oncallpilot/runner:ci runner

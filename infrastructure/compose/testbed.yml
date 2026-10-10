@@ -1,13 +1,18 @@
 # Owner: Tanzeel. Chaos Shop testbed (architecture §11, contracts/telemetry.md C7).
 #
-# Task A1.1: the baseline set of containers. Task A1.2 adds cs-lb, the other
-# api and worker slots (all created but stopped), and releases 1.5.0 and 2.2.0.
+# Profiles:
+# - `testbed`: the baseline (architecture §11.1): cs-postgres, cs-redis,
+#   cs-payments, cs-lb, cs-api-140-1, cs-worker-210, cs-loadgen.
+# - `testbed-slots`: every other slot (ADR-04, TB-002): cs-api-140-2..5,
+#   cs-api-150-1..5, cs-worker-220. They are created but never started by
+#   Compose; the runner and the chaos CLI start and stop them by name:
+#     docker compose --profile testbed-slots create
 #
 # Rules:
 # - Every managed container carries the five oncallpilot.* labels (C7 §1).
 #   cs-loadgen carries none: it plays the customers.
 # - Neutral naming (TB-010): no container name, label or release names a fault.
-# - Nothing is published on the host (architecture §3).
+# - Only cs-lb is published, on 127.0.0.1:8080 for debugging (architecture §3).
 # - Memory limits keep the testbed small on the 16 GB integration host.
 # - Secrets come from the git-ignored root .env (see .env.example).
 
@@ -16,6 +21,59 @@ x-python-healthcheck: &python-healthcheck
   timeout: 3s
   retries: 3
   start_period: 20s
+  # Checked every 2 s while starting, so a slot reports healthy soon after its
+  # app listens (inject and reset wait for it).
+  start_interval: 2s
+
+x-store-env: &store-env
+  CS_DATABASE_URL: postgresql://shop:${CS_POSTGRES_PASSWORD:?set CS_POSTGRES_PASSWORD in .env}@cs-postgres:5432/shop
+  CS_REDIS_URL: redis://:${CS_REDIS_PASSWORD:?set CS_REDIS_PASSWORD in .env}@cs-redis:6379/0
+
+x-store-env-chaos: &store-env-chaos
+  <<: *store-env
+  CHAOS_TOKEN: ${CHAOS_TOKEN:?set CHAOS_TOKEN in .env}
+
+# Non-secret release configuration must equal `config` in chaos-shop/releases.yaml
+# (the ledger's config_hash is computed from it; a test checks they agree).
+x-api-env: &api-env
+  <<: *store-env-chaos
+  CS_PAYMENTS_URL: http://cs-payments:8002
+  RUNNER_ADMIN_TOKEN: ${RUNNER_ADMIN_TOKEN:?set RUNNER_ADMIN_TOKEN in .env}
+
+x-worker-env: &worker-env
+  <<: *store-env-chaos
+
+x-managed-labels: &managed-labels
+  oncallpilot.managed: "true"
+  oncallpilot.logs: "true"
+
+# Every api slot: alias api-upstream (C7 §1), cpus 0.5 so the traffic spike
+# saturates one replica reproducibly (architecture §12.4). No restart policy:
+# only the runner and the chaos CLI start or stop api slots.
+x-api-slot: &api-slot
+  networks:
+    chaos_net:
+      aliases: [api-upstream]
+  cpus: 0.5
+  mem_limit: 256m
+  healthcheck:
+    <<: *python-healthcheck
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2)"]
+
+# Every worker slot: alias worker-upstream, restarted on failure (architecture §11.1).
+# No swap (memswap_limit = mem_limit): growing memory ends in an OOM kill and a
+# restart, as scenario 1 needs, instead of slowly paging out.
+x-worker-slot: &worker-slot
+  networks:
+    chaos_net:
+      aliases: [worker-upstream]
+  cpus: 0.5
+  mem_limit: 256m
+  memswap_limit: 256m
+  restart: on-failure
+  healthcheck:
+    <<: *python-healthcheck
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/healthz', timeout=2)"]
 
 services:
   cs-postgres:
@@ -23,15 +81,15 @@ services:
     container_name: cs-postgres
     profiles: [testbed]
     labels:
-      oncallpilot.managed: "true"
+      <<: *managed-labels
       oncallpilot.service: postgres
       oncallpilot.release: "17.11"
       oncallpilot.replica: "1"
-      oncallpilot.logs: "true"
     environment:
       POSTGRES_USER: shop
       POSTGRES_DB: shop
       POSTGRES_PASSWORD: ${CS_POSTGRES_PASSWORD:?set CS_POSTGRES_PASSWORD in .env}
+    # 10 api slots x 5 pool connections + 2 worker slots x 2, plus headroom.
     command: ["postgres", "-c", "max_connections=80", "-c", "shared_buffers=32MB"]
     volumes:
       - cs_postgres_data:/var/lib/postgresql/data
@@ -52,11 +110,10 @@ services:
     container_name: cs-redis
     profiles: [testbed]
     labels:
-      oncallpilot.managed: "true"
+      <<: *managed-labels
       oncallpilot.service: redis
       oncallpilot.release: "7.4.11"
       oncallpilot.replica: "1"
-      oncallpilot.logs: "true"
     environment:
       # redis-cli reads REDISCLI_AUTH; the server takes the same value, so the
       # password never appears in the container command line.
@@ -87,23 +144,56 @@ services:
     container_name: cs-payments
     profiles: [testbed]
     labels:
-      oncallpilot.managed: "true"
+      <<: *managed-labels
       oncallpilot.service: payments
       oncallpilot.release: "1.0.0"
       oncallpilot.replica: "1"
-      oncallpilot.logs: "true"
     environment:
       CS_INSTANCE: cs-payments
       CHAOS_TOKEN: ${CHAOS_TOKEN:?set CHAOS_TOKEN in .env}
     networks: [chaos_net]
-    mem_limit: 128m
+    mem_limit: 96m
     cpus: 0.5
     restart: unless-stopped
     healthcheck:
       <<: *python-healthcheck
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/healthz', timeout=2)"]
 
+  cs-lb:
+    image: nginx:1.30.5-alpine
+    container_name: cs-lb
+    profiles: [testbed]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: lb
+      oncallpilot.release: "1.30.5"
+      oncallpilot.replica: "1"
+    # Run nginx directly: the image's entrypoint scripts would edit files and
+    # print plain-text lines.
+    entrypoint: ["nginx", "-g", "daemon off;"]
+    volumes:
+      - ../../chaos-shop/lb/nginx.conf:/etc/nginx/nginx.conf:ro
+    read_only: true
+    tmpfs: [/tmp]
+    networks: [chaos_net]
+    # Debugging only, never on the LAN (architecture §3).
+    ports:
+      - "127.0.0.1:8080:80"
+    mem_limit: 32m
+    cpus: 0.5
+    restart: unless-stopped
+    # cs-lb starts without any api slot and answers 502 until one runs (S0.7b).
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # --- api slots: release 1.4.0 (baseline) ---
+
   cs-api-140-1:
+    <<: *api-slot
     image: chaos-shop/api:1.4.0
     build:
       context: ../../chaos-shop
@@ -113,32 +203,155 @@ services:
     container_name: cs-api-140-1
     profiles: [testbed]
     labels:
-      oncallpilot.managed: "true"
+      <<: *managed-labels
       oncallpilot.service: api
       oncallpilot.release: "1.4.0"
       oncallpilot.replica: "1"
-      oncallpilot.logs: "true"
     environment:
+      <<: *api-env
       CS_INSTANCE: cs-api-140-1
-      CS_DATABASE_URL: postgresql://shop:${CS_POSTGRES_PASSWORD:?set CS_POSTGRES_PASSWORD in .env}@cs-postgres:5432/shop
-      CS_REDIS_URL: redis://:${CS_REDIS_PASSWORD:?set CS_REDIS_PASSWORD in .env}@cs-redis:6379/0
-      CS_PAYMENTS_URL: http://cs-payments:8002
-      RUNNER_ADMIN_TOKEN: ${RUNNER_ADMIN_TOKEN:?set RUNNER_ADMIN_TOKEN in .env}
-    networks:
-      chaos_net:
-        aliases: [api-upstream]
-    # cpus 0.5 makes the traffic-spike saturation reproducible (architecture §12.4).
-    cpus: 0.5
-    mem_limit: 256m
     depends_on:
       cs-postgres: {condition: service_healthy}
       cs-redis: {condition: service_healthy}
       cs-payments: {condition: service_healthy}
-    healthcheck:
-      <<: *python-healthcheck
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2)"]
+
+  cs-api-140-2:
+    <<: *api-slot
+    image: chaos-shop/api:1.4.0
+    container_name: cs-api-140-2
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: api
+      oncallpilot.release: "1.4.0"
+      oncallpilot.replica: "2"
+    environment:
+      <<: *api-env
+      CS_INSTANCE: cs-api-140-2
+
+  cs-api-140-3:
+    <<: *api-slot
+    image: chaos-shop/api:1.4.0
+    container_name: cs-api-140-3
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: api
+      oncallpilot.release: "1.4.0"
+      oncallpilot.replica: "3"
+    environment:
+      <<: *api-env
+      CS_INSTANCE: cs-api-140-3
+
+  cs-api-140-4:
+    <<: *api-slot
+    image: chaos-shop/api:1.4.0
+    container_name: cs-api-140-4
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: api
+      oncallpilot.release: "1.4.0"
+      oncallpilot.replica: "4"
+    environment:
+      <<: *api-env
+      CS_INSTANCE: cs-api-140-4
+
+  cs-api-140-5:
+    <<: *api-slot
+    image: chaos-shop/api:1.4.0
+    container_name: cs-api-140-5
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: api
+      oncallpilot.release: "1.4.0"
+      oncallpilot.replica: "5"
+    environment:
+      <<: *api-env
+      CS_INSTANCE: cs-api-140-5
+
+  # --- api slots: release 1.5.0 ---
+
+  cs-api-150-1:
+    <<: *api-slot
+    image: chaos-shop/api:1.5.0
+    build:
+      context: ../../chaos-shop
+      target: api
+      args:
+        CS_RELEASE: "1.5.0"
+    container_name: cs-api-150-1
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: api
+      oncallpilot.release: "1.5.0"
+      oncallpilot.replica: "1"
+    environment:
+      <<: *api-env
+      CS_INSTANCE: cs-api-150-1
+
+  cs-api-150-2:
+    <<: *api-slot
+    image: chaos-shop/api:1.5.0
+    container_name: cs-api-150-2
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: api
+      oncallpilot.release: "1.5.0"
+      oncallpilot.replica: "2"
+    environment:
+      <<: *api-env
+      CS_INSTANCE: cs-api-150-2
+
+  cs-api-150-3:
+    <<: *api-slot
+    image: chaos-shop/api:1.5.0
+    container_name: cs-api-150-3
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: api
+      oncallpilot.release: "1.5.0"
+      oncallpilot.replica: "3"
+    environment:
+      <<: *api-env
+      CS_INSTANCE: cs-api-150-3
+
+  cs-api-150-4:
+    <<: *api-slot
+    image: chaos-shop/api:1.5.0
+    container_name: cs-api-150-4
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: api
+      oncallpilot.release: "1.5.0"
+      oncallpilot.replica: "4"
+    environment:
+      <<: *api-env
+      CS_INSTANCE: cs-api-150-4
+
+  cs-api-150-5:
+    <<: *api-slot
+    image: chaos-shop/api:1.5.0
+    container_name: cs-api-150-5
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: api
+      oncallpilot.release: "1.5.0"
+      oncallpilot.replica: "5"
+    environment:
+      <<: *api-env
+      CS_INSTANCE: cs-api-150-5
+
+  # --- worker slots ---
 
   cs-worker-210:
+    <<: *worker-slot
     image: chaos-shop/worker:2.1.0
     build:
       context: ../../chaos-shop
@@ -148,28 +361,39 @@ services:
     container_name: cs-worker-210
     profiles: [testbed]
     labels:
-      oncallpilot.managed: "true"
+      <<: *managed-labels
       oncallpilot.service: worker
       oncallpilot.release: "2.1.0"
       oncallpilot.replica: "1"
-      oncallpilot.logs: "true"
     environment:
+      <<: *worker-env
       CS_INSTANCE: cs-worker-210
-      CS_DATABASE_URL: postgresql://shop:${CS_POSTGRES_PASSWORD:?set CS_POSTGRES_PASSWORD in .env}@cs-postgres:5432/shop
-      CS_REDIS_URL: redis://:${CS_REDIS_PASSWORD:?set CS_REDIS_PASSWORD in .env}@cs-redis:6379/0
       QUEUE_BATCH_SIZE: "10"
-    networks:
-      chaos_net:
-        aliases: [worker-upstream]
-    cpus: 0.5
-    mem_limit: 256m
-    restart: on-failure
     depends_on:
       cs-postgres: {condition: service_healthy}
       cs-redis: {condition: service_healthy}
-    healthcheck:
-      <<: *python-healthcheck
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/healthz', timeout=2)"]
+
+  cs-worker-220:
+    <<: *worker-slot
+    image: chaos-shop/worker:2.2.0
+    build:
+      context: ../../chaos-shop
+      target: worker
+      args:
+        CS_RELEASE: "2.2.0"
+    container_name: cs-worker-220
+    profiles: [testbed-slots]
+    labels:
+      <<: *managed-labels
+      oncallpilot.service: worker
+      oncallpilot.release: "2.2.0"
+      oncallpilot.replica: "1"
+    environment:
+      <<: *worker-env
+      CS_INSTANCE: cs-worker-220
+      # Release 2.2.0 ships a batch size above the worker's limit of 100: the
+      # worker refuses to start and restarts in a loop (scenario 6).
+      QUEUE_BATCH_SIZE: "250"
 
   cs-loadgen:
     image: chaos-shop/loadgen:1.0.0
@@ -184,17 +408,20 @@ services:
     environment:
       CS_INSTANCE: cs-loadgen
       CHAOS_TOKEN: ${CHAOS_TOKEN:?set CHAOS_TOKEN in .env}
-      # A1.2 switches this to cs-lb once the load balancer exists.
-      CS_LOADGEN_TARGET_URL: http://api-upstream:8000
+      CS_LOADGEN_TARGET_URL: http://cs-lb
       CS_LOADGEN_BASELINE_RPS: "5"
-      # Placeholder until task A1.4 calibrates it on the integration host.
-      CS_LOADGEN_SPIKE_RPS: "40"
+      # Scenario 5, calibrated in A1.4 on the integration host (docs/checks/week-1.md):
+      # one api slot (cpus 0.5) serves about 75-90 rps of this mix, so 100 rps
+      # saturates it, and three slots carry it at about a third of their capacity.
+      # cs-loadgen itself tops out near 100 rps at cpus 1.0; do not raise it further.
+      CS_LOADGEN_SPIKE_RPS: "100"
       CS_LOADGEN_RAMP_SECONDS: "30"
     networks: [chaos_net]
     cpus: 1.0
     mem_limit: 128m
     restart: unless-stopped
     depends_on:
+      cs-lb: {condition: service_healthy}
       cs-api-140-1: {condition: service_healthy}
     healthcheck:
       <<: *python-healthcheck
@@ -206,3 +433,6 @@ volumes:
 networks:
   chaos_net:
     # Members: cs-*, and later prometheus, backend-worker and runner (architecture §3).
+    # Other files included by compose.yaml join it by using `chaos_net` and, if
+    # they declare it, with a plain `chaos_net: {}`. Not `external: true`: inside
+    # one project that stops Compose from creating it (docs/checks/week-1.md).
