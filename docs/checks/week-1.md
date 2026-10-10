@@ -39,7 +39,7 @@
 | A1.3 chaos CLI, seeded ledger, 8 faults | done (on `tanzeel`); scenario 5 completed in A1.4 | 2026-10-09 | Below |
 | A1.4 traffic spike calibrated: 1 replica saturates, 3 recover | done (on `tanzeel`) | 2026-10-09 | Below |
 | A1.5 Flutter skeleton: env config, go_router, theme, login, secure session, `MockIncidentRepository` | done (on `tanzeel`); device checks open | 2026-10-10 | Below |
-| A1.6 Incident Feed and Incident Detail (hypotheses, `E#` chips, evidence cards with fl_chart) in mock mode | done (on `tanzeel`); phone check open | 2026-10-10 | Below |
+| A1.6 Incident Feed and Incident Detail (hypotheses, `E#` chips, evidence cards with fl_chart) in mock mode | done (on `tanzeel`); checked on the phone | 2026-10-10 | Below |
 
 ### A1.1 — Chaos Shop baseline services
 
@@ -359,7 +359,11 @@ Two observations, both accepted as they are (ruling of 2026-10-10):
   - For each timeline's final incident, every evidence card renders its variant (never the fallback), every metric item draws a chart, and every cited `E#` chip scrolls its card into view.
   - The fixtures contain all six evidence kinds. None has `suspicious_content: true` or a dropped hypothesis, so those use the tests' own incident; the suspicious chip (MOB-019) is task A3.5.
 
-**Debug APK for the phone** (not checked on a device yet):
+**Phone check (Tanzeel, 2026-10-10):** the mock-mode APK works on an Android phone: sign-in, feed, incident detail, `E#` chips, charts, and the "Review proposed action" button. Two issues:
+1. On metric charts the top two y-axis labels overlapped (for example "2.60 s" over "2.50 s"), and the lowest label touched the caption. **Fixed:** the y axis now starts at 0 and ends on a multiple of a round interval (1, 2, 2.5 or 5 × 10ⁿ), so fl_chart's end labels fall on grid lines; the chart has 8 px of padding above and below. A widget test checks the rendered labels (`0 %`, `10.0 %` … `40.0 %`, no extra peak label).
+2. **Note:** the fixtures' evidence summary text embeds fixed clock times (for example "rose … at 10:15:00", "deployed at 08:58:40"), so in mock mode it will not match the shifted timestamps the cards show. The fixtures are unchanged.
+
+**Debug APK for the phone** (checked on a device 2026-10-10, see above):
 - Path: `D:\PROJECTS\OneCallpilot\mobile\build\app\outputs\flutter-apk\app-debug.apk` (`mobile/build/app/outputs/flutter-apk/app-debug.apk`), 220 MB (debug, all ABIs), SHA-1 `30f9069600db3e47b2f82e43d0d9b7808e52be3f`.
 - **Built in mock mode:** `flutter build apk --debug --dart-define=DATA_SOURCE=mock` at the A1.6 commit, with the 3 timelines synced from `origin/usman` at `0582f37` and bundled in the APK. It needs no network: any email with a password of at least 6 characters signs in, and the incidents replay from the start on every launch.
 
@@ -408,6 +412,41 @@ Architecture §12.1 lists four profiles (`testbed`, `obs`, `copilot`, `runner`).
 **Ledger fixture alignment (2026-10-09):** `contracts/fixtures/ledger/deploys.jsonl` now uses the commit SHAs, messages and config hashes from `chaos-shop/releases.yaml`, the seeded history's deploy times, and the reset reason `chaos reset` writes. Line order, kinds, writers and the 1.5.0 deploy time (which `test_ledger.py` relies on) are unchanged. Usman's contract suite from `origin/usman` (temporary worktree, outside the repository, with the changed fixture copied in): **246 passed**, none broken. The Dart fixture test against the same worktree: 21/21. A new CLI test fails if the fixture drifts from `releases.yaml` again.
 
 **Merge notes for later:** `origin/usman` is built on `tanzeel` at `6cac236` (A1.1). Merging both into `main` will conflict in `compose.yaml` (each branch adds one `include:` line) and in `docs/checks/week-1.md` (both add sections); both are simple to resolve.
+
+## Phase 1 status — Stream A (2026-10-10)
+
+| Item | Status | Evidence |
+|---|---|---|
+| A1.1 Chaos Shop services, C7 telemetry | Done on `tanzeel` | A1.1 above |
+| A1.2 `cs-lb`, slots, releases | Done on `tanzeel` | A1.2 above (TB-011 measured from app-ready) |
+| A1.3 chaos CLI, ledger, 8 faults | Done on `tanzeel` | A1.3 above |
+| A1.4 Spike calibrated (100 rps) | Done on `tanzeel` | A1.4 above |
+| A1.5 Flutter skeleton, mock mode | Done on `tanzeel` | A1.5 above. Open: MOB-001 on a device against Supabase (needs B0.1) |
+| A1.6 Feed and Detail | Done on `tanzeel`, checked on the phone | A1.6 above |
+| TB-008 15-minute persistence | Done: 8/8 PASS overnight | "Overnight persistence run, result" above |
+| S1.1 root `compose.yaml` and `ocp up` (shared) | `compose.yaml` includes testbed and runner; `ocp` CLI not started | `docs/checks/gate-g1.md`, criterion 1 |
+| S1.2 first runbooks (shared) | Not started (`runbooks/` is empty) | TB-013; the TB-010 grep already covers `runbooks/` |
+| Gate G1 | Criteria 2 and 3 met on `tanzeel`; 1, 4 and 5 open | `docs/checks/gate-g1.md` |
+
+**Proposed split of the shared Phase 1 work** (proposal, not agreed yet):
+- **S1.1, Tanzeel:**
+  - `tools/ocp` as a uv tool: `ocp up` runs `docker compose --profile testbed --profile obs --profile copilot --profile runner up -d --build`, creates the stopped slots, runs `chaos reset`, waits for health and prints the LAN URL (architecture §12.1). A profile with no services yet is a no-op, so it works before Usman's files exist.
+  - `ocp down`.
+  - `ocp doctor`: ports, health, versions, and the published-port policy of SEC-013.
+  - Nothing in it needs Usman's compose files.
+- **S1.1, Usman:**
+  - `observability.yml` (B1.5) and `copilot.yml`, each with its `include:` line in `compose.yaml`.
+  - `ocp seed-incident` (B1.4).
+  - `ocp smoke` later (Phase 2).
+- **S1.1, both:** merge `tanzeel` and `usman` into `main` (after the contract PRs) so that `ocp up` on `main` brings everything up for G1.
+- **S1.2:** 6–10 generic runbooks (TB-013), each reviewed by the developer who did not write it.
+  - Tanzeel writes the testbed and runner side: restart a service, roll back a release, scale the API, crash loops, memory issues.
+  - Usman writes cache issues, database connection issues, upstream dependency issues, and the escalation policy.
+  - Usman's `search_runbooks` (AI-009) reads them, so he decides the final list and format.
+- **Gate G1:**
+  - Tanzeel owns criteria 2 and 3 (met on `tanzeel`) and the walkthrough run.
+  - Usman owns 4 (Grafana and Loki; screenshots taken together) and 5 (detector, stretch).
+  - Criterion 1 is shared through S1.1.
 
 ## Friday checkpoint (W1)
 
