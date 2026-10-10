@@ -117,10 +117,10 @@
 - **CI:** new job `runner-proxy` in `runner.yml` runs `run_proxy_test.sh` on every push and PR (GitHub-hosted runners have Docker). The script now derives the API version from the host's `docker version` when `DOCKER_API_VERSION` is unset; tested locally both ways (54/54 each).
 
 **Gaps between the docs and the proxy:**
-1. **`GET /containers/{id}/attach/ws` returns 101** (WebSocket stdio attach). It is a GET under `/containers`, which §2.10 allows, and the proxy cannot block it without also blocking inspect. No command can execute (the containers' PID 1 do not read commands from stdin), but it goes beyond "start, stop, restart". Ruled 2026-10-10: **documented as a known limitation**, with a test that records the behaviour, and a proposed line for architecture §7.12 in `proxy.md`.
+1. **`GET /containers/{id}/attach/ws` returns 101** (WebSocket stdio attach). It is a GET under `/containers`, which §2.10 allows, and the proxy cannot block it without also blocking inspect. No command can execute (the containers' PID 1 do not read commands from stdin), but it goes beyond "start, stop, restart". Ruled 2026-10-10: **documented as a known limitation**, with a test that records the behaviour, and added to architecture §7.12 as L6 (`fd7b1cc`).
 2. **`kill` is allowed:** §2.10 lists it, RUN-017 and §2.11 do not. The image grants it with `ALLOW_RESTARTS`; the runner does not use it.
 3. **The start/stop/restart/kill allow rules ignore the HTTP method,** so e.g. `DELETE /containers/x/stop` reaches Docker. Docker answers 404 (it reads it as a container named `x/stop`), so nothing happens; recorded, no test needed beyond the delete-is-403 test.
-4. **`GET /containers/{id}/json` returns every container's environment.** A compromised runner can read other containers' env vars through inspect, which §2.11's limitation note does not mention. Endpoint-level filtering cannot avoid it; keeping secrets in mounted files rather than env (as the FCM key already is) would. For Usman: an architecture-level question, not a runner change.
+4. **`GET /containers/{id}/json` returns every container's environment.** A compromised runner can read other containers' env vars through inspect, which §2.11's limitation note does not mention. Endpoint-level filtering cannot avoid it; keeping secrets in mounted files rather than env (as the FCM key already is) would. For Usman: an architecture-level question, not a runner change. Recorded in architecture §7.12 as L7, an accepted risk for now (`fd7b1cc`); how secrets are stored stays Usman's decision.
 
 **Not covered:** the ro-proxy half of TEST-015 (any POST through `socket-proxy-ro` → 403) waits for Usman's `observability.yml`.
 
@@ -188,3 +188,28 @@ This is Usman's condition for approving C7 (`contract-review-b.md` §1).
   - `backend/` is still the CI skeleton.
   - The extra fixtures of review-A issue 8 are still to come.
 
+
+## Phase 0 close-out, part 3 (2026-10-10): after the merge into `main`
+
+- **`main`:** PR #1 merged as `8942520` (merge commit). It contains `tanzeel` and `usman`, with C1–C9. Its tree is identical to `7d576ac`, the tree tested in part 2.
+- **CI on `main` (`8942520`):** backend, contracts, migrations, chaos-shop, runner (`runner` and `runner-proxy`), mobile: **all green**.
+- **Tag:** annotated `contracts-v0.1.0` on `8942520`, pushed; `contracts/VERSION` is `0.1.0`.
+- **`tanzeel` synced:** fast-forward to `8942520`.
+- **Answers to the A2.2 questions:**
+  - attach/ws and the env exposure of inspect are in architecture §7.12 as L6 and L7 (`fd7b1cc`, docs only). L7 is an accepted risk for now; how secrets are stored stays Usman's decision.
+  - socket-proxy-rw has `mem_limit: 64m` (`7012459`); it uses about 18–22 MiB.
+  - A2.2 deviations 1 and 2 are accepted; the ro half of TEST-015 waits for Usman's observability compose.
+- **Full local run on `tanzeel` (`7012459`):**
+
+  | Suite | Result |
+  |---|---|
+  | Lockfiles | `uv lock --check` and `uv sync --locked` pass in `contracts/python`, `chaos-shop`, `chaos-shop/cli`, `runner`, `tools/ocp`; `flutter pub get --enforce-lockfile` passes |
+  | contracts | ruff and `mypy --strict` clean; **259 passed**; schemas regenerate with no diff |
+  | chaos-shop / chaos CLI / `tools/ocp` | ruff and mypy clean; **77 / 37 / 24 passed** |
+  | runner | ruff and mypy clean; **88 passed**, coverage **91.7 %**; live **3/3** (image rebuilt) |
+  | proxy security test (TEST-015) | **54/54** (with the 64 MiB limit) |
+  | app | `flutter analyze` clean; **90 passed** |
+  | `ocp up` / `ocp doctor` | 9 services healthy in 34 s; doctor: all checks passed |
+
+- **Memory:** the 9 running containers use about 283 MiB. socket-proxy-rw uses 17.8 MiB of its 64 MiB. socket-proxy-ro (Usman's) uses 21 MiB and has no limit yet. Windows had 3.5 GB free.
+- **Phase 0 status table:** `week-1.md`, "Phase 0 status (2026-10-10, after PR #1)".

@@ -72,7 +72,7 @@ The WebSocket attach endpoint (`GET /containers/{id}/attach/ws`) is reachable th
 
 **Impact:** low. The containers' PID 1 (uvicorn for `cs-api`, the worker loop, `redis-server`) do not execute stdin, so no command runs; the capability is reading/writing the stdio of a container the runner can already inspect and stop. It is recorded, not fixed: blocking it would need a second filtering proxy, which is more attack surface than it removes. The test `test_container_stdio_hijack_is_a_known_limitation` documents the current behaviour (it fails if `attach/ws` ever stops returning 101, so a future proxy fix is noticed).
 
-**Proposed for architecture §7.12 "Known limitations" (shared doc — for Usman/Tanzeel to add):**
+**Added to architecture §7.12 "Known limitations" as L6 (2026-10-10, `fd7b1cc`):**
 > socket-proxy-rw filters by API endpoint and method, not by action, so a compromised runner can open `GET /containers/{id}/attach/ws` (stdio of a running container) in addition to stop/start/restart/kill and GET reads. No command executes, because the monitored containers do not read commands from stdin, and create/exec/delete remain impossible.
 
 ### Covered in CI (A2.2)
