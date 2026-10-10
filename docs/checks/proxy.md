@@ -41,32 +41,48 @@ docker compose --profile runner logs socket-proxy-rw
 
 The script starts the proxy, creates a throwaway `busybox:1.37` target with the host's Docker, and runs `runner/tests/security/test_proxy.py` (`pytest -m proxy`) in a `python:3.12-slim` container on `rw_proxy_net`. The Docker SDK client is created with `version="1.56"`, so it never calls `GET /version`.
 
-### Result: 12/12 passed
+### Result: 12/12 passed (S0.7); extended to 54/54 in A2.2 (2026-10-10)
 
 | Request through socket-proxy-rw | Expected | Result |
 |---|---|---|
-| `GET /containers/json`, `GET /containers/{id}/json` | allowed | ✅ 200 |
+| `GET /containers/json`, `GET /containers/{id}/json`, `/stats` | allowed | ✅ 200 |
 | `POST /containers/{id}/stop`, `/start`, `/restart` | allowed | ✅ 204, state changed |
-| `POST /containers/create` | 403 | ✅ 403 |
-| `POST /containers/{id}/exec` | 403 | ✅ 403 |
+| `POST /containers/{id}/kill` | allowed (§2.10) | ✅ 204 |
+| `POST /containers/create` (incl. `Privileged=true`) | 403 | ✅ 403 |
+| `POST /containers/{id}/exec`, `/exec/{id}/start` | 403 | ✅ 403 |
 | `DELETE /containers/{id}` | 403 | ✅ 403 |
-| `POST /images/create` (pull) | 403 | ✅ 403 |
-| `GET /images/json` | 403 | ✅ 403 |
-| `POST /networks/create` | 403 | ✅ 403 |
-| `POST /volumes/create` | 403 | ✅ 403 |
-| `POST /containers/{id}/update` | 403 | ✅ 403 |
-| `GET /version`, `GET /_ping` | 403 | ✅ 403 |
-| `GET /events` | 403 | ✅ 403 |
+| `POST /containers/{id}/pause` `/unpause` `/rename` `/wait` `/resize` `/attach` `/update` | 403 | ✅ 403 |
+| `POST /containers/prune`, `/build`, `/commit`, `/session`, `/auth` | 403 | ✅ 403 |
+| `POST /images/create` (pull); `GET /images/json` | 403 | ✅ 403 |
+| `POST /networks/create`; `GET /networks`, `/volumes` | 403 | ✅ 403 |
+| `GET /info`, `/system/df`, `/secrets`, `/services`, `/nodes`, `/swarm`, `/plugins`, `/tasks`, `/configs`, `/distribution/*` | 403 | ✅ 403 |
+| `GET /containers/{id}/logs` `/archive` `/export` `/top` `/changes` (`ALLOW_*`=0) | 403 | ✅ 403 (GET, HEAD, PUT) |
+| `GET /libpod/containers/json` (libpod off) | 403 | ✅ 403 |
+| path tricks: double slash, `%61rchive`, encoded `?` | 403 | ✅ 403 (no bypass) |
+| `GET /version`, `GET /_ping`, `GET /events` | 403 | ✅ 403 |
+| Docker socket mounted in the test container; default client reaches a socket | no / no | ✅ not present; client fails |
 
 The proxy's debug log shows each denied request with haproxy termination flag `PR--` (refused by the proxy, never forwarded to Docker).
 
-Note: the Docker SDK's `events()` stream turns an HTTP error into `StopIteration` instead of raising. The test therefore checks the raw HTTP status for `/events`.
+Note: the Docker SDK's `events()` stream turns an HTTP error into `StopIteration` instead of raising. The test therefore checks the raw HTTP status for `/events` and for every endpoint the SDK cannot express.
+
+### Known limitation found in A2.2: `GET /containers/{id}/attach/ws` returns 101
+
+The WebSocket attach endpoint (`GET /containers/{id}/attach/ws`) is reachable through the proxy (HTTP `101 Switching Protocols`), a stdio hijack of a running container. The linuxserver proxy filters by **endpoint prefix and method only**: `attach/ws` is a `GET` under `/containers`, which architecture §2.10 explicitly allows ("GET /containers/*"), and it cannot be blocked without also blocking `GET /containers/{id}/json` (inspect), which the runner needs for its structural health check (A2.5). The non-WebSocket `POST /containers/{id}/attach` is already 403 (POST=0).
+
+**Impact:** low. The containers' PID 1 (uvicorn for `cs-api`, the worker loop, `redis-server`) do not execute stdin, so no command runs; the capability is reading/writing the stdio of a container the runner can already inspect and stop. It is recorded, not fixed: blocking it would need a second filtering proxy, which is more attack surface than it removes. The test `test_container_stdio_hijack_is_a_known_limitation` documents the current behaviour (it fails if `attach/ws` ever stops returning 101, so a future proxy fix is noticed).
+
+**Proposed for architecture §7.12 "Known limitations" (shared doc — for Usman/Tanzeel to add):**
+> socket-proxy-rw filters by API endpoint and method, not by action, so a compromised runner can open `GET /containers/{id}/attach/ws` (stdio of a running container) in addition to stop/start/restart/kill and GET reads. No command executes, because the monitored containers do not read commands from stdin, and create/exec/delete remain impossible.
+
+### Covered in CI (A2.2)
+
+`runner.yml` now has a **`runner-proxy`** job that runs `run_proxy_test.sh` on every push and PR: GitHub-hosted runners have Docker and the host socket, so the proxy starts and the test container reaches it over `rw_proxy_net`. The script derives the API version from the host's `docker version` when `DOCKER_API_VERSION` is unset.
 
 ### Not covered here
 
 - Through the **ro** proxy: any POST → 403 (second half of TEST-015, SEC-014). Added to `test_proxy.py` once `socket-proxy-ro` exists in `observability.yml` (Usman).
-- `kill` is listed as allowed in architecture §2.10, but the runner does not use it, so it is not asserted.
-- TEST-015 runs only through this script, not in CI. `runner.yml` CI runs unit tests from task A2.1.
+- TEST-015 is a **Gate G2** criterion (`phases.md`, G2 item 3): `docs/checks/gate-g2.md`.
 
 ## (a) socket-proxy-ro and Alloy — Usman
 

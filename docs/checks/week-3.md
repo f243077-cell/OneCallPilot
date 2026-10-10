@@ -7,6 +7,7 @@
 | Task | Status | Date | Evidence |
 |---|---|---|---|
 | A2.1 Runner: consumer group, signature and expiry verification (shared vector), catalogue and target allowlist, free-form rejection | done (on `tanzeel`) | 2026-10-10 | Below |
+| A2.2 socket-proxy-rw config; proxy security tests (RUN-017, TEST-015) | done (on `tanzeel`); one known limitation recorded | 2026-10-10 | Below |
 
 ### A2.1 — runner verification (RUN-001…RUN-004, RUN-018; RUN-005's SET NX brought forward)
 
@@ -88,6 +89,40 @@
 1. **No runner service in compose yet.** copilot-redis (Usman's `copilot.yml`, B1.3) does not exist, and `ocp up` starts the `runner` profile. A runner without Redis would never become healthy and would break `ocp up`. The service is added when copilot-redis exists; until then the image is tested by the live test.
 2. **C5 is implemented in the runner** instead of imported, because `oncallpilot_contracts.runner` and `.signing` are only on `origin/usman`. It is cross-checked against the shared vector, and can switch to the contracts package after the merge.
 3. **RUN-005's `SET NX` is in A2.1** (ruling 2026-10-10). Rate limit, cooldown and the state fingerprint stay in A2.5 and A2.3.
-4. **Coverage not measured:** the runner's ≥ 85 % target (TEST-001) needs pytest-cov, which is not installed.
+4. **Coverage not measured** at the time; measured after A2.1 with pytest-cov (approved 2026-10-10, dev only): **91.6 %** of `oncallpilot_runner` from the unit tests alone (`streams.py` is 50 %: its real Redis calls run only in the live test). CI fails below 85 %.
 
 **Open, for Usman** (C5 issues 9–11 in `contract-review-a.md`): the forged-refusal race, results for unanswerable messages, and the `catalogue_version` rule. The new `.env.example` entries also name the services that need each key (backend-api and backend-worker on his side).
+
+### A2.2 — socket-proxy-rw configuration and security tests (RUN-017, TEST-015)
+
+**Already covered before A2.2** (S0.7, `docs/checks/proxy.md`, 12/12): container list and inspect, start, stop, restart allowed; create, exec, delete, image pull and list, network create, volume create, container update, version, ping and events refused.
+
+**Configuration:** `infrastructure/compose/runner.yml` matches architecture §2.11 exactly, so it is unchanged: `CONTAINERS=1, ALLOW_START=1, ALLOW_STOP=1, ALLOW_RESTARTS=1, POST=0`, with the image's default-on `EVENTS`, `PING`, `VERSION`, `LIBPOD_PING`, `LIBPOD_VERSION` set to `0`; socket mounted read-only; read-only root, `/run` tmpfs; only on the internal `rw_proxy_net`; no published port.
+
+**How the proxy decides** (read from the image's `/templates/haproxy.cfg`, 3.4.6-r0-ls101): explicit allows for `/containers/{id}/(stop|restart|kill)` (`ALLOW_RESTARTS`), `/start`, `/stop`; then `deny unless GET` (POST=0); then `GET /containers*` (`CONTAINERS`); `logs`, `archive`, `export`, `top`, `changes` are denied first unless their own `ALLOW_*` is set; everything else is denied.
+
+**Tests added** (`runner/tests/security/test_proxy.py`, now 54 tests, all passed on 2026-10-10 against the real proxy):
+- **Allowed:** list, inspect, stats; stop, start, restart; **kill** (allowed by §2.10, and grouped with `ALLOW_RESTARTS` in the image).
+- **Refused with 403:**
+  - create, including `Privileged=true` with a `/` bind;
+  - exec create and exec start; delete;
+  - every other container POST: pause, unpause, rename, wait, resize, attach, update;
+  - prune, build, commit, session, auth;
+  - image pull and list; network and volume calls;
+  - `info`, `system/df`, `secrets`, `services`, `nodes`, `swarm`, `plugins`, `tasks`, `configs`, `distribution`;
+  - `logs`, `export`, `top`, `changes`, and `archive` for GET, HEAD and PUT;
+  - libpod;
+  - path tricks (double slash, `%61rchive`, encoded `?`) do not bypass the deny.
+- **The socket is unreachable except through the proxy:** the test container (same networking as the runner: `rw_proxy_net`) has no `/var/run/docker.sock` or `/run/docker.sock`, and a default Docker client cannot reach a socket. The runner image itself was already shown in A2.1's live test to run with no socket mount, no port, read-only root and no capabilities.
+- **CI:** new job `runner-proxy` in `runner.yml` runs `run_proxy_test.sh` on every push and PR (GitHub-hosted runners have Docker). The script now derives the API version from the host's `docker version` when `DOCKER_API_VERSION` is unset; tested locally both ways (54/54 each).
+
+**Gaps between the docs and the proxy:**
+1. **`GET /containers/{id}/attach/ws` returns 101** (WebSocket stdio attach). It is a GET under `/containers`, which §2.10 allows, and the proxy cannot block it without also blocking inspect. No command can execute (the containers' PID 1 do not read commands from stdin), but it goes beyond "start, stop, restart". Ruled 2026-10-10: **documented as a known limitation**, with a test that records the behaviour, and a proposed line for architecture §7.12 in `proxy.md`.
+2. **`kill` is allowed:** §2.10 lists it, RUN-017 and §2.11 do not. The image grants it with `ALLOW_RESTARTS`; the runner does not use it.
+3. **The start/stop/restart/kill allow rules ignore the HTTP method,** so e.g. `DELETE /containers/x/stop` reaches Docker. Docker answers 404 (it reads it as a container named `x/stop`), so nothing happens; recorded, no test needed beyond the delete-is-403 test.
+4. **`GET /containers/{id}/json` returns every container's environment.** A compromised runner can read other containers' env vars through inspect, which §2.11's limitation note does not mention. Endpoint-level filtering cannot avoid it; keeping secrets in mounted files rather than env (as the FCM key already is) would. For Usman: an architecture-level question, not a runner change.
+
+**Not covered:** the ro-proxy half of TEST-015 (any POST through `socket-proxy-ro` → 403) waits for Usman's `observability.yml`.
+
+**Gate:** TEST-015 is Gate G2 criterion 3: `docs/checks/gate-g2.md` (created) records it as green for socket-proxy-rw.
+

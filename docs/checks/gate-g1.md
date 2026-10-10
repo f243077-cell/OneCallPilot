@@ -11,6 +11,8 @@
 | 4 | Each scenario is visible in Grafana or Loki Explore (screenshots in this file) | **Not met** | The testbed emits the C7 metrics and logs every dashboard needs (TB-003, TB-004: contract tests on `/metrics` and on 1,000+ log lines). Each scenario's signal, from the verify runs: 1: worker RSS and restarts; 2: checkout 500s; 3: pool timeouts; 4: 503s with cs-redis down; 5: request rate ×18 and p95 ~9 s; 6: worker crash loop; 7: checkout p95 ~2.6 s; 8: coupon 500s. | **U (B1.5):** Prometheus, Loki, Alloy and Grafana with the "Chaos Shop Overview" dashboard (TB-012). **T+U:** one screenshot per scenario, with Tanzeel injecting. Note for the dashboard: scenario 5 shows best as p95 and request rate, not error rate (`week-1.md`). |
 | 5 | The detector opens an incident for at least scenarios 2, 4 and 6 (stretch for G1, required for G2) | **Not met** (stretch) | Faults 2, 4 and 6 are reproducible and persist (criterion 3); their signals are error rate (2, 4) and restarts (6). | **U (B1.6, B1.7):** `POST /ingest/alert` and detector v1 against the live stack, which needs criterion 4's Prometheus. |
 
+> **Note (2026-10-10):** `socket-proxy-rw`, which `ocp up` starts with the `runner` profile, is now security-tested against the real proxy (TEST-015, 54/54, also in CI): see `docs/checks/proxy.md` and Gate G2 criterion 3 in `docs/checks/gate-g2.md`.
+
 ## Integration checkpoints
 
 | Checkpoint | Status | Notes |
