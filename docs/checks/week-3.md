@@ -8,6 +8,7 @@
 |---|---|---|---|
 | A2.1 Runner: consumer group, signature and expiry verification (shared vector), catalogue and target allowlist, free-form rejection | done (on `tanzeel`) | 2026-10-10 | Below |
 | A2.2 socket-proxy-rw config; proxy security tests (RUN-017, TEST-015) | done (on `tanzeel`); one known limitation recorded | 2026-10-10 | Below |
+| A2.3 Dry runs for all 4 actions; state fingerprint (RUN-007) | done (on `tanzeel`, not pushed) | 2026-10-10 | Below |
 
 ### A2.1 — runner verification (RUN-001…RUN-004, RUN-018; RUN-005's SET NX brought forward)
 
@@ -125,6 +126,62 @@
 **Not covered:** the ro-proxy half of TEST-015 (any POST through `socket-proxy-ro` → 403) waits for Usman's `observability.yml`.
 
 **Gate:** TEST-015 is Gate G2 criterion 3: `docs/checks/gate-g2.md` (created) records it as green for socket-proxy-rw.
+
+### A2.3 — dry runs for the four actions, and the state fingerprint (RUN-007)
+
+**Read first** (2026-10-10): architecture §2.10, §5.6, §5.10, §7.4, §7.5, §7.6 and §9.5; C4 (`actions.yaml`); C5 (`runner.py`, `signing.py`); C1 `DryRunResult`; C8 §2; RUN-006 to RUN-012.
+
+**Rulings (2026-10-10)**, asked before coding because the documents left them open:
+1. **Fingerprint as §7.5 says.** It covers the ledger's active release, the ledger's desired replica count, and the sorted names of the target containers that exist and pass the allowlist. Container state is shown in `current` but is not hashed, so a crash loop is not drift.
+2. **clear_cache counts under `api`** for rate limit and cooldown. C4 gives it no `service`. The backend must use the same key (tell Usman).
+3. **N is the ledger's desired count,** not the running count. RUN-011 says "current replica count"; the fingerprint hashes the ledger value, so both use it. A warning appears when fewer replicas are running.
+4. **redis has no ledger record:** release and replicas are null. Its fingerprint is the container name only.
+
+**Built** (`runner/oncallpilot_runner/`):
+- **`dry_run.py`:** one preview per action, returned as C1 `DryRunResult`. It holds `would_change`, `current` (release, running replicas, the targets' state and health, `cache_keys`), `preconditions`, `predicted_effect` (at most 300 characters), `warnings` and `state_fingerprint`.
+  - **rollback_deploy:** start slots 1..N of `target_release`, then stop the running containers of the active release.
+  - **restart_service:** restart the active release's slots 1..N; an exited target is started instead.
+  - **scale_service:** start or stop the active release's slots until `replicas` run. The targets are slots 1..max(N, replicas).
+  - **clear_cache:** reads `GET http://cs-lb/internal/cache/stats` with `RUNNER_ADMIN_TOKEN`. `catalog` counts as 1 key or 0; `pricing` counts its hash entries. If the stats are unreachable, the preview still comes back, with `cache_keys` null and a warning.
+  - **preconditions:** the dry run reads the runner's own counters `ocp:runner:ratelimit:{service}` (ZCOUNT over the last 1800 s, fewer than 3) and `ocp:runner:cooldown:{service}` (EXISTS). Nothing writes them before A2.5.
+- **`fingerprint.py`:** SHA-256 of C5's canonical JSON of `{"active_release", "desired_replicas", "target_containers"}`, in lower-case hex. Only the runner computes and compares it.
+- **`docker_client.py`:** `DockerReader`, the only Docker access a dry run has.
+  - It lists containers by label and returns plain values, never SDK objects, so dry-run code cannot call a write.
+  - `SdkDockerReader` uses `DOCKER_HOST` and passes `DOCKER_API_VERSION` as `version=`, so the SDK never calls `/version`.
+  - Every listed container must pass `container_allowed` (labels and name regex). `backend-api` carrying the api labels is never a target.
+- **`shop_admin.py`:** the stats call, with a 5 s timeout. The token is never logged.
+- **`ledger.py`:** `active(service)`, the latest record's release and replicas. A record without them is unreadable.
+- **Consumer:** an accepted dry run is answered with an `ok` `dry_run_result` signed with RUNNER_LINK_KEY.
+  - If Docker or the ledger cannot be read, the dry run is **refused** with `VALIDATION_ERROR` (fail closed).
+  - A Redis error leaves the entry pending for a retry.
+  - An execute still runs nothing (A2.4).
+- **Start-up:** the runner refuses to start without `DOCKER_HOST`, `DOCKER_API_VERSION` and `RUNNER_ADMIN_TOKEN`. It also refuses a `DOCKER_HOST` that is not `tcp://`, so a socket path is impossible.
+- **`.env.example`:** gains a commented `DOCKER_HOST` line (set per service in compose, never in `.env`, for the same reason as `DOCKER_API_VERSION`).
+
+**Tests:**
+- **Unit** (`test_dry_run.py`, `test_fingerprint.py`, `test_docker_client.py`, and new startup cases): **158 passed**, coverage **95.4 %**; ruff and `mypy --strict` clean.
+  - Every dry run goes through a check that the `FakeDockerClient` recorded no create, start, stop, restart, kill or remove call, that every container is exactly as before, and that the ledger is byte for byte the same. No Redis key is written.
+  - **Fingerprint:**
+    - the same state gives the same value;
+    - a new release, a new desired count, or a target that disappears or loses its labels changes it;
+    - container state or health, restart counts, non-targets, unrelated ledger records, a half-written last line and listing order do not.
+- **Live** (`tests/live/test_live_dry_run.py`, real testbed and real socket-proxy-rw):
+  - The test runs the image as compose will: on `rw_proxy_net` and `chaos_net`, with the ledger mounted **read-only** and no socket.
+  - Setup: proxy at debug level, then `chaos inject 2`. At the end: `chaos reset` and the proxy back to `info`.
+  - **Order:** rollback_deploy was proved first (api 1.5.0 → 1.4.0: start `cs-api-140-1`, stop `cs-api-150-1`, the expected fingerprint, the same value twice). Then restart (worker, redis), scale (api → 3) and clear_cache (catalog, pricing).
+  - **After each batch:** every testbed container has the same state, start time, PID and restart count; the ledger and the runner's Redis keys are unchanged; cs-api logged no `cache cleared`.
+  - **RUN-007's acceptance:** the proxy's request log of the dry runs holds **only GET**.
+  - The A2.1 live test (3/3) now passes the three new settings.
+- **C5 check:** 6 `ok` results and 1 refusal validate as `RunnerResult` with Usman's models, and the signatures verify with `oncallpilot_contracts.signing` (one-off check in the contracts environment).
+- **CI:** new job **`runner-live`** in `runner.yml` runs `ocp up` with the TEST-ONLY `.env.example` values, builds the image, and runs `pytest -m live`. It has not run on GitHub yet, because nothing is pushed.
+
+**Memory:** the runner uses 34 MiB of its 128 MiB after the dry runs; socket-proxy-rw uses 17.6 MiB of its 64 MiB. No limits changed.
+
+**Incident during the task:** Docker Desktop's engine VM stopped (every API call returned 500). It was restarted with `docker desktop restart`, then `ocp up`. Nothing was lost.
+
+**For A2.4 and A2.5:**
+- §7.6 exempts rollback proposals from the cooldown, but a C5 request does not say whether it comes from a rollback proposal, so the runner cannot apply the exemption. That needs a contract change before A2.5.
+- C5 does not say how the worker treats a **refused** dry run (here: Docker or the ledger unreadable). Usman's worker should treat it like `dry_run_unavailable`.
 
 ## Phase 0 close-out, part 2 (2026-10-10): one PR into `main`
 
