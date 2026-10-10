@@ -364,8 +364,8 @@ Two observations, both accepted as they are (ruling of 2026-10-10):
 2. **Note:** the fixtures' evidence summary text embeds fixed clock times (for example "rose … at 10:15:00", "deployed at 08:58:40"), so in mock mode it will not match the shifted timestamps the cards show. The fixtures are unchanged.
 
 **Debug APK for the phone** (checked on a device 2026-10-10, see above):
-- Path: `D:\PROJECTS\OneCallpilot\mobile\build\app\outputs\flutter-apk\app-debug.apk` (`mobile/build/app/outputs/flutter-apk/app-debug.apk`), 220 MB (debug, all ABIs), SHA-1 `30f9069600db3e47b2f82e43d0d9b7808e52be3f`.
-- **Built in mock mode:** `flutter build apk --debug --dart-define=DATA_SOURCE=mock` at the A1.6 commit, with the 3 timelines synced from `origin/usman` at `0582f37` and bundled in the APK. It needs no network: any email with a password of at least 6 characters signs in, and the incidents replay from the start on every launch.
+- Path: `D:\PROJECTS\OneCallpilot\mobile\build\app\outputs\flutter-apk\app-debug.apk` (`mobile/build/app/outputs/flutter-apk/app-debug.apk`), 220 MB (debug, all ABIs). Rebuilt after the chart fix (`fix(mobile)` commit of 2026-10-10): SHA-1 `2ae37389d6376450823ec7b626c89b70fb7dd8f5`; the build the phone check used was `30f9069600db3e47b2f82e43d0d9b7808e52be3f`.
+- **Built in mock mode:** `flutter build apk --debug --dart-define=DATA_SOURCE=mock`, with the 3 timelines synced from `origin/usman` at `0582f37` and bundled in the APK. It needs no network: any email with a password of at least 6 characters signs in, and the incidents replay from the start on every launch.
 
 ## C7 deviations (accepted for now, 2026-10-09)
 
