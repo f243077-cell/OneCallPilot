@@ -3,6 +3,9 @@
 #
 # Usage (from the repository root, Git Bash or Linux):
 #   DOCKER_API_VERSION=<pinned value from docs/checks/proxy.md> runner/tests/security/run_proxy_test.sh
+# If DOCKER_API_VERSION is unset it is read from the host's `docker version`
+# (the host talks to the real socket; only the runner must pin it). The CI job
+# relies on this.
 #
 # What it does:
 #   1. starts socket-proxy-rw (compose profile `runner`) and waits until it is healthy;
@@ -12,7 +15,8 @@
 #   4. removes the target and the test container, and stops the proxy if this script started it.
 set -euo pipefail
 
-: "${DOCKER_API_VERSION:?set DOCKER_API_VERSION to the pinned API version (docs/checks/proxy.md)}"
+: "${DOCKER_API_VERSION:=$(docker version --format '{{.Server.APIVersion}}')}"
+: "${DOCKER_API_VERSION:?could not determine the Docker API version; set it (docs/checks/proxy.md)}"
 
 export MSYS_NO_PATHCONV=1
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && (pwd -W 2>/dev/null || pwd))"
@@ -46,6 +50,6 @@ docker create --name "$TESTER" \
   python:3.12-slim \
   sh -c "pip install --quiet --disable-pip-version-check uv==$UV_VERSION \
          && uv sync --locked --quiet \
-         && uv run --no-sync pytest -m proxy -v tests/security/test_proxy.py" >/dev/null
+         && uv run --no-sync pytest -m proxy -v -p no:cacheprovider tests/security/test_proxy.py" >/dev/null
 docker network connect "$NETWORK" "$TESTER"
 docker start -a "$TESTER"
