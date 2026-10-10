@@ -38,6 +38,7 @@
 | A1.2 `cs-lb` and slots, releases 1.4.0/1.5.0/2.1.0/2.2.0 | done (on `tanzeel`) | 2026-10-09 | Below |
 | A1.3 chaos CLI, seeded ledger, 8 faults | done (on `tanzeel`); scenario 5 completed in A1.4 | 2026-10-09 | Below |
 | A1.4 traffic spike calibrated: 1 replica saturates, 3 recover | done (on `tanzeel`) | 2026-10-09 | Below |
+| A1.5 Flutter skeleton: env config, go_router, theme, login, secure session, `MockIncidentRepository` | done (on `tanzeel`); device checks open | 2026-10-10 | Below |
 
 ### A1.1 — Chaos Shop baseline services
 
@@ -252,6 +253,67 @@ Two observations, both accepted as they are (ruling of 2026-10-10):
 **Deviations:** none from the architecture. Two things to know:
 1. The loadgen runs at its CPU ceiling during the spike. If the host is busier (for example the full stack in W2), the loadgen sends a little less than 100 rps. One slot still saturates above about 75–90 rps, and the check needs only 70 % of the spike rate served. The overnight `verify --all --hold 900` with the full stack will show whether there is enough margin.
 2. Errors during the spike are pool timeouts, as described above.
+
+### A1.5 — Flutter skeleton (MOB-001, MOB-002, MOB-017)
+
+**What exists now** (`mobile/`, layout of architecture §10.1):
+- **Packages** (approved 2026-10-10): flutter_riverpod 3.4.3, go_router 18.0.2, supabase_flutter 2.18.2, flutter_secure_storage 11.2.0, json_annotation 4.12.0. Dev only: json_serializable 6.14.1, build_runner 2.15.1. They are locked in `pubspec.lock`.
+- **Config** (`core/config/env.dart`): `DATA_SOURCE` (`mock`, the default, or `live`), `API_BASE_URL`, `WS_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` from `--dart-define`. A live build that lacks one shows which instead of starting.
+- **Routes** (`core/router/app_router.dart`): every route of §10.2.
+  - Signed out, every route except `/login` goes to `/login`.
+  - A deep link such as a push tap's `/incidents/:id` is kept in `?from=` and opened after sign-in. Only in-app paths are accepted there.
+  - Screens that later tasks build (detail A1.6, review A2.7, execution A2.9, audit A3.5) are placeholders.
+  - The feed lists the repository's incidents until A1.6 builds the real one.
+- **Login and session** (MOB-001):
+  - `AuthRepository` has two implementations. `SupabaseAuthRepository` signs in with email and password. `MockAuthRepository`, used in mock mode, accepts any email with a password of at least 6 characters.
+  - Supabase gets `SecureSessionStorage` and `SecureAsyncStorage`. Both write through `flutter_secure_storage`, so the session and PKCE data never go to shared preferences.
+  - Sign-out clears the stored session. Deleting the device registration joins sign-out in A3.2 (push).
+- **Data layer behind an interface:**
+  - Screens and providers use only `IncidentRepository`: list, detail, events, challenge, approve and reject.
+  - `MockIncidentRepository` implements it now; `LiveIncidentRepository` (A3.1) will implement the same interface, so the screens do not change.
+- **DTOs** (`data/models`, json_serializable, generated `*.g.dart` committed): C1 `IncidentSummary`/`IncidentDetail`, `Evidence`, `Hypothesis`, `Proposal` with its dry run, `Execution`; C3 `WsEvent`; C8 challenge, approve and reject bodies.
+  - Every enum has an `unknown` case for values this build does not know (MOB-020).
+  - Two parts stay raw maps until the screens that show them: evidence payloads (A1.6) and `health_after` (A2.9).
+- **Mock mode** (MOB-017, `MockIncidentRepository`):
+  - It replays every timeline with its delays and moves all timestamps so the incident opens "now"; expiry countdowns are therefore real.
+  - It builds the incident from the events emitted so far, and returns the timeline's `final` at the end.
+  - At an `await_approval` step it waits for the user's approval; a timeline may wait twice (primary, then rollback).
+  - Challenge, approve and reject run the protocol's checks in its order:
+    - `NOT_FOUND`;
+    - `IDEMPOTENCY_KEY_REQUIRED`, and replay or `IDEMPOTENCY_CONFLICT` for a reused key;
+    - single-use `CHALLENGE_INVALID`;
+    - `STALE_PROPOSAL`, `PROPOSAL_NOT_PENDING`, `PROPOSAL_EXPIRED`;
+    - `BIOMETRIC_REQUIRED` for medium and high tiers;
+    - `VALIDATION_ERROR` for a reject reason.
+  - Codes that need server state (`RATE_LIMITED`, `COOLDOWN_ACTIVE` with `retry_after`, `UNAUTHORIZED`, `INTERNAL`, …) are simulated with `failNext`.
+  - A rejection escalates the incident with `proposal_rejected` and stops the replay.
+- **Fixtures at run time:**
+  - `dart run tool/sync_fixtures.dart [--from <contracts dir>]` copies `contracts/fixtures/timelines/*.json` into `mobile/assets/fixtures/timelines/`. The copies are git-ignored (`mobile/assets/fixtures/**/*.json`); only the script and a `.gitkeep` are committed.
+  - Until C1 is on `main`, run it against a worktree of `origin/usman`.
+  - Without synced fixtures, the app starts with a message naming the command.
+- **CI** (`.github/workflows/mobile.yml`, replacing the skeleton step): locked `pub get`, the DTO code regenerates with no diff, `flutter analyze`, `flutter test`.
+
+**Checks (2026-10-10):**
+- `flutter analyze`: no issues.
+- `flutter test` on `tanzeel`: **25 passed**. The fixture groups are skipped because the C1/C3 fixtures are not on this branch.
+  - Router: the redirect rules, a deep link opened after sign-in, a refused sign-in, sign-out back to login (MOB-002).
+  - Session storage: only in the secure store, kept across a restart, cleared by sign-out (MOB-001).
+  - Mock repository: 9 tests covering every check and code above (MOB-017).
+  - Env, app start, startup error.
+- `OCP_CONTRACTS_DIR=<worktree of origin/usman>/contracts flutter test`: **55 passed**.
+  - The real DTOs parse all 8 C3 event fixtures.
+  - All 3 timelines replay through `MockIncidentRepository` to their `final` state. `scale_failed_rollback` needs two approvals.
+- `flutter build apk --debug --dart-define=DATA_SOURCE=mock`: builds in 2.5 minutes.
+- Regenerating the DTO code gives identical files.
+
+**Not checked yet (needs the phone or the emulator, or Usman's B0.1):**
+- MOB-001's acceptance (stay signed in across an app restart, session not in shared preferences) on a device against the real Supabase project.
+- MOB-017's full flow (feed → detail → review → approve → execution → resolved) needs the screens of A1.6, A2.7 and A2.9. A1.5 provides the replay and approval engine they will use.
+- MOB-002's manual push-tap test belongs to A3.2.
+
+**Two build settings changed in `mobile/android/gradle.properties`:**
+1. The Gradle heap is 2 GB instead of the template's 8 GB: the laptop has 16 GB, and Docker holds up to 10 GB.
+2. `kotlin.incremental=false`: the first build failed in `url_launcher_android` with "Could not close incremental caches", because the plugin sources sit in the pub cache on C: and the build on D:.
 
 ## C7 deviations (accepted for now, 2026-10-09)
 
