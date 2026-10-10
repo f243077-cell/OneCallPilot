@@ -27,6 +27,16 @@
 | 7 | `fixtures/timelines/bad_deploy_success.json:46, 58` | The fixture's 1.5.0 failure is `KeyError: 'unit_price'`; the real release 1.5.0 raises `IndexError: tuple index out of range` for orders of 50.00 or more (A1.3). | Use the real exception type and message, so the mock matches the live scenario. |
 | 8 | `fixtures/` | No fixture yet for the app widget tests of MOB-019 (scenario 8, `suspicious_content: true`), MOB-011 (escalated `runner_timeout`, no rollback button), MOB-012 (an audit page) and MOB-017 (error envelopes for each approve and challenge code). | Not a Phase 0 blocker (S0.4 asks for 3 timelines). Add them in a later contract PR before A2/A3 need them. |
 
+## Issues found while building the runner (A2.1, 2026-10-10)
+
+Read from `origin/usman` at `0582f37`. The signing vector itself is correct: every `canonical` string matches its message, and each signature verifies or fails exactly as labelled.
+
+| # | File:line | Issue | Suggested fix |
+|---|---|---|---|
+| 9 | `python/oncallpilot_contracts/runner.py` (docstring, check 1) | A `BAD_SIGNATURE` refusal echoes `request_id` and `execution_id` from a message that failed verification. A forged message with a real `execution_id` makes the runner sign a refusal; the worker then fails that execution (`runner_refused`). If the genuine execute arrives afterwards it still runs, because the refusal does not consume the idempotency key, while the incident already shows `escalated`. The runner follows C5 for now (ruling 2026-10-10). | Either the worker ignores a refusal for an execution it has not seen fail its own checks, or a refused `execute` also sets `ocp:runner:idem:{execution_id}` so a later message with that id is a duplicate. Either way, write the rule into C5. |
+| 10 | `runner.py` (`RunnerResult`) | A message without a usable `type`, a UUID `request_id`, or (for `execute`) a UUID `execution_id` cannot be answered with a valid `RunnerResult`. The runner logs and acknowledges it with no result, and the worker's sweeper ends a real execution with `runner_timeout`. | State in C5 that such messages get no result. |
+| 11 | `runner.py` (`RunnerRequest.catalogue_version`) | C5 does not say what the runner does when `catalogue_version` differs from the catalogue it loaded. The runner does not compare them yet. | Decide: refuse with `VALIDATION_ERROR` (fail closed), or accept and log. |
+
 ## For information
 
 - **C7 change on `tanzeel`:** logger names are now `shop.<area>` (`shop.access`, `shop.checkout`, …) instead of `chaosshop.*` (TB-010; `logger` is agent-visible). Nothing on `origin/usman` refers to `chaosshop`, so no contract file needs changing; Loki and Grafana queries must filter on `shop.*`.
