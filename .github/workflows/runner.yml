@@ -52,8 +52,8 @@ jobs:
       - name: Mypy (strict)
         run: uv run mypy
 
-      - name: Pytest (unit tests, fake Redis)
-        run: uv run pytest -q
+      - name: Pytest (unit tests, fake Redis) with the coverage floor (TEST-001, >= 85 %)
+        run: uv run pytest -q --cov=oncallpilot_runner --cov-report=term --cov-fail-under=85
 
       - name: Runner image builds
         working-directory: .
