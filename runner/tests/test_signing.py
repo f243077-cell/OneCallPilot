@@ -22,6 +22,7 @@ from oncallpilot_runner.signing import (
     sign,
     verify,
 )
+from tests.fakes import FakeStreams
 from tests.publish_signed import entry, vector_keys, vector_path
 
 VECTOR = vector_path()
@@ -58,6 +59,8 @@ def test_the_runner_accepts_and_refuses_the_vector_requests(
         if message["type"] not in ("execute", "dry_run"):
             continue
         clock[0] = utc(message["issued_at"], "issued_at") + timedelta(seconds=1)
+        # The vector's executes share one execution_id: judge each one fresh.
+        checker.set_nx = FakeStreams().set_nx
         decision = checker.check(entry(message))
         if vector["valid"]:
             assert isinstance(decision, Accepted), vector["name"]

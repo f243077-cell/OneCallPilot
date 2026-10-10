@@ -120,8 +120,9 @@ def test_a_request_aged_61_seconds_is_refused(
     message = signed_for(build_request(now=NOW), keys)
     clock[0] = at(61)
     assert_refused(check(checker, message), "REQUEST_EXPIRED", keys, message)
+    exact = signed_for(build_request(now=NOW), keys)
     clock[0] = at(60)  # at expires_at exactly: expired too
-    assert_refused(check(checker, message), "REQUEST_EXPIRED", keys, message)
+    assert_refused(check(checker, exact), "REQUEST_EXPIRED", keys, exact)
 
 
 # --- replay (RUN-005, brought forward) ---
@@ -134,8 +135,8 @@ def test_a_replayed_execute_runs_at_most_once(
     assert isinstance(check(checker, message), Accepted)
     replay = check(checker, message)
     assert isinstance(replay, Duplicate) and replay.execution_id == message["execution_id"]
-    clock[0] = at(120)  # replayed after it expired
-    assert_refused(check(checker, message), "REQUEST_EXPIRED", keys, message)
+    clock[0] = at(120)  # replayed after it expired: its ID is taken, so no answer at all
+    assert isinstance(check(checker, message), Duplicate)
 
 
 def test_a_new_execution_id_is_not_a_duplicate(checker: Checker, keys: Keys) -> None:
@@ -143,6 +144,65 @@ def test_a_new_execution_id_is_not_a_duplicate(checker: Checker, keys: Keys) -> 
     second = signed_for(build_request(now=NOW), keys)
     assert isinstance(check(checker, first), Accepted)
     assert isinstance(check(checker, second), Accepted)
+
+
+# --- every final answer to an execute claims its ID first (C5, issue 9) ---
+
+
+def test_a_forged_message_with_a_real_id_blocks_the_genuine_execute(
+    checker: Checker, keys: Keys
+) -> None:
+    genuine = signed_for(build_request(now=NOW), keys)
+    forged = {
+        **genuine,
+        "params": {"service": "api", "target_release": "1.5.0"},
+    }  # sig no longer fits
+    assert_refused(check(checker, forged), "BAD_SIGNATURE", keys, forged)
+    # The genuine execute arrives after the refusal: a duplicate, never accepted.
+    later = check(checker, genuine)
+    assert isinstance(later, Duplicate) and later.execution_id == genuine["execution_id"]
+
+
+def test_a_forged_message_after_the_genuine_one_gets_no_answer(
+    checker: Checker, keys: Keys
+) -> None:
+    genuine = signed_for(build_request(now=NOW), keys)
+    assert isinstance(check(checker, genuine), Accepted)
+    forged = {**genuine, "sig": "0" * 64}
+    # No refusal may be sent for an execution that is already running.
+    assert isinstance(check(checker, forged), Duplicate)
+
+
+@pytest.mark.parametrize(
+    "spoil",
+    [
+        lambda m: {**m, "sig": "1" * 64},  # BAD_SIGNATURE
+        lambda m: {**m, "action": "exec_shell", "params": {"cmd": "id"}},  # ACTION_NOT_ALLOWED
+    ],
+)
+def test_every_refused_execute_claims_its_id(
+    checker: Checker, keys: Keys, streams: Any, spoil: Any
+) -> None:
+    message = spoil(signed_for(build_request(now=NOW), keys))
+    if message["sig"] != "1" * 64:
+        message = signed_for({k: v for k, v in message.items() if k != "sig"}, keys)
+    assert isinstance(check(checker, message), Refused)
+    assert f"ocp:runner:idem:{message['execution_id']}" in streams.keys
+
+
+def test_a_refused_dry_run_claims_nothing(checker: Checker, keys: Keys, streams: Any) -> None:
+    dry = {**build_request("dry_run", now=NOW), "sig": "2" * 64}
+    assert_refused(check(checker, dry), "BAD_SIGNATURE", keys, dry)
+    assert streams.keys == {}
+
+
+# --- catalogue version (C5 check 4) ---
+
+
+def test_a_different_catalogue_version_is_refused(checker: Checker, keys: Keys) -> None:
+    for kind in ("dry_run", "execute"):
+        message = signed_for(build_request(kind, now=NOW, catalogue_version="1.1.0"), keys)
+        assert_refused(check(checker, message), "VALIDATION_ERROR", keys, message)
 
 
 # --- catalogue (RUN-003) ---

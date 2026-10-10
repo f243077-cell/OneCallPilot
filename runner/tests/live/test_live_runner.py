@@ -136,9 +136,15 @@ def test_the_runner_answers_every_request_and_fails_closed(
     }
     backend.xadd(REQUESTS, entry(good))  # type: ignore[arg-type]
     backend.xadd(REQUESTS, entry(good))  # type: ignore[arg-type]  # replay
+    # C5 issue 9: a forgery borrowing a real execution_id, then the genuine execute.
+    borrowed = signed_for(build_request(now=now), keys)
+    cases["BAD_SIGNATURE borrowed id"] = {**borrowed, "sig": "4" * 64}
+    backend.xadd(REQUESTS, entry(cases["BAD_SIGNATURE borrowed id"]))  # type: ignore[arg-type]
+    backend.xadd(REQUESTS, entry(borrowed))  # type: ignore[arg-type]
     backend.xadd(REQUESTS, {"msg": "not json"})
-    for message in cases.values():
-        backend.xadd(REQUESTS, entry(message))  # type: ignore[arg-type]
+    for label, message in cases.items():
+        if label != "BAD_SIGNATURE borrowed id":  # already published, before `borrowed`
+            backend.xadd(REQUESTS, entry(message))  # type: ignore[arg-type]
 
     deadline = time.monotonic() + 30
     while True:
@@ -163,8 +169,8 @@ def test_the_runner_answers_every_request_and_fails_closed(
 
     logs = [json.loads(line) for line in docker("logs", stack["runner"]).splitlines() if line]
     decisions = [line.get("decision") for line in logs]
-    assert decisions.count("accepted") == 1
-    assert decisions.count("duplicate") == 1
+    assert decisions.count("accepted") == 1  # only `good`; `borrowed` must never run
+    assert decisions.count("duplicate") == 2  # the replay of `good`, and `borrowed`
     assert decisions.count("dropped") == 1
     assert decisions.count("refused") == len(cases)
     assert not any(keys.action.hex() in json.dumps(line) for line in logs)  # keys never logged

@@ -183,3 +183,23 @@ def test_refusals_echo_the_request_ids(
     assert (result["type"], result["request_id"], result["execution_id"]) == (
         "dry_run_result", dry["request_id"], None,
     )  # fmt: skip
+
+
+def test_forged_then_genuine_execute_through_the_stream(
+    consumer: Consumer, streams: FakeStreams, keys: Keys
+) -> None:
+    """C5 issue 9: the forgery ends the execution as refused; the genuine
+    execute that follows is a duplicate and never runs."""
+    genuine = signed_for(build_request(now=NOW), keys)
+    publish(streams, {**genuine, "sig": "3" * 64})
+    publish(streams, genuine)
+    decisions = [
+        consumer.handle(i, f)
+        for i, f in streams.read_group(REQUESTS_GROUP, "runner-a", REQUESTS_STREAM, ">", 10, None)
+    ]
+    assert [type(d).__name__ for d in decisions] == ["Refused", "Duplicate"]
+    (result,) = results(streams)
+    assert (result["execution_id"], result["error_code"]) == (
+        genuine["execution_id"], "BAD_SIGNATURE",
+    )  # fmt: skip
+    assert pending(streams) == {}

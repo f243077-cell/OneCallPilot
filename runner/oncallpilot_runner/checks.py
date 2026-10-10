@@ -3,20 +3,27 @@
     1. signature, with the one key for the message type   -> BAD_SIGNATURE
     2. message shape                                      -> VALIDATION_ERROR
     3. expires_at not yet passed                          -> REQUEST_EXPIRED
-    4. action enabled in the catalogue, with a handler    -> ACTION_NOT_ALLOWED
-    5. parameters valid against the catalogue             -> VALIDATION_ERROR
-    6. targets in runner/targets.yaml                     -> TARGET_NOT_ALLOWED
-    7. execute only: SET NX ocp:runner:idem:{execution_id}; a duplicate is
+    4. catalogue_version equals the loaded catalogue's    -> VALIDATION_ERROR
+    5. action enabled in the catalogue, with a handler    -> ACTION_NOT_ALLOWED
+    6. parameters valid against the catalogue             -> VALIDATION_ERROR
+    7. targets in runner/targets.yaml                     -> TARGET_NOT_ALLOWED
+    8. execute only: SET NX ocp:runner:idem:{execution_id}; a duplicate is
        acknowledged and ignored with no result (RUN-005, brought forward)
 
-Every failure fails closed: the request is refused (or, if it is too malformed
-to answer, dropped) and nothing runs. Rate limit, cooldown and the state
-fingerprint (the rest of step 7) come in tasks A2.5 and A2.3.
+**Every final answer to an execute claims its ID first** (C5): before a
+refusal of an execute is sent, for checks 1-7 too, the runner sets
+ocp:runner:idem:{execution_id} with SET NX. If the key already exists the
+message is a duplicate and gets no result. So a forged message that borrows a
+real execution_id ends that execution as refused, and the genuine execute
+arriving later is a duplicate that never runs (C5 issue 9, closed).
 
-A refusal echoes `request_id` and `execution_id` even when the signature
-failed, as C5 requires. That lets a forged message with a real execution_id
-make the runner refuse that execution; recorded as an open contract issue
-(docs/checks/week-3.md).
+**A message that cannot be answered gets no result** (C5): no usable type, no
+UUID request_id, or an execute without a UUID execution_id is logged and
+acknowledged.
+
+Every failure fails closed: the request is refused (or dropped) and nothing
+runs. Rate limit, cooldown and the state fingerprint (the rest of step 8) come
+in tasks A2.5 and A2.3.
 """
 
 import json
@@ -86,7 +93,7 @@ class Checker:
             return target
         kind = target.kind
 
-        def refuse(code: str, reason: str) -> Refused:
+        def refuse(code: str, reason: str) -> Refused | Duplicate:
             return self._refusal(target, code, reason)
 
         key = self.keys.for_request(kind)
@@ -98,26 +105,32 @@ class Checker:
             return refuse("VALIDATION_ERROR", str(exc))
         if self.now() >= request.expires_at:  # 3
             return refuse("REQUEST_EXPIRED", f"expired at {request.expires_at.isoformat()}")
-        action = self.catalogue.actions.get(request.action)  # 4
+        if request.catalogue_version != self.catalogue.version:  # 4
+            return refuse(
+                "VALIDATION_ERROR",
+                f"catalogue_version {request.catalogue_version} is not the loaded "
+                f"{self.catalogue.version}",
+            )
+        action = self.catalogue.actions.get(request.action)  # 5
         if action is None or not action.enabled or request.action not in self.handlers:
             return refuse("ACTION_NOT_ALLOWED", f"{request.action} is not an enabled action")
-        try:  # 5
+        try:  # 6
             problems = param_problems(action, request.params, self.runtime_values)
         except ValueError as exc:  # the ledger cannot be read: fail closed
             return refuse("VALIDATION_ERROR", f"parameters cannot be checked: {exc}")
         if problems:
             return refuse("VALIDATION_ERROR", "; ".join(problems))
-        for name, spec in action.params.items():  # 6
+        for name, spec in action.params.items():  # 7
             if spec.live_check == "targets" and not self.targets.allows_service(
                 str(request.params[name])
             ):
                 return refuse("TARGET_NOT_ALLOWED", f"{request.params[name]} is not a target")
-        if request.type == "execute" and request.execution_id:  # 7
-            if not self.set_nx(f"ocp:runner:idem:{request.execution_id}", IDEM_TTL_SECONDS):
+        if request.type == "execute" and request.execution_id:  # 8
+            if not self._claim(request.execution_id):
                 return Duplicate(request.execution_id)
         return Accepted(request)
 
-    def refuse_unexpected(self, fields: dict[str, str]) -> Refused | Dropped:
+    def refuse_unexpected(self, fields: dict[str, str]) -> Refused | Duplicate | Dropped:
         """A check raised something unexpected (a bug): refuse if the request can
         be answered at all, so it fails closed and the worker escalates."""
         message = _message(fields)
@@ -128,7 +141,13 @@ class Checker:
             return target
         return self._refusal(target, "VALIDATION_ERROR", "internal error while checking")
 
-    def _refusal(self, target: "_Answer", code: str, reason: str) -> Refused:
+    def _claim(self, execution_id: str) -> bool:
+        return self.set_nx(f"ocp:runner:idem:{execution_id}", IDEM_TTL_SECONDS)
+
+    def _refusal(self, target: "_Answer", code: str, reason: str) -> Refused | Duplicate:
+        # An execute's final answer claims its ID first; a taken ID is a duplicate.
+        if target.execution_id is not None and not self._claim(target.execution_id):
+            return Duplicate(target.execution_id)
         result = refused(
             request_type=target.kind,
             request_id=target.request_id,
