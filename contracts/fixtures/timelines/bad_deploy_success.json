@@ -1,0 +1,1082 @@
+{
+  "name": "bad_deploy_success",
+  "description": "Scenario 2: api 1.5.0 fails at checkout right after its deploy. The agent proposes rollback_deploy to 1.4.0 (medium tier, biometric). The user approves; the runner rolls back; both health checks pass; the incident is resolved (action_succeeded).",
+  "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+  "steps": [
+    {
+      "delay_ms": 0,
+      "event": {
+        "type": "event",
+        "event": "incident.opened",
+        "event_id": "1791968425000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 1,
+        "ts": "2026-10-14T09:00:25Z",
+        "data": {
+          "id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+          "service": "api",
+          "severity": "sev1",
+          "status": "investigating",
+          "status_reason": null,
+          "title": "api error rate 31%",
+          "opened_at": "2026-10-14T09:00:25Z",
+          "resolved_at": null,
+          "resolution": null,
+          "state_version": 1,
+          "top_hypothesis": null,
+          "pending_proposal_id": null
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791968431000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 2,
+        "ts": "2026-10-14T09:00:31Z",
+        "data": {
+          "id": "10000000-0000-4000-8000-000000000002",
+          "ref": "E2",
+          "kind": "log_query",
+          "purpose": "gather",
+          "tool_name": "query_logs",
+          "summary": "41 ERROR lines on /checkout, all IndexError: tuple index out of range",
+          "payload": {
+            "lines": [
+              {
+                "ts": "2026-10-14T09:00:12Z",
+                "level": "ERROR",
+                "msg": "unhandled error while serving the request",
+                "exc_type": "IndexError"
+              },
+              {
+                "ts": "2026-10-14T09:00:12Z",
+                "level": "ERROR",
+                "msg": "POST /checkout 500",
+                "exc_type": null
+              }
+            ],
+            "total_count": 41,
+            "top_exception_types": [
+              {
+                "exc_type": "IndexError",
+                "count": 41
+              }
+            ]
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T09:00:31Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791968436000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 3,
+        "ts": "2026-10-14T09:00:36Z",
+        "data": {
+          "id": "10000000-0000-4000-8000-000000000003",
+          "ref": "E3",
+          "kind": "metric_query",
+          "purpose": "gather",
+          "tool_name": "query_metrics",
+          "summary": "api error rate rose from 0.4% to 31%, starting 85 s after the deploy",
+          "payload": {
+            "template": "error_rate",
+            "service": "api",
+            "unit": "ratio",
+            "step_seconds": 15,
+            "points": [
+              {
+                "ts": "2026-10-14T08:59:30Z",
+                "value": 0.004
+              },
+              {
+                "ts": "2026-10-14T08:59:45Z",
+                "value": 0.003
+              },
+              {
+                "ts": "2026-10-14T09:00:00Z",
+                "value": 0.005
+              },
+              {
+                "ts": "2026-10-14T09:00:15Z",
+                "value": 0.29
+              },
+              {
+                "ts": "2026-10-14T09:00:30Z",
+                "value": 0.31
+              },
+              {
+                "ts": "2026-10-14T09:00:45Z",
+                "value": 0.31
+              }
+            ],
+            "baseline_mean": 0.004,
+            "peak": 0.31,
+            "pct_change": 7650.0,
+            "change_point_at": "2026-10-14T09:00:05Z",
+            "note": null
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T09:00:36Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791968440000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 4,
+        "ts": "2026-10-14T09:00:40Z",
+        "data": {
+          "id": "10000000-0000-4000-8000-000000000004",
+          "ref": "E4",
+          "kind": "deploy_list",
+          "purpose": "gather",
+          "tool_name": "get_recent_deploys",
+          "summary": "api 1.5.0 was deployed 90 s before the errors began",
+          "payload": {
+            "records": [
+              {
+                "service": "api",
+                "release": "1.5.0",
+                "commit_sha": "e56a282e7523212fea82c73f9157b41d5ba1743b",
+                "commit_message": "checkout: compute totals with new pricing rounding",
+                "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
+                "deployed_at": "2026-10-14T08:58:40Z",
+                "deployed_by": "ci",
+                "kind": "deploy",
+                "replicas": 1,
+                "reason": "scheduled release"
+              },
+              {
+                "service": "api",
+                "release": "1.4.0",
+                "commit_sha": "606c2674b8e32ec226c88019db05b426594a08f6",
+                "commit_message": "cart: cache price lookups",
+                "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
+                "deployed_at": "2026-10-05T09:05:00Z",
+                "deployed_by": "setup",
+                "kind": "deploy",
+                "replicas": 1,
+                "reason": "scheduled release"
+              }
+            ]
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T09:00:40Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791968444000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 5,
+        "ts": "2026-10-14T09:00:44Z",
+        "data": {
+          "id": "10000000-0000-4000-8000-000000000005",
+          "ref": "E5",
+          "kind": "service_health",
+          "purpose": "gather",
+          "tool_name": "get_service_health",
+          "summary": "cs-api-150-1 running and healthy; /healthz 200",
+          "payload": {
+            "service": "api",
+            "containers": [
+              {
+                "name": "cs-api-150-1",
+                "release": "1.5.0",
+                "state": "running",
+                "health": "healthy",
+                "restart_count": 0,
+                "oom_killed": false,
+                "exit_code": null,
+                "started_at": "2026-10-14T08:58:31Z"
+              }
+            ],
+            "probe": {
+              "url": "http://cs-lb/healthz",
+              "ok": true,
+              "status_code": 200,
+              "latency_ms": 4.1,
+              "error": null
+            }
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T09:00:44Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791968449000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 6,
+        "ts": "2026-10-14T09:00:49Z",
+        "data": {
+          "id": "10000000-0000-4000-8000-000000000006",
+          "ref": "E6",
+          "kind": "runbook_hit",
+          "purpose": "gather",
+          "tool_name": "search_runbooks",
+          "summary": "Runbook: roll back a release",
+          "payload": {
+            "chunks": [
+              {
+                "source": "runbooks/rollback.md",
+                "heading": "When to roll back",
+                "content": "If errors start right after a deploy, roll back to the last good release.",
+                "similarity": 0.83
+              }
+            ]
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T09:00:49Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 900,
+      "event": {
+        "type": "event",
+        "event": "hypothesis.updated",
+        "event_id": "1791968455000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 7,
+        "ts": "2026-10-14T09:00:55Z",
+        "data": {
+          "hypotheses": [
+            {
+              "id": "10000000-0000-4000-8000-000000000021",
+              "rank": 1,
+              "summary": "Release 1.5.0 of the api fails at checkout, starting right after its deploy",
+              "root_cause_category": "bad_deploy",
+              "confidence": 0.9,
+              "confidence_initial": 0.9,
+              "evidence_refs": [
+                "E2",
+                "E3",
+                "E4"
+              ],
+              "status": "active",
+              "reflection_notes": null
+            },
+            {
+              "id": "10000000-0000-4000-8000-000000000022",
+              "rank": 2,
+              "summary": "A bug in the checkout code path that the new traffic pattern exposes",
+              "root_cause_category": "application_bug",
+              "confidence": 0.35,
+              "confidence_initial": 0.35,
+              "evidence_refs": [
+                "E2"
+              ],
+              "status": "active",
+              "reflection_notes": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791968460000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 8,
+        "ts": "2026-10-14T09:01:00Z",
+        "data": {
+          "id": "10000000-0000-4000-8000-000000000007",
+          "ref": "E7",
+          "kind": "log_query",
+          "purpose": "disproof",
+          "tool_name": "query_logs",
+          "summary": "No checkout errors in the 10 minutes before the deploy",
+          "payload": {
+            "lines": [],
+            "total_count": 0,
+            "top_exception_types": []
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T09:01:00Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 900,
+      "event": {
+        "type": "event",
+        "event": "hypothesis.updated",
+        "event_id": "1791968461000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 9,
+        "ts": "2026-10-14T09:01:01Z",
+        "data": {
+          "hypotheses": [
+            {
+              "id": "10000000-0000-4000-8000-000000000021",
+              "rank": 1,
+              "summary": "Release 1.5.0 of the api fails at checkout, starting right after its deploy",
+              "root_cause_category": "bad_deploy",
+              "confidence": 0.86,
+              "confidence_initial": 0.9,
+              "evidence_refs": [
+                "E2",
+                "E3",
+                "E4"
+              ],
+              "status": "active",
+              "reflection_notes": "Citations support the claim; no checkout errors before the deploy (E7)."
+            },
+            {
+              "id": "10000000-0000-4000-8000-000000000022",
+              "rank": 2,
+              "summary": "A bug in the checkout code path that the new traffic pattern exposes",
+              "root_cause_category": "application_bug",
+              "confidence": 0.3,
+              "confidence_initial": 0.35,
+              "evidence_refs": [
+                "E2"
+              ],
+              "status": "active",
+              "reflection_notes": "Possible, but the errors start with the deploy."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "delay_ms": 800,
+      "event": {
+        "type": "event",
+        "event": "proposal.created",
+        "event_id": "1791968465000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 10,
+        "ts": "2026-10-14T09:01:05Z",
+        "data": {
+          "id": "10000000-0000-4000-8000-000000000030",
+          "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+          "kind": "primary",
+          "parent_proposal_id": null,
+          "action": "rollback_deploy",
+          "params": {
+            "service": "api",
+            "target_release": "1.4.0"
+          },
+          "risk_tier": "medium",
+          "approval_requirement": "biometric",
+          "expected_effect": "Checkout errors stop once 1.4.0 serves traffic",
+          "rationale": "Errors began 90 s after 1.5.0 was deployed (E4), all at checkout (E2, E3); none before the deploy (E7).",
+          "evidence_refs": [
+            "E2",
+            "E3",
+            "E4"
+          ],
+          "rollback_step": {
+            "action": "rollback_deploy",
+            "params": {
+              "service": "api",
+              "target_release": "1.5.0"
+            }
+          },
+          "dry_run_result": {
+            "would_change": [
+              {
+                "target": "cs-api-140-1",
+                "change": "start"
+              },
+              {
+                "target": "cs-api-150-1",
+                "change": "stop"
+              }
+            ],
+            "current": {
+              "active_release": "1.5.0",
+              "running_replicas": 1,
+              "containers": [
+                {
+                  "name": "cs-api-150-1",
+                  "state": "running",
+                  "health": "healthy"
+                },
+                {
+                  "name": "cs-api-140-1",
+                  "state": "exited",
+                  "health": "none"
+                }
+              ],
+              "cache_keys": null
+            },
+            "preconditions": {
+              "rate_limit_ok": true,
+              "cooldown_ok": true,
+              "slots_available": true
+            },
+            "predicted_effect": "1 replica of api 1.4.0 serves traffic; 1.5.0 is stopped",
+            "warnings": [],
+            "state_fingerprint": "c46dd06e977865ff3dab8819952fdce0567bea50e56a76206a9e87dc118e91f7"
+          },
+          "dry_run_at": "2026-10-14T09:01:02Z",
+          "fingerprint": "e42b9f6497e2d0be87fed64e22f77a36d8374e3ee26d7f5fafc027af0f8cb649",
+          "status": "pending",
+          "status_reason": null,
+          "expires_at": "2026-10-14T09:16:05Z",
+          "created_at": "2026-10-14T09:01:05Z"
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791968465000-1",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 11,
+        "ts": "2026-10-14T09:01:05Z",
+        "data": {
+          "status": "awaiting_approval",
+          "status_reason": null,
+          "severity": "sev1"
+        }
+      }
+    },
+    {
+      "delay_ms": 0,
+      "await_approval": true,
+      "event": {
+        "type": "event",
+        "event": "proposal.updated",
+        "event_id": "1791968518000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 12,
+        "ts": "2026-10-14T09:01:58Z",
+        "data": {
+          "proposal_id": "10000000-0000-4000-8000-000000000030",
+          "status": "approved",
+          "status_reason": null,
+          "superseded_by": null
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791968518000-1",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 13,
+        "ts": "2026-10-14T09:01:58Z",
+        "data": {
+          "status": "executing",
+          "status_reason": null,
+          "severity": "sev1"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791968521000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 14,
+        "ts": "2026-10-14T09:02:01Z",
+        "data": {
+          "execution_id": "10000000-0000-4000-8000-000000000040",
+          "proposal_id": "10000000-0000-4000-8000-000000000030",
+          "step": "validated",
+          "status": "succeeded",
+          "message": "signature, catalogue, targets and fingerprint checked"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791968523000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 15,
+        "ts": "2026-10-14T09:02:03Z",
+        "data": {
+          "execution_id": "10000000-0000-4000-8000-000000000040",
+          "proposal_id": "10000000-0000-4000-8000-000000000030",
+          "step": "starting cs-api-140-1",
+          "status": "running",
+          "message": "waiting for cs-api-140-1 to report healthy"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791968540000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 16,
+        "ts": "2026-10-14T09:02:20Z",
+        "data": {
+          "execution_id": "10000000-0000-4000-8000-000000000040",
+          "proposal_id": "10000000-0000-4000-8000-000000000030",
+          "step": "cs-api-140-1 healthy",
+          "status": "succeeded",
+          "message": "health check passed"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791968544000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 17,
+        "ts": "2026-10-14T09:02:24Z",
+        "data": {
+          "execution_id": "10000000-0000-4000-8000-000000000040",
+          "proposal_id": "10000000-0000-4000-8000-000000000030",
+          "step": "stopping cs-api-150-1",
+          "status": "succeeded",
+          "message": "stopped gracefully"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791968550000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 18,
+        "ts": "2026-10-14T09:02:30Z",
+        "data": {
+          "execution_id": "10000000-0000-4000-8000-000000000040",
+          "proposal_id": "10000000-0000-4000-8000-000000000030",
+          "step": "done",
+          "status": "succeeded",
+          "message": "structural health check passed"
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "proposal.updated",
+        "event_id": "1791968551000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 19,
+        "ts": "2026-10-14T09:02:31Z",
+        "data": {
+          "proposal_id": "10000000-0000-4000-8000-000000000030",
+          "status": "succeeded",
+          "status_reason": null,
+          "superseded_by": null
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791968551000-1",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 20,
+        "ts": "2026-10-14T09:02:31Z",
+        "data": {
+          "status": "verifying",
+          "status_reason": null,
+          "severity": "sev1"
+        }
+      }
+    },
+    {
+      "delay_ms": 2500,
+      "event": {
+        "type": "event",
+        "event": "incident.resolved",
+        "event_id": "1791968611000-0",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "state_version": 21,
+        "ts": "2026-10-14T09:03:31Z",
+        "data": {
+          "resolution": "action_succeeded",
+          "resolved_at": "2026-10-14T09:03:31Z"
+        }
+      }
+    }
+  ],
+  "final": {
+    "id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+    "service": "api",
+    "severity": "sev1",
+    "status": "resolved",
+    "status_reason": null,
+    "title": "api error rate 31%",
+    "opened_at": "2026-10-14T09:00:25Z",
+    "resolved_at": "2026-10-14T09:03:31Z",
+    "resolution": "action_succeeded",
+    "state_version": 21,
+    "top_hypothesis": {
+      "summary": "Release 1.5.0 of the api fails at checkout, starting right after its deploy",
+      "confidence": 0.86,
+      "root_cause_category": "bad_deploy"
+    },
+    "pending_proposal_id": null,
+    "window_start": "2026-10-14T08:50:10Z",
+    "window_end": "2026-10-14T09:03:31Z",
+    "trigger": {
+      "source": "detector",
+      "signals": [
+        {
+          "name": "error_rate",
+          "value": 0.31,
+          "baseline": 0.004,
+          "zscore": 9.2,
+          "first_anomalous_at": "2026-10-14T09:00:10Z"
+        }
+      ],
+      "observed_at": "2026-10-14T09:00:25Z",
+      "updates": []
+    },
+    "evidence": [
+      {
+        "id": "10000000-0000-4000-8000-000000000001",
+        "ref": "E1",
+        "kind": "detector_signal",
+        "purpose": "seed",
+        "tool_name": null,
+        "summary": "api error rate 31% (detector signal)",
+        "payload": {
+          "service": "api",
+          "signals": [
+            {
+              "name": "error_rate",
+              "value": 0.31,
+              "baseline": 0.004,
+              "zscore": 9.2,
+              "first_anomalous_at": "2026-10-14T09:00:10Z"
+            }
+          ],
+          "observed_at": "2026-10-14T09:00:25Z"
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T09:00:25Z"
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "ref": "E2",
+        "kind": "log_query",
+        "purpose": "gather",
+        "tool_name": "query_logs",
+        "summary": "41 ERROR lines on /checkout, all IndexError: tuple index out of range",
+        "payload": {
+          "lines": [
+            {
+              "ts": "2026-10-14T09:00:12Z",
+              "level": "ERROR",
+              "msg": "unhandled error while serving the request",
+              "exc_type": "IndexError"
+            },
+            {
+              "ts": "2026-10-14T09:00:12Z",
+              "level": "ERROR",
+              "msg": "POST /checkout 500",
+              "exc_type": null
+            }
+          ],
+          "total_count": 41,
+          "top_exception_types": [
+            {
+              "exc_type": "IndexError",
+              "count": 41
+            }
+          ]
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T09:00:31Z"
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000003",
+        "ref": "E3",
+        "kind": "metric_query",
+        "purpose": "gather",
+        "tool_name": "query_metrics",
+        "summary": "api error rate rose from 0.4% to 31%, starting 85 s after the deploy",
+        "payload": {
+          "template": "error_rate",
+          "service": "api",
+          "unit": "ratio",
+          "step_seconds": 15,
+          "points": [
+            {
+              "ts": "2026-10-14T08:59:30Z",
+              "value": 0.004
+            },
+            {
+              "ts": "2026-10-14T08:59:45Z",
+              "value": 0.003
+            },
+            {
+              "ts": "2026-10-14T09:00:00Z",
+              "value": 0.005
+            },
+            {
+              "ts": "2026-10-14T09:00:15Z",
+              "value": 0.29
+            },
+            {
+              "ts": "2026-10-14T09:00:30Z",
+              "value": 0.31
+            },
+            {
+              "ts": "2026-10-14T09:00:45Z",
+              "value": 0.31
+            }
+          ],
+          "baseline_mean": 0.004,
+          "peak": 0.31,
+          "pct_change": 7650.0,
+          "change_point_at": "2026-10-14T09:00:05Z",
+          "note": null
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T09:00:36Z"
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000004",
+        "ref": "E4",
+        "kind": "deploy_list",
+        "purpose": "gather",
+        "tool_name": "get_recent_deploys",
+        "summary": "api 1.5.0 was deployed 90 s before the errors began",
+        "payload": {
+          "records": [
+            {
+              "service": "api",
+              "release": "1.5.0",
+              "commit_sha": "e56a282e7523212fea82c73f9157b41d5ba1743b",
+              "commit_message": "checkout: compute totals with new pricing rounding",
+              "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
+              "deployed_at": "2026-10-14T08:58:40Z",
+              "deployed_by": "ci",
+              "kind": "deploy",
+              "replicas": 1,
+              "reason": "scheduled release"
+            },
+            {
+              "service": "api",
+              "release": "1.4.0",
+              "commit_sha": "606c2674b8e32ec226c88019db05b426594a08f6",
+              "commit_message": "cart: cache price lookups",
+              "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
+              "deployed_at": "2026-10-05T09:05:00Z",
+              "deployed_by": "setup",
+              "kind": "deploy",
+              "replicas": 1,
+              "reason": "scheduled release"
+            }
+          ]
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T09:00:40Z"
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000005",
+        "ref": "E5",
+        "kind": "service_health",
+        "purpose": "gather",
+        "tool_name": "get_service_health",
+        "summary": "cs-api-150-1 running and healthy; /healthz 200",
+        "payload": {
+          "service": "api",
+          "containers": [
+            {
+              "name": "cs-api-150-1",
+              "release": "1.5.0",
+              "state": "running",
+              "health": "healthy",
+              "restart_count": 0,
+              "oom_killed": false,
+              "exit_code": null,
+              "started_at": "2026-10-14T08:58:31Z"
+            }
+          ],
+          "probe": {
+            "url": "http://cs-lb/healthz",
+            "ok": true,
+            "status_code": 200,
+            "latency_ms": 4.1,
+            "error": null
+          }
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T09:00:44Z"
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000006",
+        "ref": "E6",
+        "kind": "runbook_hit",
+        "purpose": "gather",
+        "tool_name": "search_runbooks",
+        "summary": "Runbook: roll back a release",
+        "payload": {
+          "chunks": [
+            {
+              "source": "runbooks/rollback.md",
+              "heading": "When to roll back",
+              "content": "If errors start right after a deploy, roll back to the last good release.",
+              "similarity": 0.83
+            }
+          ]
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T09:00:49Z"
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000007",
+        "ref": "E7",
+        "kind": "log_query",
+        "purpose": "disproof",
+        "tool_name": "query_logs",
+        "summary": "No checkout errors in the 10 minutes before the deploy",
+        "payload": {
+          "lines": [],
+          "total_count": 0,
+          "top_exception_types": []
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T09:01:00Z"
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "10000000-0000-4000-8000-000000000021",
+        "rank": 1,
+        "summary": "Release 1.5.0 of the api fails at checkout, starting right after its deploy",
+        "root_cause_category": "bad_deploy",
+        "confidence": 0.86,
+        "confidence_initial": 0.9,
+        "evidence_refs": [
+          "E2",
+          "E3",
+          "E4"
+        ],
+        "status": "active",
+        "reflection_notes": "Citations support the claim; no checkout errors before the deploy (E7)."
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000022",
+        "rank": 2,
+        "summary": "A bug in the checkout code path that the new traffic pattern exposes",
+        "root_cause_category": "application_bug",
+        "confidence": 0.3,
+        "confidence_initial": 0.35,
+        "evidence_refs": [
+          "E2"
+        ],
+        "status": "active",
+        "reflection_notes": "Possible, but the errors start with the deploy."
+      }
+    ],
+    "proposals": [
+      {
+        "id": "10000000-0000-4000-8000-000000000030",
+        "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+        "kind": "primary",
+        "parent_proposal_id": null,
+        "action": "rollback_deploy",
+        "params": {
+          "service": "api",
+          "target_release": "1.4.0"
+        },
+        "risk_tier": "medium",
+        "approval_requirement": "biometric",
+        "expected_effect": "Checkout errors stop once 1.4.0 serves traffic",
+        "rationale": "Errors began 90 s after 1.5.0 was deployed (E4), all at checkout (E2, E3); none before the deploy (E7).",
+        "evidence_refs": [
+          "E2",
+          "E3",
+          "E4"
+        ],
+        "rollback_step": {
+          "action": "rollback_deploy",
+          "params": {
+            "service": "api",
+            "target_release": "1.5.0"
+          }
+        },
+        "dry_run_result": {
+          "would_change": [
+            {
+              "target": "cs-api-140-1",
+              "change": "start"
+            },
+            {
+              "target": "cs-api-150-1",
+              "change": "stop"
+            }
+          ],
+          "current": {
+            "active_release": "1.5.0",
+            "running_replicas": 1,
+            "containers": [
+              {
+                "name": "cs-api-150-1",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-140-1",
+                "state": "exited",
+                "health": "none"
+              }
+            ],
+            "cache_keys": null
+          },
+          "preconditions": {
+            "rate_limit_ok": true,
+            "cooldown_ok": true,
+            "slots_available": true
+          },
+          "predicted_effect": "1 replica of api 1.4.0 serves traffic; 1.5.0 is stopped",
+          "warnings": [],
+          "state_fingerprint": "c46dd06e977865ff3dab8819952fdce0567bea50e56a76206a9e87dc118e91f7"
+        },
+        "dry_run_at": "2026-10-14T09:01:02Z",
+        "fingerprint": "e42b9f6497e2d0be87fed64e22f77a36d8374e3ee26d7f5fafc027af0f8cb649",
+        "status": "succeeded",
+        "status_reason": null,
+        "expires_at": "2026-10-14T09:16:05Z",
+        "created_at": "2026-10-14T09:01:05Z"
+      }
+    ],
+    "executions": [
+      {
+        "id": "10000000-0000-4000-8000-000000000040",
+        "proposal_id": "10000000-0000-4000-8000-000000000030",
+        "status": "succeeded",
+        "steps": [
+          {
+            "at": "2026-10-14T09:02:01Z",
+            "step": "validated",
+            "status": "succeeded",
+            "message": "signature, catalogue, targets and fingerprint checked"
+          },
+          {
+            "at": "2026-10-14T09:02:03Z",
+            "step": "starting cs-api-140-1",
+            "status": "running",
+            "message": "waiting for cs-api-140-1 to report healthy"
+          },
+          {
+            "at": "2026-10-14T09:02:20Z",
+            "step": "cs-api-140-1 healthy",
+            "status": "succeeded",
+            "message": "health check passed"
+          },
+          {
+            "at": "2026-10-14T09:02:24Z",
+            "step": "stopping cs-api-150-1",
+            "status": "succeeded",
+            "message": "stopped gracefully"
+          },
+          {
+            "at": "2026-10-14T09:02:30Z",
+            "step": "done",
+            "status": "succeeded",
+            "message": "structural health check passed"
+          }
+        ],
+        "error_code": null,
+        "health_after": {
+          "structural": {
+            "passed": true,
+            "checked_at": "2026-10-14T09:02:29Z",
+            "containers": [
+              {
+                "name": "cs-api-140-1",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-150-1",
+                "state": "exited",
+                "health": "none"
+              }
+            ],
+            "probes": [
+              {
+                "url": "http://cs-lb/healthz",
+                "ok": true,
+                "status_code": 200,
+                "latency_ms": 3.4,
+                "error": null
+              }
+            ]
+          },
+          "signals": {
+            "passed": true,
+            "checked_at": "2026-10-14T09:03:31Z",
+            "window_seconds": 60,
+            "signals": [
+              "error_rate"
+            ]
+          },
+          "verdict": "pass"
+        },
+        "started_at": "2026-10-14T09:02:00Z",
+        "finished_at": "2026-10-14T09:02:30Z"
+      }
+    ],
+    "agent_meta": {
+      "prompt_version": "v1",
+      "provider": "fake",
+      "model": "fake-scripted",
+      "catalogue_version": "1.0.0",
+      "agent_config_hash": "751ddb4c81bb87ac09e98cef2a91e775ed7ff80fe80f825cdf08641c5f158117",
+      "tool_calls": 7,
+      "llm_calls": 10,
+      "input_tokens": 18240,
+      "output_tokens": 1630,
+      "duration_ms": 38400,
+      "terminal_state": "PROPOSED",
+      "run_started_at": "2026-10-14T09:00:26Z"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+# Owner: Tanzeel. Runner and socket-proxy-rw (architecture §2.10, §2.11, §3, §7.3).
+# The runner service is added once copilot-redis exists (Usman's copilot.yml,
+# task B1.3): without it the runner cannot consume, and `ocp up` starts this
+# profile. The image is built from runner/Dockerfile and tested in A2.1
+# (docs/checks/week-3.md).
+#
+# SAFETY (CLAUDE.md §6.5, RUN-017, TEST-015): socket-proxy-rw allows exactly
+# CONTAINERS (GET), ALLOW_START, ALLOW_STOP and ALLOW_RESTARTS, with POST=0.
+# The image enables EVENTS, PING and VERSION (and their LIBPOD_* twins) by
+# default, so they are switched off explicitly below. Never widen this list.
+# Only this proxy and socket-proxy-ro may mount the Docker socket.
+
+services:
+  socket-proxy-rw:
+    image: lscr.io/linuxserver/socket-proxy:3.4.6-r0-ls101
+    profiles: [runner]
+    environment:
+      CONTAINERS: "1"
+      ALLOW_START: "1"
+      ALLOW_STOP: "1"
+      ALLOW_RESTARTS: "1"
+      POST: "0"
+      EVENTS: "0"
+      PING: "0"
+      VERSION: "0"
+      LIBPOD_PING: "0"
+      LIBPOD_VERSION: "0"
+      LOG_LEVEL: ${SOCKET_PROXY_RW_LOG_LEVEL:-info}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [rw_proxy_net]
+    read_only: true
+    tmpfs: [/run]
+    restart: unless-stopped
+    healthcheck:
+      # Port check only: PING and VERSION are blocked on purpose.
+      test: ["CMD", "nc", "-z", "127.0.0.1", "2375"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+networks:
+  rw_proxy_net:
+    # Internal: no internet egress. Members: socket-proxy-rw and runner only.
+    internal: true

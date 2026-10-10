@@ -1,0 +1,189 @@
+{
+  "$defs": {
+    "ContainerHealth": {
+      "additionalProperties": false,
+      "description": "One container in ``get_service_health``: projected fields only (AI-008).",
+      "properties": {
+        "exit_code": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Exit Code"
+        },
+        "health": {
+          "enum": [
+            "healthy",
+            "unhealthy",
+            "starting",
+            "none"
+          ],
+          "title": "Health",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "^cs-[a-z0-9]+(-[a-z0-9]+)*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "oom_killed": {
+          "title": "Oom Killed",
+          "type": "boolean"
+        },
+        "release": {
+          "pattern": "^[0-9]+(\\.[0-9]+){1,2}$",
+          "title": "Release",
+          "type": "string"
+        },
+        "restart_count": {
+          "minimum": 0,
+          "title": "Restart Count",
+          "type": "integer"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Started At"
+        },
+        "state": {
+          "enum": [
+            "created",
+            "restarting",
+            "running",
+            "removing",
+            "paused",
+            "exited",
+            "dead"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "release",
+        "state",
+        "health",
+        "restart_count",
+        "oom_killed",
+        "exit_code",
+        "started_at"
+      ],
+      "title": "ContainerHealth",
+      "type": "object"
+    },
+    "ProbeResult": {
+      "additionalProperties": false,
+      "description": "An HTTP ``/healthz`` probe.",
+      "properties": {
+        "error": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Error"
+        },
+        "latency_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latency Ms"
+        },
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        },
+        "status_code": {
+          "anyOf": [
+            {
+              "maximum": 599,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Status Code"
+        },
+        "url": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "ok",
+        "status_code",
+        "latency_ms",
+        "error"
+      ],
+      "title": "ProbeResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "``kind = service_health``: result of ``get_service_health`` (AI-008).\n\nNever holds container environment variables, mounts, or labels outside\n``oncallpilot.*``.",
+  "properties": {
+    "containers": {
+      "items": {
+        "$ref": "#/$defs/ContainerHealth"
+      },
+      "title": "Containers",
+      "type": "array"
+    },
+    "probe": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProbeResult"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "service": {
+      "enum": [
+        "api",
+        "worker",
+        "lb",
+        "payments",
+        "redis",
+        "postgres"
+      ],
+      "title": "Service",
+      "type": "string"
+    }
+  },
+  "required": [
+    "service",
+    "containers",
+    "probe"
+  ],
+  "title": "ServiceHealthPayload",
+  "type": "object"
+}

@@ -1,0 +1,42 @@
+[project]
+name = "ocp"
+version = "0.1.0"
+description = "ocp: one-command setup and checks for the OnCallPilot stack (architecture §12.1)"
+requires-python = ">=3.12,<3.13"
+# Standard library only: the commands drive the `docker` and `uv` CLIs.
+dependencies = []
+
+[project.scripts]
+ocp = "ocp_cli.main:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "mypy>=1.13",
+    "ruff>=0.8",
+]
+
+[build-system]
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+module-name = "ocp_cli"
+
+[tool.pytest.ini_options]
+# Tests marked `live` run against the Docker stack on the integration host
+# (`uv run pytest -m live`). A later `-m live` overrides this.
+addopts = "-m 'not live'"
+markers = ["live: runs ocp against the real Docker stack"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+strict = true
+packages = ["ocp_cli", "tests"]

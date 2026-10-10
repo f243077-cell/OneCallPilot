@@ -1,0 +1,99 @@
+{
+  "additionalProperties": false,
+  "description": "One line of ``deploys.jsonl``.",
+  "properties": {
+    "commit_message": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Commit Message",
+      "type": "string"
+    },
+    "commit_sha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Commit Sha",
+      "type": "string"
+    },
+    "config_hash": {
+      "description": "SHA-256 hex of the effective config",
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Config Hash",
+      "type": "string"
+    },
+    "deploy_id": {
+      "format": "uuid",
+      "title": "Deploy Id",
+      "type": "string"
+    },
+    "deployed_at": {
+      "description": "UTC, serialised with a Z suffix",
+      "format": "date-time",
+      "title": "Deployed At",
+      "type": "string"
+    },
+    "deployed_by": {
+      "enum": [
+        "ci",
+        "runner",
+        "setup"
+      ],
+      "title": "Deployed By",
+      "type": "string"
+    },
+    "image_tag": {
+      "pattern": "^chaos-shop/(api|worker):[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Image Tag",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "deploy",
+        "rollback",
+        "scale",
+        "reset"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "release": {
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "title": "Release",
+      "type": "string"
+    },
+    "replicas": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Replicas",
+      "type": "integer"
+    },
+    "service": {
+      "enum": [
+        "api",
+        "worker"
+      ],
+      "title": "Service",
+      "type": "string"
+    }
+  },
+  "required": [
+    "deploy_id",
+    "kind",
+    "service",
+    "release",
+    "commit_sha",
+    "commit_message",
+    "image_tag",
+    "config_hash",
+    "replicas",
+    "deployed_at",
+    "deployed_by",
+    "reason"
+  ],
+  "title": "DeployRecord",
+  "type": "object"
+}

@@ -1,0 +1,36 @@
+{
+  "type": "event",
+  "event": "evidence.added",
+  "event_id": "1791968431000-0",
+  "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+  "state_version": 2,
+  "ts": "2026-10-14T09:00:31Z",
+  "data": {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "ref": "E2",
+    "kind": "log_query",
+    "purpose": "gather",
+    "tool_name": "query_logs",
+    "summary": "41 ERROR lines on /checkout, all IndexError: tuple index out of range",
+    "payload": {
+      "lines": [
+        {
+          "ts": "2026-10-14T09:00:12Z",
+          "level": "ERROR",
+          "msg": "unhandled error while serving the request",
+          "exc_type": "IndexError"
+        }
+      ],
+      "total_count": 41,
+      "top_exception_types": [
+        {
+          "exc_type": "IndexError",
+          "count": 41
+        }
+      ]
+    },
+    "suspicious_content": false,
+    "created_at": "2026-10-14T09:00:31Z",
+    "payload_truncated": false
+  }
+}

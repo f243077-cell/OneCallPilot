@@ -1,0 +1,106 @@
+{
+  "$defs": {
+    "Signal": {
+      "additionalProperties": false,
+      "description": "One detector signal (§6.8), as sent in ``AlertIn`` (§9.2).",
+      "properties": {
+        "baseline": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Baseline"
+        },
+        "first_anomalous_at": {
+          "format": "date-time",
+          "title": "First Anomalous At",
+          "type": "string"
+        },
+        "name": {
+          "enum": [
+            "error_rate",
+            "p95_latency",
+            "job_failure_rate",
+            "restarts",
+            "stack_traces"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "zscore": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Zscore"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "baseline",
+        "zscore",
+        "first_anomalous_at"
+      ],
+      "title": "Signal",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Body of ``POST /ingest/alert`` in the native format (§9.2, API-003).",
+  "properties": {
+    "observed_at": {
+      "format": "date-time",
+      "title": "Observed At",
+      "type": "string"
+    },
+    "service": {
+      "enum": [
+        "api",
+        "worker",
+        "lb",
+        "payments",
+        "redis",
+        "postgres"
+      ],
+      "title": "Service",
+      "type": "string"
+    },
+    "signals": {
+      "items": {
+        "$ref": "#/$defs/Signal"
+      },
+      "minItems": 1,
+      "title": "Signals",
+      "type": "array"
+    },
+    "source": {
+      "enum": [
+        "detector",
+        "alertmanager"
+      ],
+      "title": "Source",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source",
+    "service",
+    "signals",
+    "observed_at"
+  ],
+  "title": "AlertIn",
+  "type": "object"
+}

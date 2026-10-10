@@ -1,0 +1,135 @@
+# C4 — Action catalogue (contracts/actions.yaml)
+#
+# Drafter: Tanzeel · Reader: Usman · Source: docs/architecture.md §7.2, §7.6, §9.5
+# Requirements: AI-018, AI-019, RUN-003, RUN-009..RUN-012, RUN-018
+#
+# The agent validator (backend) and the runner load THIS file. Rules:
+# - Only actions with `enabled: true` may be proposed or executed. Anything
+#   else, including an unknown name, is refused (`ACTION_NOT_ALLOWED`).
+# - `risk_tier`, `approval_requirement`, and `rollback_step` are copied from
+#   here into the proposal. Values from the model are ignored (AI-019).
+# - `approval_requirement` follows the tier: low -> tap; medium, high -> biometric.
+# - Every parameter is an enum or a bounded integer; there are no free-form
+#   strings (RUN-018). Unknown parameters are refused.
+# - Enum `values` are the most the catalogue allows. At validation time each
+#   value must ALSO pass the live checks named in `live_check`, so the
+#   effective enum is the intersection.
+# - The runner's handler set must equal the set of enabled actions (CI check,
+#   TEST-009 item 6).
+# - Any change to this file is a contract change (CLAUDE.md §8.4) and bumps
+#   `catalogue_version` (stamped on proposals, runner requests, agent_meta).
+#
+# Parameter types:
+#   enum     `values`: fixed list, or `values_from`: a runtime source:
+#              ledger_releases -> releases of params.service in the deploy
+#                                 ledger history that have slot containers
+#                                 in runner/targets.yaml, excluding the
+#                                 currently active release
+#   integer  `minimum` and `maximum`, inclusive
+#
+# live_check:
+#   targets  the service has an entry in runner/targets.yaml
+#
+# rollback_step (null = not reversible): the action and parameters of the
+# rollback proposal the worker creates when post-action verification fails
+# (FR-015). Each parameter is either
+#   {from: params.<name>}    a parameter of the original proposal, or
+#   {from: captured.<name>}  a value the runner captured before executing
+#                            and returned in its execution_result.
+
+catalogue_version: "1.0.0"
+
+actions:
+  restart_service:
+    enabled: true
+    label: Restart service
+    description: >-
+      Gracefully restarts the running containers of the service's active
+      release (SIGTERM, 10 s timeout), or starts them if they have exited.
+    risk_tier: low
+    approval_requirement: tap
+    params:
+      service:
+        type: enum
+        values: [api, worker, redis]
+        live_check: targets
+    captures: []
+    rollback_step: null
+
+  scale_service:
+    enabled: true
+    label: Scale service
+    description: >-
+      Starts or stops replica slots of the active release until the
+      requested number of replicas is running.
+    risk_tier: low
+    approval_requirement: tap
+    params:
+      service:
+        type: enum
+        values: [api]
+        live_check: targets
+      replicas:
+        type: integer
+        minimum: 1
+        maximum: 5
+    captures: [previous_replicas]
+    rollback_step:
+      action: scale_service
+      params:
+        service: {from: params.service}
+        replicas: {from: captured.previous_replicas}
+
+  rollback_deploy:
+    enabled: true
+    label: Roll back deploy
+    description: >-
+      Starts the same number of replicas of the target release, waits until
+      they are healthy, then stops the active release's replicas.
+    risk_tier: medium
+    approval_requirement: biometric
+    params:
+      service:
+        type: enum
+        values: [api, worker]
+        live_check: targets
+      target_release:
+        type: enum
+        values_from: ledger_releases
+    captures: [previous_release]
+    rollback_step:
+      action: rollback_deploy
+      params:
+        service: {from: params.service}
+        target_release: {from: captured.previous_release}
+
+  clear_cache:
+    enabled: true
+    label: Clear cache
+    description: >-
+      Deletes every key of one application cache through the store's
+      internal admin API. The cache refills on demand.
+    risk_tier: medium
+    approval_requirement: biometric
+    params:
+      cache:
+        type: enum
+        values: [catalog, pricing]
+    captures: []
+    rollback_step: null
+
+  run_migration_rollback:
+    # Disabled in v1 (CLAUDE.md §5.6, §6.4). Never enable it.
+    enabled: false
+    label: Roll back database migration
+    description: >-
+      Not available in v1. Listed so that a proposal naming it is rejected
+      explicitly by the validator and the runner.
+    risk_tier: high
+    approval_requirement: biometric
+    params:
+      migration_id:
+        type: enum
+        values: []
+    captures: []
+    rollback_step: null

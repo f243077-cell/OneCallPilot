@@ -1,0 +1,52 @@
+[project]
+name = "chaos-cli"
+version = "0.1.0"
+description = "chaos: host-side operator CLI for the Chaos Shop testbed (architecture §2.13, §11.3)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "docker>=7.1,<8",
+    "pyyaml>=6.0,<7",
+    "oncallpilot-contracts",
+]
+
+[project.scripts]
+chaos = "chaos_cli.main:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "mypy>=1.13",
+    "ruff>=0.8",
+    "types-docker",
+    "types-requests",
+    "types-PyYAML",
+]
+
+[tool.uv.sources]
+oncallpilot-contracts = { path = "../../contracts/python", editable = true }
+
+[build-system]
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+
+[tool.pytest.ini_options]
+# Tests marked `live` drive the running testbed and run only on the integration
+# host (`uv run pytest -m live`). A later `-m live` overrides this.
+addopts = "-m 'not live'"
+markers = [
+    "live: runs chaos commands against the running testbed (TB-006..TB-010)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+strict = true
+packages = ["chaos_cli", "tests"]

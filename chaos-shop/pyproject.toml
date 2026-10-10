@@ -1,0 +1,53 @@
+[project]
+name = "chaos-shop"
+version = "0.1.0"
+description = "Chaos Shop: the breakable store testbed monitored by OnCallPilot (architecture.md §11)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.143,<0.144",
+    "uvicorn>=0.54,<0.55",
+    "prometheus-client>=0.26,<0.27",
+    "asyncpg>=0.32,<0.33",
+    "redis>=8.1,<9",
+    "httpx>=0.28,<0.29",
+    "pyyaml>=6.0,<7",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "mypy>=1.13",
+    "ruff>=0.8",
+    "types-PyYAML",
+]
+
+[tool.uv]
+# Not an installable package: each image copies its own folders and runs
+# `python -m <service>` from /app. Tests and mypy run from chaos-shop/.
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+# cli/ is its own uv project with its own tests.
+testpaths = ["tests"]
+# Tests marked `live` need the running testbed and run only on the integration
+# host (`uv run pytest -m live`). A later `-m live` overrides this.
+addopts = "-m 'not live'"
+markers = [
+    "live: runs against the running testbed containers (TB-003, TB-004, TB-005)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+strict = true
+packages = ["common", "api", "worker", "payments", "loadgen", "tests"]
+
+[[tool.mypy.overrides]]
+module = ["asyncpg", "asyncpg.*"]
+ignore_missing_imports = true

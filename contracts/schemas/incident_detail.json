@@ -1,0 +1,1501 @@
+{
+  "$defs": {
+    "AgentMeta": {
+      "additionalProperties": false,
+      "description": "``incidents.agent_meta`` (§6.7, AI-024). Empty in manual mode; filled as the run goes.",
+      "properties": {
+        "agent_config_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent Config Hash"
+        },
+        "catalogue_version": {
+          "anyOf": [
+            {
+              "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Catalogue Version"
+        },
+        "duration_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration Ms"
+        },
+        "input_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Tokens"
+        },
+        "llm_calls": {
+          "anyOf": [
+            {
+              "maximum": 15,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Llm Calls"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "output_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Tokens"
+        },
+        "prompt_version": {
+          "anyOf": [
+            {
+              "pattern": "^v[0-9]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt Version"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "enum": [
+                "gemini",
+                "anthropic",
+                "fake"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider"
+        },
+        "run_started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Started At"
+        },
+        "terminal_state": {
+          "anyOf": [
+            {
+              "enum": [
+                "PROPOSED",
+                "ESCALATED"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Terminal State"
+        },
+        "tool_calls": {
+          "anyOf": [
+            {
+              "maximum": 8,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool Calls"
+        }
+      },
+      "title": "AgentMeta",
+      "type": "object"
+    },
+    "ContainerState": {
+      "additionalProperties": false,
+      "description": "State of one container (dry runs and structural health checks).",
+      "properties": {
+        "health": {
+          "enum": [
+            "healthy",
+            "unhealthy",
+            "starting",
+            "none"
+          ],
+          "title": "Health",
+          "type": "string"
+        },
+        "name": {
+          "pattern": "^cs-[a-z0-9]+(-[a-z0-9]+)*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "created",
+            "restarting",
+            "running",
+            "removing",
+            "paused",
+            "exited",
+            "dead"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "state",
+        "health"
+      ],
+      "title": "ContainerState",
+      "type": "object"
+    },
+    "DryRunCurrent": {
+      "additionalProperties": false,
+      "description": "What the runner sees now (§7.5).",
+      "properties": {
+        "active_release": {
+          "anyOf": [
+            {
+              "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null for clear_cache",
+          "title": "Active Release"
+        },
+        "cache_keys": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "clear_cache only",
+          "title": "Cache Keys"
+        },
+        "containers": {
+          "items": {
+            "$ref": "#/$defs/ContainerState"
+          },
+          "title": "Containers",
+          "type": "array"
+        },
+        "running_replicas": {
+          "anyOf": [
+            {
+              "maximum": 5,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null for clear_cache",
+          "title": "Running Replicas"
+        }
+      },
+      "required": [
+        "active_release",
+        "running_replicas",
+        "containers",
+        "cache_keys"
+      ],
+      "title": "DryRunCurrent",
+      "type": "object"
+    },
+    "DryRunPreconditions": {
+      "additionalProperties": false,
+      "properties": {
+        "cooldown_ok": {
+          "title": "Cooldown Ok",
+          "type": "boolean"
+        },
+        "rate_limit_ok": {
+          "title": "Rate Limit Ok",
+          "type": "boolean"
+        },
+        "slots_available": {
+          "title": "Slots Available",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rate_limit_ok",
+        "cooldown_ok",
+        "slots_available"
+      ],
+      "title": "DryRunPreconditions",
+      "type": "object"
+    },
+    "DryRunResult": {
+      "additionalProperties": false,
+      "description": "The runner's preview of an action (RUN-007).",
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/DryRunCurrent"
+        },
+        "preconditions": {
+          "$ref": "#/$defs/DryRunPreconditions"
+        },
+        "predicted_effect": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Predicted Effect",
+          "type": "string"
+        },
+        "state_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "State Fingerprint",
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        },
+        "would_change": {
+          "items": {
+            "$ref": "#/$defs/WouldChange"
+          },
+          "title": "Would Change",
+          "type": "array"
+        }
+      },
+      "required": [
+        "would_change",
+        "current",
+        "preconditions",
+        "predicted_effect",
+        "warnings",
+        "state_fingerprint"
+      ],
+      "title": "DryRunResult",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "description": "One evidence item (§5.3, §9.3; DB-003).",
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "detector_signal",
+            "log_query",
+            "metric_query",
+            "deploy_list",
+            "service_health",
+            "runbook_hit"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "description": "Redacted content; one shape per kind (evidence_payload_<kind>.json)",
+          "title": "Payload",
+          "type": "object"
+        },
+        "purpose": {
+          "enum": [
+            "seed",
+            "gather",
+            "disproof"
+          ],
+          "title": "Purpose",
+          "type": "string"
+        },
+        "ref": {
+          "pattern": "^E[0-9]{1,3}$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "summary": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "suspicious_content": {
+          "title": "Suspicious Content",
+          "type": "boolean"
+        },
+        "tool_name": {
+          "anyOf": [
+            {
+              "enum": [
+                "query_logs",
+                "query_metrics",
+                "get_recent_deploys",
+                "get_service_health",
+                "search_runbooks"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null for seed evidence",
+          "title": "Tool Name"
+        }
+      },
+      "required": [
+        "id",
+        "ref",
+        "kind",
+        "purpose",
+        "tool_name",
+        "summary",
+        "payload",
+        "suspicious_content",
+        "created_at"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Execution": {
+      "additionalProperties": false,
+      "description": "One execution of an approved proposal (§5.10, §9.3; DB-007).",
+      "properties": {
+        "error_code": {
+          "anyOf": [
+            {
+              "enum": [
+                "BAD_SIGNATURE",
+                "REQUEST_EXPIRED",
+                "ACTION_NOT_ALLOWED",
+                "TARGET_NOT_ALLOWED",
+                "VALIDATION_ERROR",
+                "RATE_LIMITED",
+                "COOLDOWN_ACTIVE",
+                "STATE_DRIFT",
+                "RUNNER_TIMEOUT"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Error Code"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Finished At"
+        },
+        "health_after": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HealthAfter"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "proposal_id": {
+          "format": "uuid",
+          "title": "Proposal Id",
+          "type": "string"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Started At"
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "succeeded",
+            "failed",
+            "aborted"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/ExecutionStep"
+          },
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "proposal_id",
+        "status",
+        "steps",
+        "error_code",
+        "health_after",
+        "started_at",
+        "finished_at"
+      ],
+      "title": "Execution",
+      "type": "object"
+    },
+    "ExecutionStep": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 300,
+          "title": "Message",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "succeeded",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "step": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Step",
+          "type": "string"
+        }
+      },
+      "required": [
+        "at",
+        "step",
+        "status",
+        "message"
+      ],
+      "title": "ExecutionStep",
+      "type": "object"
+    },
+    "HealthAfter": {
+      "additionalProperties": false,
+      "description": "``executions.health_after``: both checks and the combined verdict (FR-014).",
+      "properties": {
+        "signals": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SignalHealth"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "structural": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StructuralHealth"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "verdict": {
+          "anyOf": [
+            {
+              "enum": [
+                "pass",
+                "fail"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Verdict"
+        }
+      },
+      "required": [
+        "structural",
+        "signals",
+        "verdict"
+      ],
+      "title": "HealthAfter",
+      "type": "object"
+    },
+    "Hypothesis": {
+      "additionalProperties": false,
+      "description": "A ranked root-cause hypothesis (§5.4, §5.5, §9.3; DB-004).",
+      "properties": {
+        "confidence": {
+          "description": "After reflection (AI-016)",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "confidence_initial": {
+          "description": "Before reflection",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence Initial",
+          "type": "number"
+        },
+        "evidence_refs": {
+          "items": {
+            "pattern": "^E[0-9]{1,3}$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "rank": {
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Rank",
+          "type": "integer"
+        },
+        "reflection_notes": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reflection Notes"
+        },
+        "root_cause_category": {
+          "enum": [
+            "bad_deploy",
+            "config_error",
+            "memory_leak",
+            "resource_saturation",
+            "traffic_surge",
+            "dependency_unavailable",
+            "dependency_slow",
+            "db_connection_exhaustion",
+            "cache_failure",
+            "application_bug",
+            "network_issue",
+            "disk_pressure",
+            "unknown"
+          ],
+          "title": "Root Cause Category",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "dropped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "summary": {
+          "maxLength": 400,
+          "minLength": 10,
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "rank",
+        "summary",
+        "root_cause_category",
+        "confidence",
+        "confidence_initial",
+        "evidence_refs",
+        "status",
+        "reflection_notes"
+      ],
+      "title": "Hypothesis",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "ProbeResult": {
+      "additionalProperties": false,
+      "description": "An HTTP ``/healthz`` probe.",
+      "properties": {
+        "error": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Error"
+        },
+        "latency_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latency Ms"
+        },
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        },
+        "status_code": {
+          "anyOf": [
+            {
+              "maximum": 599,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Status Code"
+        },
+        "url": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "ok",
+        "status_code",
+        "latency_ms",
+        "error"
+      ],
+      "title": "ProbeResult",
+      "type": "object"
+    },
+    "Proposal": {
+      "additionalProperties": false,
+      "description": "A proposed catalogue action awaiting a decision (§5.6, §9.3; DB-005).",
+      "properties": {
+        "action": {
+          "enum": [
+            "restart_service",
+            "scale_service",
+            "rollback_deploy",
+            "clear_cache"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "approval_requirement": {
+          "enum": [
+            "tap",
+            "biometric"
+          ],
+          "title": "Approval Requirement",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "dry_run_at": {
+          "format": "date-time",
+          "title": "Dry Run At",
+          "type": "string"
+        },
+        "dry_run_result": {
+          "$ref": "#/$defs/DryRunResult"
+        },
+        "evidence_refs": {
+          "items": {
+            "pattern": "^E[0-9]{1,3}$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "expected_effect": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Expected Effect",
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "fingerprint": {
+          "description": "The app echoes it to approve (§7.5)",
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Fingerprint",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "incident_id": {
+          "format": "uuid",
+          "title": "Incident Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "primary",
+            "rollback"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "params": {
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{0,63}$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "title": "Params",
+          "type": "object"
+        },
+        "parent_proposal_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Parent Proposal Id"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "risk_tier": {
+          "description": "Copied from the catalogue, never from the model",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Risk Tier",
+          "type": "string"
+        },
+        "rollback_step": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RollbackStep"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null = not reversible"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected",
+            "expired",
+            "superseded",
+            "executing",
+            "succeeded",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "status_reason": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Status Reason"
+        }
+      },
+      "required": [
+        "id",
+        "incident_id",
+        "kind",
+        "parent_proposal_id",
+        "action",
+        "params",
+        "risk_tier",
+        "approval_requirement",
+        "expected_effect",
+        "rationale",
+        "evidence_refs",
+        "rollback_step",
+        "dry_run_result",
+        "dry_run_at",
+        "fingerprint",
+        "status",
+        "status_reason",
+        "expires_at",
+        "created_at"
+      ],
+      "title": "Proposal",
+      "type": "object"
+    },
+    "RollbackStep": {
+      "additionalProperties": false,
+      "description": "The concrete rollback proposal offered if verification fails (C4, FR-015).",
+      "properties": {
+        "action": {
+          "enum": [
+            "restart_service",
+            "scale_service",
+            "rollback_deploy",
+            "clear_cache"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "params": {
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{0,63}$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "title": "Params",
+          "type": "object"
+        }
+      },
+      "required": [
+        "action",
+        "params"
+      ],
+      "title": "RollbackStep",
+      "type": "object"
+    },
+    "Signal": {
+      "additionalProperties": false,
+      "description": "One detector signal (§6.8), as sent in ``AlertIn`` (§9.2).",
+      "properties": {
+        "baseline": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Baseline"
+        },
+        "first_anomalous_at": {
+          "format": "date-time",
+          "title": "First Anomalous At",
+          "type": "string"
+        },
+        "name": {
+          "enum": [
+            "error_rate",
+            "p95_latency",
+            "job_failure_rate",
+            "restarts",
+            "stack_traces"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "zscore": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Zscore"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "baseline",
+        "zscore",
+        "first_anomalous_at"
+      ],
+      "title": "Signal",
+      "type": "object"
+    },
+    "SignalHealth": {
+      "additionalProperties": false,
+      "description": "The worker's signal verification (§5.10 step 7).",
+      "properties": {
+        "checked_at": {
+          "format": "date-time",
+          "title": "Checked At",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "signals": {
+          "items": {
+            "enum": [
+              "error_rate",
+              "p95_latency",
+              "job_failure_rate",
+              "restarts",
+              "stack_traces"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Signals",
+          "type": "array"
+        },
+        "window_seconds": {
+          "minimum": 1,
+          "title": "Window Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "passed",
+        "checked_at",
+        "window_seconds",
+        "signals"
+      ],
+      "title": "SignalHealth",
+      "type": "object"
+    },
+    "StructuralHealth": {
+      "additionalProperties": false,
+      "description": "The runner's structural health check (RUN-014).",
+      "properties": {
+        "checked_at": {
+          "format": "date-time",
+          "title": "Checked At",
+          "type": "string"
+        },
+        "containers": {
+          "items": {
+            "$ref": "#/$defs/ContainerState"
+          },
+          "title": "Containers",
+          "type": "array"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "probes": {
+          "items": {
+            "$ref": "#/$defs/ProbeResult"
+          },
+          "title": "Probes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "passed",
+        "checked_at",
+        "containers",
+        "probes"
+      ],
+      "title": "StructuralHealth",
+      "type": "object"
+    },
+    "TopHypothesis": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "root_cause_category": {
+          "enum": [
+            "bad_deploy",
+            "config_error",
+            "memory_leak",
+            "resource_saturation",
+            "traffic_surge",
+            "dependency_unavailable",
+            "dependency_slow",
+            "db_connection_exhaustion",
+            "cache_failure",
+            "application_bug",
+            "network_issue",
+            "disk_pressure",
+            "unknown"
+          ],
+          "title": "Root Cause Category",
+          "type": "string"
+        },
+        "summary": {
+          "maxLength": 400,
+          "minLength": 10,
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "summary",
+        "confidence",
+        "root_cause_category"
+      ],
+      "title": "TopHypothesis",
+      "type": "object"
+    },
+    "Trigger": {
+      "additionalProperties": false,
+      "description": "``incidents.trigger``: the alert that opened the incident, plus later updates.",
+      "properties": {
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "signals": {
+          "items": {
+            "$ref": "#/$defs/Signal"
+          },
+          "minItems": 1,
+          "title": "Signals",
+          "type": "array"
+        },
+        "source": {
+          "enum": [
+            "detector",
+            "alertmanager"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "updates": {
+          "items": {
+            "$ref": "#/$defs/TriggerUpdate"
+          },
+          "title": "Updates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source",
+        "signals",
+        "observed_at",
+        "updates"
+      ],
+      "title": "Trigger",
+      "type": "object"
+    },
+    "TriggerUpdate": {
+      "additionalProperties": false,
+      "description": "A later alert for an incident that was still open (deduplicated, FR-005).",
+      "properties": {
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "signals": {
+          "items": {
+            "$ref": "#/$defs/Signal"
+          },
+          "minItems": 1,
+          "title": "Signals",
+          "type": "array"
+        }
+      },
+      "required": [
+        "signals",
+        "observed_at"
+      ],
+      "title": "TriggerUpdate",
+      "type": "object"
+    },
+    "WouldChange": {
+      "additionalProperties": false,
+      "description": "One change an action would make: a container, or a cache for ``clear_cache``.",
+      "properties": {
+        "change": {
+          "enum": [
+            "start",
+            "stop",
+            "restart",
+            "clear"
+          ],
+          "title": "Change",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target",
+        "change"
+      ],
+      "title": "WouldChange",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One incident with everything the app shows (§9.3, API-005).",
+  "properties": {
+    "agent_meta": {
+      "$ref": "#/$defs/AgentMeta"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "executions": {
+      "items": {
+        "$ref": "#/$defs/Execution"
+      },
+      "title": "Executions",
+      "type": "array"
+    },
+    "hypotheses": {
+      "items": {
+        "$ref": "#/$defs/Hypothesis"
+      },
+      "title": "Hypotheses",
+      "type": "array"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "opened_at": {
+      "format": "date-time",
+      "title": "Opened At",
+      "type": "string"
+    },
+    "pending_proposal_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Pending Proposal Id"
+    },
+    "proposals": {
+      "items": {
+        "$ref": "#/$defs/Proposal"
+      },
+      "title": "Proposals",
+      "type": "array"
+    },
+    "resolution": {
+      "anyOf": [
+        {
+          "enum": [
+            "action_succeeded",
+            "auto_recovered",
+            "manual",
+            "rolled_back"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resolution"
+    },
+    "resolved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resolved At"
+    },
+    "service": {
+      "enum": [
+        "api",
+        "worker",
+        "lb",
+        "payments",
+        "redis",
+        "postgres"
+      ],
+      "title": "Service",
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "sev1",
+        "sev2",
+        "sev3"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "state_version": {
+      "minimum": 1,
+      "title": "State Version",
+      "type": "integer"
+    },
+    "status": {
+      "enum": [
+        "investigating",
+        "awaiting_approval",
+        "escalated",
+        "executing",
+        "verifying",
+        "resolved",
+        "action_failed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "status_reason": {
+      "anyOf": [
+        {
+          "enum": [
+            "low_confidence",
+            "no_catalogue_action_fits",
+            "budget_exhausted",
+            "llm_unavailable",
+            "llm_output_invalid",
+            "proposal_invalid",
+            "dry_run_unavailable",
+            "proposal_rejected",
+            "proposal_expired",
+            "rolled_back_after_failed_action",
+            "runner_refused",
+            "runner_timeout",
+            "agent_interrupted"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Status Reason"
+    },
+    "title": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "top_hypothesis": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TopHypothesis"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trigger": {
+      "$ref": "#/$defs/Trigger"
+    },
+    "window_end": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Window End"
+    },
+    "window_start": {
+      "format": "date-time",
+      "title": "Window Start",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "service",
+    "severity",
+    "status",
+    "status_reason",
+    "title",
+    "opened_at",
+    "resolved_at",
+    "resolution",
+    "state_version",
+    "top_hypothesis",
+    "pending_proposal_id",
+    "window_start",
+    "window_end",
+    "trigger",
+    "evidence",
+    "hypotheses",
+    "proposals",
+    "executions",
+    "agent_meta"
+  ],
+  "title": "IncidentDetail",
+  "type": "object"
+}

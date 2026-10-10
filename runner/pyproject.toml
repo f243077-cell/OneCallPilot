@@ -1,0 +1,48 @@
+[project]
+name = "oncallpilot-runner"
+version = "0.1.0"
+description = "OnCallPilot runner: executes approved, signed, allowlisted actions"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "docker>=7.1,<8",
+    "pyyaml>=6.0,<7",
+    "redis>=8.1,<9",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "mypy>=1.13",
+    "ruff>=0.8",
+    "types-docker",
+    "types-requests",
+    "types-PyYAML",
+    "pytest-cov>=7.1.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+
+[tool.pytest.ini_options]
+# Tests marked `proxy` need the real socket-proxy-rw and run only through
+# tests/security/run_proxy_test.sh (TEST-015). A later `-m proxy` overrides this.
+addopts = "-m 'not proxy and not live'"
+markers = [
+    "proxy: runs against the real socket-proxy-rw (TEST-015, RUN-017)",
+    "live: runs the runner image against a throwaway Redis (A2.1)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+strict = true
+packages = ["oncallpilot_runner", "tests"]

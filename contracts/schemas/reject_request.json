@@ -1,0 +1,17 @@
+{
+  "additionalProperties": false,
+  "description": "Body of ``POST /proposals/{id}/reject`` (header ``Idempotency-Key`` required).",
+  "properties": {
+    "reason": {
+      "maxLength": 500,
+      "minLength": 3,
+      "title": "Reason",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reason"
+  ],
+  "title": "RejectRequest",
+  "type": "object"
+}

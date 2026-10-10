@@ -1,0 +1,107 @@
+{
+  "$defs": {
+    "ExceptionCount": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "minimum": 1,
+          "title": "Count",
+          "type": "integer"
+        },
+        "exc_type": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Exc Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "exc_type",
+        "count"
+      ],
+      "title": "ExceptionCount",
+      "type": "object"
+    },
+    "LogLine": {
+      "additionalProperties": false,
+      "description": "One redacted log line (``query_logs`` evidence and ``GET /incidents/{id}/log-tail``).",
+      "properties": {
+        "exc_type": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Exc Type"
+        },
+        "level": {
+          "enum": [
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+            "UNKNOWN"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "msg": {
+          "maxLength": 200,
+          "title": "Msg",
+          "type": "string"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ts",
+        "level",
+        "msg",
+        "exc_type"
+      ],
+      "title": "LogLine",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "``kind = log_query``: result of ``query_logs`` (AI-005).",
+  "properties": {
+    "lines": {
+      "items": {
+        "$ref": "#/$defs/LogLine"
+      },
+      "maxItems": 50,
+      "title": "Lines",
+      "type": "array"
+    },
+    "top_exception_types": {
+      "items": {
+        "$ref": "#/$defs/ExceptionCount"
+      },
+      "maxItems": 5,
+      "title": "Top Exception Types",
+      "type": "array"
+    },
+    "total_count": {
+      "description": "Matching lines in the window, before the cap",
+      "minimum": 0,
+      "title": "Total Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "lines",
+    "total_count",
+    "top_exception_types"
+  ],
+  "title": "LogQueryPayload",
+  "type": "object"
+}

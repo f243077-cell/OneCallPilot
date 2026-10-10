@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "LogLine": {
+      "additionalProperties": false,
+      "description": "One redacted log line (``query_logs`` evidence and ``GET /incidents/{id}/log-tail``).",
+      "properties": {
+        "exc_type": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Exc Type"
+        },
+        "level": {
+          "enum": [
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+            "UNKNOWN"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "msg": {
+          "maxLength": 200,
+          "title": "Msg",
+          "type": "string"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ts",
+        "level",
+        "msg",
+        "exc_type"
+      ],
+      "title": "LogLine",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "``200`` of ``GET /incidents/{id}/log-tail``: redacted lines (API-006).",
+  "properties": {
+    "lines": {
+      "items": {
+        "$ref": "#/$defs/LogLine"
+      },
+      "maxItems": 50,
+      "title": "Lines",
+      "type": "array"
+    },
+    "until": {
+      "description": "Pass as ?since= on the next poll",
+      "format": "date-time",
+      "title": "Until",
+      "type": "string"
+    }
+  },
+  "required": [
+    "lines",
+    "until"
+  ],
+  "title": "LogTail",
+  "type": "object"
+}

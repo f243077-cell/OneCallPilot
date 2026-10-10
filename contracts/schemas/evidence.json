@@ -1,0 +1,95 @@
+{
+  "$defs": {
+    "JsonValue": {}
+  },
+  "additionalProperties": false,
+  "description": "One evidence item (§5.3, §9.3; DB-003).",
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "detector_signal",
+        "log_query",
+        "metric_query",
+        "deploy_list",
+        "service_health",
+        "runbook_hit"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "description": "Redacted content; one shape per kind (evidence_payload_<kind>.json)",
+      "title": "Payload",
+      "type": "object"
+    },
+    "purpose": {
+      "enum": [
+        "seed",
+        "gather",
+        "disproof"
+      ],
+      "title": "Purpose",
+      "type": "string"
+    },
+    "ref": {
+      "pattern": "^E[0-9]{1,3}$",
+      "title": "Ref",
+      "type": "string"
+    },
+    "summary": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "suspicious_content": {
+      "title": "Suspicious Content",
+      "type": "boolean"
+    },
+    "tool_name": {
+      "anyOf": [
+        {
+          "enum": [
+            "query_logs",
+            "query_metrics",
+            "get_recent_deploys",
+            "get_service_health",
+            "search_runbooks"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "null for seed evidence",
+      "title": "Tool Name"
+    }
+  },
+  "required": [
+    "id",
+    "ref",
+    "kind",
+    "purpose",
+    "tool_name",
+    "summary",
+    "payload",
+    "suspicious_content",
+    "created_at"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

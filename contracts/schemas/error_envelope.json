@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "ErrorBody": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "UNAUTHORIZED",
+            "FORBIDDEN",
+            "NOT_FOUND",
+            "VALIDATION_ERROR",
+            "IDEMPOTENCY_KEY_REQUIRED",
+            "IDEMPOTENCY_CONFLICT",
+            "CHALLENGE_INVALID",
+            "STALE_PROPOSAL",
+            "PROPOSAL_NOT_PENDING",
+            "PROPOSAL_EXPIRED",
+            "BIOMETRIC_REQUIRED",
+            "RATE_LIMITED",
+            "COOLDOWN_ACTIVE",
+            "INCIDENT_BUSY",
+            "VERSION_CONFLICT",
+            "BENCHMARK_LOCKED",
+            "INTERNAL"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "details": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Details",
+          "type": "object"
+        },
+        "message": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "details"
+      ],
+      "title": "ErrorBody",
+      "type": "object"
+    },
+    "JsonValue": {}
+  },
+  "additionalProperties": false,
+  "description": "Every error response: ``{\"error\": {code, message, details}}`` (API-001).",
+  "properties": {
+    "error": {
+      "$ref": "#/$defs/ErrorBody"
+    }
+  },
+  "required": [
+    "error"
+  ],
+  "title": "ErrorEnvelope",
+  "type": "object"
+}

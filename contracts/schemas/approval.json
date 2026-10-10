@@ -1,0 +1,91 @@
+{
+  "additionalProperties": false,
+  "description": "A decision on a proposal (§5.9, §8.2; DB-006).",
+  "properties": {
+    "auth_method": {
+      "enum": [
+        "biometric",
+        "tap"
+      ],
+      "title": "Auth Method",
+      "type": "string"
+    },
+    "challenge_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Challenge Id"
+    },
+    "decided_at": {
+      "format": "date-time",
+      "title": "Decided At",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "approved",
+        "rejected"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "device_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Device Id"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reason"
+    },
+    "user_id": {
+      "format": "uuid",
+      "title": "User Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "proposal_id",
+    "user_id",
+    "decision",
+    "reason",
+    "auth_method",
+    "challenge_id",
+    "device_id",
+    "decided_at"
+  ],
+  "title": "Approval",
+  "type": "object"
+}

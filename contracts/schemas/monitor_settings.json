@@ -1,0 +1,105 @@
+{
+  "$defs": {
+    "NotifySettings": {
+      "additionalProperties": false,
+      "properties": {
+        "min_push_severity": {
+          "enum": [
+            "sev1",
+            "sev2",
+            "sev3"
+          ],
+          "title": "Min Push Severity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "min_push_severity"
+      ],
+      "title": "NotifySettings",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Monitor settings (§8.2 ``monitor_settings``; FR-023, MOB-013).\n\n``thresholds`` maps detector setting names (``backend/config/detector.yaml``,\nfor example ``error_rate.z``) to values. ``locked`` is true while\n``BENCHMARK_LOCK`` is on, when ``PUT /settings`` answers ``423``;\n``lock_reason`` is then the text the app shows beside the read-only fields.",
+  "properties": {
+    "lock_reason": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Lock Reason"
+    },
+    "locked": {
+      "title": "Locked",
+      "type": "boolean"
+    },
+    "notify": {
+      "$ref": "#/$defs/NotifySettings"
+    },
+    "services": {
+      "items": {
+        "enum": [
+          "api",
+          "worker",
+          "lb",
+          "payments",
+          "redis",
+          "postgres"
+        ],
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Services",
+      "type": "array"
+    },
+    "thresholds": {
+      "patternProperties": {
+        "^[a-z0-9_]+(\\.[a-z0-9_]+)*$": {
+          "type": "number"
+        }
+      },
+      "title": "Thresholds",
+      "type": "object"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "updated_by": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Updated By"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "version",
+    "services",
+    "thresholds",
+    "notify",
+    "locked",
+    "lock_reason",
+    "updated_by",
+    "updated_at"
+  ],
+  "title": "MonitorSettings",
+  "type": "object"
+}

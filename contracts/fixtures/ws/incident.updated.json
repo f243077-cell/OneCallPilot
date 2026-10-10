@@ -1,0 +1,13 @@
+{
+  "type": "event",
+  "event": "incident.updated",
+  "event_id": "1791968465000-1",
+  "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+  "state_version": 9,
+  "ts": "2026-10-14T09:01:05Z",
+  "data": {
+    "status": "awaiting_approval",
+    "status_reason": null,
+    "severity": "sev1"
+  }
+}

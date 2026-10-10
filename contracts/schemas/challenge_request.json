@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "description": "Body of ``POST /proposals/{id}/challenge``.",
+  "properties": {
+    "proposal_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Proposal Fingerprint",
+      "type": "string"
+    }
+  },
+  "required": [
+    "proposal_fingerprint"
+  ],
+  "title": "ChallengeRequest",
+  "type": "object"
+}

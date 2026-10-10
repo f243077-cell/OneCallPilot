@@ -1,0 +1,58 @@
+# Contract checks (TEST-009, TEST-012): lint, type-check and test the
+# oncallpilot_contracts package, and fail if the committed JSON Schemas
+# differ from the ones generated from the Pydantic models.
+#
+# Path filtering (TEST-012): this workflow covers contracts/.
+# The trigger is deliberately NOT path-filtered, because a required check
+# that never reports blocks merges. The job is fast, so it runs on every PR.
+# Keep the job name stable: branch protection requires it by name.
+name: contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    name: contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: contracts/python
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pipx install uv==0.12.7
+
+      - name: Install dependencies (locked)
+        run: uv sync --locked
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Mypy (strict)
+        run: uv run mypy oncallpilot_contracts tests
+
+      - name: Pytest
+        run: uv run pytest -q
+
+      - name: Schemas match the models
+        run: |
+          uv run python -m oncallpilot_contracts.schema_export
+          git diff --exit-code -- ../schemas
+          test -z "$(git status --porcelain -- ../schemas)"

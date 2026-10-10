@@ -1,0 +1,78 @@
+{
+  "type": "event",
+  "event": "proposal.created",
+  "event_id": "1791968465000-0",
+  "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+  "state_version": 8,
+  "ts": "2026-10-14T09:01:05Z",
+  "data": {
+    "id": "8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02",
+    "incident_id": "6f1c2a4e-0b7d-4c1e-9a53-2d8e4f6a7b01",
+    "kind": "primary",
+    "parent_proposal_id": null,
+    "action": "rollback_deploy",
+    "params": {
+      "service": "api",
+      "target_release": "1.4.0"
+    },
+    "risk_tier": "medium",
+    "approval_requirement": "biometric",
+    "expected_effect": "Checkout errors stop once 1.4.0 serves traffic",
+    "rationale": "Errors began 90 s after 1.5.0 was deployed (E4) and all come from checkout (E2).",
+    "evidence_refs": [
+      "E2",
+      "E3",
+      "E4"
+    ],
+    "rollback_step": {
+      "action": "rollback_deploy",
+      "params": {
+        "service": "api",
+        "target_release": "1.5.0"
+      }
+    },
+    "dry_run_result": {
+      "would_change": [
+        {
+          "target": "cs-api-140-1",
+          "change": "start"
+        },
+        {
+          "target": "cs-api-150-1",
+          "change": "stop"
+        }
+      ],
+      "current": {
+        "active_release": "1.5.0",
+        "running_replicas": 1,
+        "containers": [
+          {
+            "name": "cs-api-150-1",
+            "state": "running",
+            "health": "healthy"
+          },
+          {
+            "name": "cs-api-140-1",
+            "state": "exited",
+            "health": "none"
+          }
+        ],
+        "cache_keys": null
+      },
+      "preconditions": {
+        "rate_limit_ok": true,
+        "cooldown_ok": true,
+        "slots_available": true
+      },
+      "predicted_effect": "1 replica of api 1.4.0 serves traffic; 1.5.0 is stopped",
+      "warnings": [],
+      "state_fingerprint": "b94ac02137f28bc69ac0d32c382537a31d9477b6dde2dedc27c1a734c3fcaf42"
+    },
+    "dry_run_at": "2026-10-14T09:01:02Z",
+    "fingerprint": "9558f4563f943cef3082fc284353f8e2f09e2ca264ce14cf0d6ad95feec12d74",
+    "status": "pending",
+    "status_reason": null,
+    "expires_at": "2026-10-14T09:16:05Z",
+    "created_at": "2026-10-14T09:01:05Z"
+  }
+}

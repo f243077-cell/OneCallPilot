@@ -1,0 +1,1423 @@
+{
+  "name": "scale_failed_rollback",
+  "description": "A traffic surge saturates the single api replica. The agent proposes scale_service to 3 (low tier, tap) and the user approves. The runner succeeds, but p95 stays high, so signal verification fails (action_failed). The worker offers the catalogue rollback (scale back to the captured 1 replica); the user approves; signals recover; resolved as rolled_back.",
+  "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+  "steps": [
+    {
+      "delay_ms": 0,
+      "event": {
+        "type": "event",
+        "event": "incident.opened",
+        "event_id": "1791988220000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 1,
+        "ts": "2026-10-14T14:30:20Z",
+        "data": {
+          "id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+          "service": "api",
+          "severity": "sev2",
+          "status": "investigating",
+          "status_reason": null,
+          "title": "api p95 latency 1.8 s",
+          "opened_at": "2026-10-14T14:30:20Z",
+          "resolved_at": null,
+          "resolution": null,
+          "state_version": 1,
+          "top_hypothesis": null,
+          "pending_proposal_id": null
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791988227000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 2,
+        "ts": "2026-10-14T14:30:27Z",
+        "data": {
+          "id": "30000000-0000-4000-8000-000000000002",
+          "ref": "E2",
+          "kind": "metric_query",
+          "purpose": "gather",
+          "tool_name": "query_metrics",
+          "summary": "api request rate rose from 5 to 38 requests per second",
+          "payload": {
+            "template": "request_rate",
+            "service": "api",
+            "unit": "requests_per_second",
+            "step_seconds": 15,
+            "points": [
+              {
+                "ts": "2026-10-14T14:29:15Z",
+                "value": 5.0
+              },
+              {
+                "ts": "2026-10-14T14:29:30Z",
+                "value": 5.1
+              },
+              {
+                "ts": "2026-10-14T14:29:45Z",
+                "value": 4.9
+              },
+              {
+                "ts": "2026-10-14T14:30:00Z",
+                "value": 21.0
+              },
+              {
+                "ts": "2026-10-14T14:30:15Z",
+                "value": 37.5
+              },
+              {
+                "ts": "2026-10-14T14:30:30Z",
+                "value": 38.0
+              }
+            ],
+            "baseline_mean": 5.0,
+            "peak": 38.0,
+            "pct_change": 660.0,
+            "change_point_at": "2026-10-14T14:29:55Z",
+            "note": null
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T14:30:27Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791988232000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 3,
+        "ts": "2026-10-14T14:30:32Z",
+        "data": {
+          "id": "30000000-0000-4000-8000-000000000003",
+          "ref": "E3",
+          "kind": "metric_query",
+          "purpose": "gather",
+          "tool_name": "query_metrics",
+          "summary": "api CPU pinned at its 0.5-core limit",
+          "payload": {
+            "template": "cpu_usage",
+            "service": "api",
+            "unit": "cores",
+            "step_seconds": 15,
+            "points": [
+              {
+                "ts": "2026-10-14T14:29:15Z",
+                "value": 0.11
+              },
+              {
+                "ts": "2026-10-14T14:29:30Z",
+                "value": 0.12
+              },
+              {
+                "ts": "2026-10-14T14:29:45Z",
+                "value": 0.11
+              },
+              {
+                "ts": "2026-10-14T14:30:00Z",
+                "value": 0.38
+              },
+              {
+                "ts": "2026-10-14T14:30:15Z",
+                "value": 0.5
+              },
+              {
+                "ts": "2026-10-14T14:30:30Z",
+                "value": 0.5
+              }
+            ],
+            "baseline_mean": 0.11,
+            "peak": 0.5,
+            "pct_change": 354.5,
+            "change_point_at": "2026-10-14T14:29:55Z",
+            "note": null
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T14:30:32Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791988236000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 4,
+        "ts": "2026-10-14T14:30:36Z",
+        "data": {
+          "id": "30000000-0000-4000-8000-000000000004",
+          "ref": "E4",
+          "kind": "deploy_list",
+          "purpose": "gather",
+          "tool_name": "get_recent_deploys",
+          "summary": "No deploy in the 9 days before the incident",
+          "payload": {
+            "records": [
+              {
+                "service": "api",
+                "release": "1.4.0",
+                "commit_sha": "606c2674b8e32ec226c88019db05b426594a08f6",
+                "commit_message": "cart: cache price lookups",
+                "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
+                "deployed_at": "2026-10-05T09:05:00Z",
+                "deployed_by": "setup",
+                "kind": "deploy",
+                "replicas": 1,
+                "reason": "scheduled release"
+              }
+            ]
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T14:30:36Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791988240000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 5,
+        "ts": "2026-10-14T14:30:40Z",
+        "data": {
+          "id": "30000000-0000-4000-8000-000000000005",
+          "ref": "E5",
+          "kind": "service_health",
+          "purpose": "gather",
+          "tool_name": "get_service_health",
+          "summary": "1 api replica running and healthy",
+          "payload": {
+            "service": "api",
+            "containers": [
+              {
+                "name": "cs-api-140-1",
+                "release": "1.4.0",
+                "state": "running",
+                "health": "healthy",
+                "restart_count": 0,
+                "oom_killed": false,
+                "exit_code": null,
+                "started_at": "2026-10-14T08:02:11Z"
+              }
+            ],
+            "probe": {
+              "url": "http://cs-lb/healthz",
+              "ok": true,
+              "status_code": 200,
+              "latency_ms": 380.0,
+              "error": null
+            }
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T14:30:40Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 900,
+      "event": {
+        "type": "event",
+        "event": "hypothesis.updated",
+        "event_id": "1791988246000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 6,
+        "ts": "2026-10-14T14:30:46Z",
+        "data": {
+          "hypotheses": [
+            {
+              "id": "30000000-0000-4000-8000-000000000021",
+              "rank": 1,
+              "summary": "A traffic surge saturates the single api replica, so requests queue and p95 rises",
+              "root_cause_category": "traffic_surge",
+              "confidence": 0.84,
+              "confidence_initial": 0.84,
+              "evidence_refs": [
+                "E2",
+                "E3"
+              ],
+              "status": "active",
+              "reflection_notes": null
+            },
+            {
+              "id": "30000000-0000-4000-8000-000000000022",
+              "rank": 2,
+              "summary": "The api replica is short of CPU for its normal load",
+              "root_cause_category": "resource_saturation",
+              "confidence": 0.4,
+              "confidence_initial": 0.4,
+              "evidence_refs": [
+                "E3"
+              ],
+              "status": "active",
+              "reflection_notes": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "delay_ms": 600,
+      "event": {
+        "type": "event",
+        "event": "evidence.added",
+        "event_id": "1791988251000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 7,
+        "ts": "2026-10-14T14:30:51Z",
+        "data": {
+          "id": "30000000-0000-4000-8000-000000000006",
+          "ref": "E6",
+          "kind": "log_query",
+          "purpose": "disproof",
+          "tool_name": "query_logs",
+          "summary": "No new exception types; only slow-request warnings",
+          "payload": {
+            "lines": [
+              {
+                "ts": "2026-10-14T14:30:11Z",
+                "level": "WARNING",
+                "msg": "GET /products took 1712 ms",
+                "exc_type": null
+              }
+            ],
+            "total_count": 64,
+            "top_exception_types": []
+          },
+          "suspicious_content": false,
+          "created_at": "2026-10-14T14:30:51Z",
+          "payload_truncated": false
+        }
+      }
+    },
+    {
+      "delay_ms": 900,
+      "event": {
+        "type": "event",
+        "event": "hypothesis.updated",
+        "event_id": "1791988252000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 8,
+        "ts": "2026-10-14T14:30:52Z",
+        "data": {
+          "hypotheses": [
+            {
+              "id": "30000000-0000-4000-8000-000000000021",
+              "rank": 1,
+              "summary": "A traffic surge saturates the single api replica, so requests queue and p95 rises",
+              "root_cause_category": "traffic_surge",
+              "confidence": 0.8,
+              "confidence_initial": 0.84,
+              "evidence_refs": [
+                "E2",
+                "E3"
+              ],
+              "status": "active",
+              "reflection_notes": "Survived the disproof: no new errors (E6); the load rose 7x (E2)."
+            },
+            {
+              "id": "30000000-0000-4000-8000-000000000022",
+              "rank": 2,
+              "summary": "The api replica is short of CPU for its normal load",
+              "root_cause_category": "resource_saturation",
+              "confidence": 0.35,
+              "confidence_initial": 0.4,
+              "evidence_refs": [
+                "E3"
+              ],
+              "status": "active",
+              "reflection_notes": "CPU is high only because load rose (E2)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "delay_ms": 800,
+      "event": {
+        "type": "event",
+        "event": "proposal.created",
+        "event_id": "1791988256000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 9,
+        "ts": "2026-10-14T14:30:56Z",
+        "data": {
+          "id": "30000000-0000-4000-8000-000000000030",
+          "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+          "kind": "primary",
+          "parent_proposal_id": null,
+          "action": "scale_service",
+          "params": {
+            "service": "api",
+            "replicas": 3
+          },
+          "risk_tier": "low",
+          "approval_requirement": "tap",
+          "expected_effect": "p95 latency returns below 300 ms with 3 replicas sharing the load",
+          "rationale": "Load rose 7x (E2) and the single replica is CPU-bound (E3); nothing was deployed (E4).",
+          "evidence_refs": [
+            "E2",
+            "E3",
+            "E4"
+          ],
+          "rollback_step": {
+            "action": "scale_service",
+            "params": {
+              "service": "api",
+              "replicas": 1
+            }
+          },
+          "dry_run_result": {
+            "would_change": [
+              {
+                "target": "cs-api-140-2",
+                "change": "start"
+              },
+              {
+                "target": "cs-api-140-3",
+                "change": "start"
+              }
+            ],
+            "current": {
+              "active_release": "1.4.0",
+              "running_replicas": 1,
+              "containers": [
+                {
+                  "name": "cs-api-140-1",
+                  "state": "running",
+                  "health": "healthy"
+                },
+                {
+                  "name": "cs-api-140-2",
+                  "state": "exited",
+                  "health": "none"
+                },
+                {
+                  "name": "cs-api-140-3",
+                  "state": "exited",
+                  "health": "none"
+                }
+              ],
+              "cache_keys": null
+            },
+            "preconditions": {
+              "rate_limit_ok": true,
+              "cooldown_ok": true,
+              "slots_available": true
+            },
+            "predicted_effect": "3 replicas of api 1.4.0 serve traffic behind cs-lb",
+            "warnings": [],
+            "state_fingerprint": "92c6c92c3ae96a8cb82862e999ee468ee08e33be154e623d22097ee28ba21907"
+          },
+          "dry_run_at": "2026-10-14T14:30:53Z",
+          "fingerprint": "612b4faf6d13e118c8a86098f76c9020f742646d8f5d0b49246c10cc6699ce66",
+          "status": "pending",
+          "status_reason": null,
+          "expires_at": "2026-10-14T14:45:56Z",
+          "created_at": "2026-10-14T14:30:56Z"
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791988256000-1",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 10,
+        "ts": "2026-10-14T14:30:56Z",
+        "data": {
+          "status": "awaiting_approval",
+          "status_reason": null,
+          "severity": "sev2"
+        }
+      }
+    },
+    {
+      "delay_ms": 0,
+      "await_approval": true,
+      "event": {
+        "type": "event",
+        "event": "proposal.updated",
+        "event_id": "1791988300000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 11,
+        "ts": "2026-10-14T14:31:40Z",
+        "data": {
+          "proposal_id": "30000000-0000-4000-8000-000000000030",
+          "status": "approved",
+          "status_reason": null,
+          "superseded_by": null
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791988300000-1",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 12,
+        "ts": "2026-10-14T14:31:40Z",
+        "data": {
+          "status": "executing",
+          "status_reason": null,
+          "severity": "sev2"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791988302000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 13,
+        "ts": "2026-10-14T14:31:42Z",
+        "data": {
+          "execution_id": "30000000-0000-4000-8000-000000000040",
+          "proposal_id": "30000000-0000-4000-8000-000000000030",
+          "step": "validated",
+          "status": "succeeded",
+          "message": "signature, catalogue, targets and fingerprint checked"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791988310000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 14,
+        "ts": "2026-10-14T14:31:50Z",
+        "data": {
+          "execution_id": "30000000-0000-4000-8000-000000000040",
+          "proposal_id": "30000000-0000-4000-8000-000000000030",
+          "step": "starting cs-api-140-2",
+          "status": "succeeded",
+          "message": "running and healthy"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791988318000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 15,
+        "ts": "2026-10-14T14:31:58Z",
+        "data": {
+          "execution_id": "30000000-0000-4000-8000-000000000040",
+          "proposal_id": "30000000-0000-4000-8000-000000000030",
+          "step": "starting cs-api-140-3",
+          "status": "succeeded",
+          "message": "running and healthy"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791988325000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 16,
+        "ts": "2026-10-14T14:32:05Z",
+        "data": {
+          "execution_id": "30000000-0000-4000-8000-000000000040",
+          "proposal_id": "30000000-0000-4000-8000-000000000030",
+          "step": "done",
+          "status": "succeeded",
+          "message": "structural health check passed"
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "proposal.updated",
+        "event_id": "1791988326000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 17,
+        "ts": "2026-10-14T14:32:06Z",
+        "data": {
+          "proposal_id": "30000000-0000-4000-8000-000000000030",
+          "status": "succeeded",
+          "status_reason": null,
+          "superseded_by": null
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791988326000-1",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 18,
+        "ts": "2026-10-14T14:32:06Z",
+        "data": {
+          "status": "verifying",
+          "status_reason": null,
+          "severity": "sev2"
+        }
+      }
+    },
+    {
+      "delay_ms": 3000,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791988626000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 19,
+        "ts": "2026-10-14T14:37:06Z",
+        "data": {
+          "status": "action_failed",
+          "status_reason": null,
+          "severity": "sev2"
+        }
+      }
+    },
+    {
+      "delay_ms": 800,
+      "event": {
+        "type": "event",
+        "event": "proposal.created",
+        "event_id": "1791988630000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 20,
+        "ts": "2026-10-14T14:37:10Z",
+        "data": {
+          "id": "30000000-0000-4000-8000-000000000031",
+          "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+          "kind": "rollback",
+          "parent_proposal_id": "30000000-0000-4000-8000-000000000030",
+          "action": "scale_service",
+          "params": {
+            "service": "api",
+            "replicas": 1
+          },
+          "risk_tier": "low",
+          "approval_requirement": "tap",
+          "expected_effect": "Return to 1 replica, as before the scale",
+          "rationale": "Signal verification failed after scaling to 3 replicas: p95 latency stayed above its threshold.",
+          "evidence_refs": [],
+          "rollback_step": null,
+          "dry_run_result": {
+            "would_change": [
+              {
+                "target": "cs-api-140-3",
+                "change": "stop"
+              },
+              {
+                "target": "cs-api-140-2",
+                "change": "stop"
+              }
+            ],
+            "current": {
+              "active_release": "1.4.0",
+              "running_replicas": 3,
+              "containers": [
+                {
+                  "name": "cs-api-140-1",
+                  "state": "running",
+                  "health": "healthy"
+                },
+                {
+                  "name": "cs-api-140-2",
+                  "state": "running",
+                  "health": "healthy"
+                },
+                {
+                  "name": "cs-api-140-3",
+                  "state": "running",
+                  "health": "healthy"
+                }
+              ],
+              "cache_keys": null
+            },
+            "preconditions": {
+              "rate_limit_ok": true,
+              "cooldown_ok": true,
+              "slots_available": true
+            },
+            "predicted_effect": "1 replica of api 1.4.0 serves traffic, as before the scale",
+            "warnings": [],
+            "state_fingerprint": "5e1d0fd457e1c5009f7e2750a98bb5fc20f4e9b06bbe9e3e4b843efbd144867b"
+          },
+          "dry_run_at": "2026-10-14T14:37:07Z",
+          "fingerprint": "d8601c5cd69131eaf66ab74d3c3c30b1648a5c46b82e398b69262e5f375922e2",
+          "status": "pending",
+          "status_reason": null,
+          "expires_at": "2026-10-14T14:52:10Z",
+          "created_at": "2026-10-14T14:37:10Z"
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791988630000-1",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 21,
+        "ts": "2026-10-14T14:37:10Z",
+        "data": {
+          "status": "awaiting_approval",
+          "status_reason": null,
+          "severity": "sev2"
+        }
+      }
+    },
+    {
+      "delay_ms": 0,
+      "await_approval": true,
+      "event": {
+        "type": "event",
+        "event": "proposal.updated",
+        "event_id": "1791988670000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 22,
+        "ts": "2026-10-14T14:37:50Z",
+        "data": {
+          "proposal_id": "30000000-0000-4000-8000-000000000031",
+          "status": "approved",
+          "status_reason": null,
+          "superseded_by": null
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791988670000-1",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 23,
+        "ts": "2026-10-14T14:37:50Z",
+        "data": {
+          "status": "executing",
+          "status_reason": null,
+          "severity": "sev2"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791988672000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 24,
+        "ts": "2026-10-14T14:37:52Z",
+        "data": {
+          "execution_id": "30000000-0000-4000-8000-000000000041",
+          "proposal_id": "30000000-0000-4000-8000-000000000031",
+          "step": "validated",
+          "status": "succeeded",
+          "message": "signature, catalogue, targets and fingerprint checked"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791988680000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 25,
+        "ts": "2026-10-14T14:38:00Z",
+        "data": {
+          "execution_id": "30000000-0000-4000-8000-000000000041",
+          "proposal_id": "30000000-0000-4000-8000-000000000031",
+          "step": "stopping cs-api-140-3",
+          "status": "succeeded",
+          "message": "stopped gracefully"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791988686000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 26,
+        "ts": "2026-10-14T14:38:06Z",
+        "data": {
+          "execution_id": "30000000-0000-4000-8000-000000000041",
+          "proposal_id": "30000000-0000-4000-8000-000000000031",
+          "step": "stopping cs-api-140-2",
+          "status": "succeeded",
+          "message": "stopped gracefully"
+        }
+      }
+    },
+    {
+      "delay_ms": 700,
+      "event": {
+        "type": "event",
+        "event": "execution.progress",
+        "event_id": "1791988690000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 27,
+        "ts": "2026-10-14T14:38:10Z",
+        "data": {
+          "execution_id": "30000000-0000-4000-8000-000000000041",
+          "proposal_id": "30000000-0000-4000-8000-000000000031",
+          "step": "done",
+          "status": "succeeded",
+          "message": "structural health check passed"
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "proposal.updated",
+        "event_id": "1791988691000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 28,
+        "ts": "2026-10-14T14:38:11Z",
+        "data": {
+          "proposal_id": "30000000-0000-4000-8000-000000000031",
+          "status": "succeeded",
+          "status_reason": null,
+          "superseded_by": null
+        }
+      }
+    },
+    {
+      "delay_ms": 300,
+      "event": {
+        "type": "event",
+        "event": "incident.updated",
+        "event_id": "1791988691000-1",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 29,
+        "ts": "2026-10-14T14:38:11Z",
+        "data": {
+          "status": "verifying",
+          "status_reason": null,
+          "severity": "sev2"
+        }
+      }
+    },
+    {
+      "delay_ms": 2500,
+      "event": {
+        "type": "event",
+        "event": "incident.resolved",
+        "event_id": "1791988751000-0",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "state_version": 30,
+        "ts": "2026-10-14T14:39:11Z",
+        "data": {
+          "resolution": "rolled_back",
+          "resolved_at": "2026-10-14T14:39:11Z"
+        }
+      }
+    }
+  ],
+  "final": {
+    "id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+    "service": "api",
+    "severity": "sev2",
+    "status": "resolved",
+    "status_reason": null,
+    "title": "api p95 latency 1.8 s",
+    "opened_at": "2026-10-14T14:30:20Z",
+    "resolved_at": "2026-10-14T14:39:11Z",
+    "resolution": "rolled_back",
+    "state_version": 30,
+    "top_hypothesis": {
+      "summary": "A traffic surge saturates the single api replica, so requests queue and p95 rises",
+      "confidence": 0.8,
+      "root_cause_category": "traffic_surge"
+    },
+    "pending_proposal_id": null,
+    "window_start": "2026-10-14T14:20:05Z",
+    "window_end": "2026-10-14T14:39:11Z",
+    "trigger": {
+      "source": "detector",
+      "signals": [
+        {
+          "name": "p95_latency",
+          "value": 1.8,
+          "baseline": 0.11,
+          "zscore": 8.7,
+          "first_anomalous_at": "2026-10-14T14:30:05Z"
+        }
+      ],
+      "observed_at": "2026-10-14T14:30:20Z",
+      "updates": []
+    },
+    "evidence": [
+      {
+        "id": "30000000-0000-4000-8000-000000000001",
+        "ref": "E1",
+        "kind": "detector_signal",
+        "purpose": "seed",
+        "tool_name": null,
+        "summary": "api p95 latency 1.8 s (detector signal)",
+        "payload": {
+          "service": "api",
+          "signals": [
+            {
+              "name": "p95_latency",
+              "value": 1.8,
+              "baseline": 0.11,
+              "zscore": 8.7,
+              "first_anomalous_at": "2026-10-14T14:30:05Z"
+            }
+          ],
+          "observed_at": "2026-10-14T14:30:20Z"
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T14:30:20Z"
+      },
+      {
+        "id": "30000000-0000-4000-8000-000000000002",
+        "ref": "E2",
+        "kind": "metric_query",
+        "purpose": "gather",
+        "tool_name": "query_metrics",
+        "summary": "api request rate rose from 5 to 38 requests per second",
+        "payload": {
+          "template": "request_rate",
+          "service": "api",
+          "unit": "requests_per_second",
+          "step_seconds": 15,
+          "points": [
+            {
+              "ts": "2026-10-14T14:29:15Z",
+              "value": 5.0
+            },
+            {
+              "ts": "2026-10-14T14:29:30Z",
+              "value": 5.1
+            },
+            {
+              "ts": "2026-10-14T14:29:45Z",
+              "value": 4.9
+            },
+            {
+              "ts": "2026-10-14T14:30:00Z",
+              "value": 21.0
+            },
+            {
+              "ts": "2026-10-14T14:30:15Z",
+              "value": 37.5
+            },
+            {
+              "ts": "2026-10-14T14:30:30Z",
+              "value": 38.0
+            }
+          ],
+          "baseline_mean": 5.0,
+          "peak": 38.0,
+          "pct_change": 660.0,
+          "change_point_at": "2026-10-14T14:29:55Z",
+          "note": null
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T14:30:27Z"
+      },
+      {
+        "id": "30000000-0000-4000-8000-000000000003",
+        "ref": "E3",
+        "kind": "metric_query",
+        "purpose": "gather",
+        "tool_name": "query_metrics",
+        "summary": "api CPU pinned at its 0.5-core limit",
+        "payload": {
+          "template": "cpu_usage",
+          "service": "api",
+          "unit": "cores",
+          "step_seconds": 15,
+          "points": [
+            {
+              "ts": "2026-10-14T14:29:15Z",
+              "value": 0.11
+            },
+            {
+              "ts": "2026-10-14T14:29:30Z",
+              "value": 0.12
+            },
+            {
+              "ts": "2026-10-14T14:29:45Z",
+              "value": 0.11
+            },
+            {
+              "ts": "2026-10-14T14:30:00Z",
+              "value": 0.38
+            },
+            {
+              "ts": "2026-10-14T14:30:15Z",
+              "value": 0.5
+            },
+            {
+              "ts": "2026-10-14T14:30:30Z",
+              "value": 0.5
+            }
+          ],
+          "baseline_mean": 0.11,
+          "peak": 0.5,
+          "pct_change": 354.5,
+          "change_point_at": "2026-10-14T14:29:55Z",
+          "note": null
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T14:30:32Z"
+      },
+      {
+        "id": "30000000-0000-4000-8000-000000000004",
+        "ref": "E4",
+        "kind": "deploy_list",
+        "purpose": "gather",
+        "tool_name": "get_recent_deploys",
+        "summary": "No deploy in the 9 days before the incident",
+        "payload": {
+          "records": [
+            {
+              "service": "api",
+              "release": "1.4.0",
+              "commit_sha": "606c2674b8e32ec226c88019db05b426594a08f6",
+              "commit_message": "cart: cache price lookups",
+              "config_hash": "294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324",
+              "deployed_at": "2026-10-05T09:05:00Z",
+              "deployed_by": "setup",
+              "kind": "deploy",
+              "replicas": 1,
+              "reason": "scheduled release"
+            }
+          ]
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T14:30:36Z"
+      },
+      {
+        "id": "30000000-0000-4000-8000-000000000005",
+        "ref": "E5",
+        "kind": "service_health",
+        "purpose": "gather",
+        "tool_name": "get_service_health",
+        "summary": "1 api replica running and healthy",
+        "payload": {
+          "service": "api",
+          "containers": [
+            {
+              "name": "cs-api-140-1",
+              "release": "1.4.0",
+              "state": "running",
+              "health": "healthy",
+              "restart_count": 0,
+              "oom_killed": false,
+              "exit_code": null,
+              "started_at": "2026-10-14T08:02:11Z"
+            }
+          ],
+          "probe": {
+            "url": "http://cs-lb/healthz",
+            "ok": true,
+            "status_code": 200,
+            "latency_ms": 380.0,
+            "error": null
+          }
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T14:30:40Z"
+      },
+      {
+        "id": "30000000-0000-4000-8000-000000000006",
+        "ref": "E6",
+        "kind": "log_query",
+        "purpose": "disproof",
+        "tool_name": "query_logs",
+        "summary": "No new exception types; only slow-request warnings",
+        "payload": {
+          "lines": [
+            {
+              "ts": "2026-10-14T14:30:11Z",
+              "level": "WARNING",
+              "msg": "GET /products took 1712 ms",
+              "exc_type": null
+            }
+          ],
+          "total_count": 64,
+          "top_exception_types": []
+        },
+        "suspicious_content": false,
+        "created_at": "2026-10-14T14:30:51Z"
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "30000000-0000-4000-8000-000000000021",
+        "rank": 1,
+        "summary": "A traffic surge saturates the single api replica, so requests queue and p95 rises",
+        "root_cause_category": "traffic_surge",
+        "confidence": 0.8,
+        "confidence_initial": 0.84,
+        "evidence_refs": [
+          "E2",
+          "E3"
+        ],
+        "status": "active",
+        "reflection_notes": "Survived the disproof: no new errors (E6); the load rose 7x (E2)."
+      },
+      {
+        "id": "30000000-0000-4000-8000-000000000022",
+        "rank": 2,
+        "summary": "The api replica is short of CPU for its normal load",
+        "root_cause_category": "resource_saturation",
+        "confidence": 0.35,
+        "confidence_initial": 0.4,
+        "evidence_refs": [
+          "E3"
+        ],
+        "status": "active",
+        "reflection_notes": "CPU is high only because load rose (E2)."
+      }
+    ],
+    "proposals": [
+      {
+        "id": "30000000-0000-4000-8000-000000000030",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "kind": "primary",
+        "parent_proposal_id": null,
+        "action": "scale_service",
+        "params": {
+          "service": "api",
+          "replicas": 3
+        },
+        "risk_tier": "low",
+        "approval_requirement": "tap",
+        "expected_effect": "p95 latency returns below 300 ms with 3 replicas sharing the load",
+        "rationale": "Load rose 7x (E2) and the single replica is CPU-bound (E3); nothing was deployed (E4).",
+        "evidence_refs": [
+          "E2",
+          "E3",
+          "E4"
+        ],
+        "rollback_step": {
+          "action": "scale_service",
+          "params": {
+            "service": "api",
+            "replicas": 1
+          }
+        },
+        "dry_run_result": {
+          "would_change": [
+            {
+              "target": "cs-api-140-2",
+              "change": "start"
+            },
+            {
+              "target": "cs-api-140-3",
+              "change": "start"
+            }
+          ],
+          "current": {
+            "active_release": "1.4.0",
+            "running_replicas": 1,
+            "containers": [
+              {
+                "name": "cs-api-140-1",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-140-2",
+                "state": "exited",
+                "health": "none"
+              },
+              {
+                "name": "cs-api-140-3",
+                "state": "exited",
+                "health": "none"
+              }
+            ],
+            "cache_keys": null
+          },
+          "preconditions": {
+            "rate_limit_ok": true,
+            "cooldown_ok": true,
+            "slots_available": true
+          },
+          "predicted_effect": "3 replicas of api 1.4.0 serve traffic behind cs-lb",
+          "warnings": [],
+          "state_fingerprint": "92c6c92c3ae96a8cb82862e999ee468ee08e33be154e623d22097ee28ba21907"
+        },
+        "dry_run_at": "2026-10-14T14:30:53Z",
+        "fingerprint": "612b4faf6d13e118c8a86098f76c9020f742646d8f5d0b49246c10cc6699ce66",
+        "status": "succeeded",
+        "status_reason": null,
+        "expires_at": "2026-10-14T14:45:56Z",
+        "created_at": "2026-10-14T14:30:56Z"
+      },
+      {
+        "id": "30000000-0000-4000-8000-000000000031",
+        "incident_id": "9e1f3a5c-7b2d-4e6f-a8c0-2b4d6f8a1c03",
+        "kind": "rollback",
+        "parent_proposal_id": "30000000-0000-4000-8000-000000000030",
+        "action": "scale_service",
+        "params": {
+          "service": "api",
+          "replicas": 1
+        },
+        "risk_tier": "low",
+        "approval_requirement": "tap",
+        "expected_effect": "Return to 1 replica, as before the scale",
+        "rationale": "Signal verification failed after scaling to 3 replicas: p95 latency stayed above its threshold.",
+        "evidence_refs": [],
+        "rollback_step": null,
+        "dry_run_result": {
+          "would_change": [
+            {
+              "target": "cs-api-140-3",
+              "change": "stop"
+            },
+            {
+              "target": "cs-api-140-2",
+              "change": "stop"
+            }
+          ],
+          "current": {
+            "active_release": "1.4.0",
+            "running_replicas": 3,
+            "containers": [
+              {
+                "name": "cs-api-140-1",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-140-2",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-140-3",
+                "state": "running",
+                "health": "healthy"
+              }
+            ],
+            "cache_keys": null
+          },
+          "preconditions": {
+            "rate_limit_ok": true,
+            "cooldown_ok": true,
+            "slots_available": true
+          },
+          "predicted_effect": "1 replica of api 1.4.0 serves traffic, as before the scale",
+          "warnings": [],
+          "state_fingerprint": "5e1d0fd457e1c5009f7e2750a98bb5fc20f4e9b06bbe9e3e4b843efbd144867b"
+        },
+        "dry_run_at": "2026-10-14T14:37:07Z",
+        "fingerprint": "d8601c5cd69131eaf66ab74d3c3c30b1648a5c46b82e398b69262e5f375922e2",
+        "status": "succeeded",
+        "status_reason": null,
+        "expires_at": "2026-10-14T14:52:10Z",
+        "created_at": "2026-10-14T14:37:10Z"
+      }
+    ],
+    "executions": [
+      {
+        "id": "30000000-0000-4000-8000-000000000040",
+        "proposal_id": "30000000-0000-4000-8000-000000000030",
+        "status": "succeeded",
+        "steps": [
+          {
+            "at": "2026-10-14T14:31:42Z",
+            "step": "validated",
+            "status": "succeeded",
+            "message": "signature, catalogue, targets and fingerprint checked"
+          },
+          {
+            "at": "2026-10-14T14:31:50Z",
+            "step": "starting cs-api-140-2",
+            "status": "succeeded",
+            "message": "running and healthy"
+          },
+          {
+            "at": "2026-10-14T14:31:58Z",
+            "step": "starting cs-api-140-3",
+            "status": "succeeded",
+            "message": "running and healthy"
+          },
+          {
+            "at": "2026-10-14T14:32:05Z",
+            "step": "done",
+            "status": "succeeded",
+            "message": "structural health check passed"
+          }
+        ],
+        "error_code": null,
+        "health_after": {
+          "structural": {
+            "passed": true,
+            "checked_at": "2026-10-14T14:32:04Z",
+            "containers": [
+              {
+                "name": "cs-api-140-1",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-140-2",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-140-3",
+                "state": "running",
+                "health": "healthy"
+              }
+            ],
+            "probes": [
+              {
+                "url": "http://cs-lb/healthz",
+                "ok": true,
+                "status_code": 200,
+                "latency_ms": 3.4,
+                "error": null
+              }
+            ]
+          },
+          "signals": {
+            "passed": false,
+            "checked_at": "2026-10-14T14:37:06Z",
+            "window_seconds": 60,
+            "signals": [
+              "p95_latency"
+            ]
+          },
+          "verdict": "fail"
+        },
+        "started_at": "2026-10-14T14:31:41Z",
+        "finished_at": "2026-10-14T14:32:05Z"
+      },
+      {
+        "id": "30000000-0000-4000-8000-000000000041",
+        "proposal_id": "30000000-0000-4000-8000-000000000031",
+        "status": "succeeded",
+        "steps": [
+          {
+            "at": "2026-10-14T14:37:52Z",
+            "step": "validated",
+            "status": "succeeded",
+            "message": "signature, catalogue, targets and fingerprint checked"
+          },
+          {
+            "at": "2026-10-14T14:38:00Z",
+            "step": "stopping cs-api-140-3",
+            "status": "succeeded",
+            "message": "stopped gracefully"
+          },
+          {
+            "at": "2026-10-14T14:38:06Z",
+            "step": "stopping cs-api-140-2",
+            "status": "succeeded",
+            "message": "stopped gracefully"
+          },
+          {
+            "at": "2026-10-14T14:38:10Z",
+            "step": "done",
+            "status": "succeeded",
+            "message": "structural health check passed"
+          }
+        ],
+        "error_code": null,
+        "health_after": {
+          "structural": {
+            "passed": true,
+            "checked_at": "2026-10-14T14:38:09Z",
+            "containers": [
+              {
+                "name": "cs-api-140-1",
+                "state": "running",
+                "health": "healthy"
+              },
+              {
+                "name": "cs-api-140-2",
+                "state": "exited",
+                "health": "none"
+              },
+              {
+                "name": "cs-api-140-3",
+                "state": "exited",
+                "health": "none"
+              }
+            ],
+            "probes": [
+              {
+                "url": "http://cs-lb/healthz",
+                "ok": true,
+                "status_code": 200,
+                "latency_ms": 3.4,
+                "error": null
+              }
+            ]
+          },
+          "signals": {
+            "passed": true,
+            "checked_at": "2026-10-14T14:39:11Z",
+            "window_seconds": 60,
+            "signals": [
+              "p95_latency"
+            ]
+          },
+          "verdict": "pass"
+        },
+        "started_at": "2026-10-14T14:37:51Z",
+        "finished_at": "2026-10-14T14:38:10Z"
+      }
+    ],
+    "agent_meta": {
+      "prompt_version": "v1",
+      "provider": "fake",
+      "model": "fake-scripted",
+      "catalogue_version": "1.0.0",
+      "agent_config_hash": "751ddb4c81bb87ac09e98cef2a91e775ed7ff80fe80f825cdf08641c5f158117",
+      "tool_calls": 6,
+      "llm_calls": 9,
+      "input_tokens": 16480,
+      "output_tokens": 1390,
+      "duration_ms": 36900,
+      "terminal_state": "PROPOSED",
+      "run_started_at": "2026-10-14T14:30:21Z"
+    }
+  }
+}

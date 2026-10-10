@@ -1,0 +1,54 @@
+# Mobile checks (TEST-012, CLAUDE.md §4.5): analyze with zero warnings, the
+# generated DTO code matches the models, and the unit and widget tests pass.
+#
+# The trigger is deliberately NOT path-filtered, because a required check
+# that never reports blocks merges. Keep the job name stable, since branch
+# protection requires it by name.
+name: mobile
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile:
+    name: mobile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        # Third-party action pinned to a full commit SHA. v2.23.0 (also the v2
+        # tag), checked on 2026-10-10 with git ls-remote and the releases API.
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: 3.44.2
+          channel: stable
+
+      - name: Dependencies (locked)
+        run: flutter pub get --enforce-lockfile
+
+      - name: Generated DTO code is current
+        run: |
+          dart run build_runner build
+          git diff --exit-code -- lib
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Tests (the contract fixtures run when contracts/fixtures has them)
+        run: flutter test
