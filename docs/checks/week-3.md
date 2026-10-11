@@ -9,6 +9,7 @@
 | A2.1 Runner: consumer group, signature and expiry verification (shared vector), catalogue and target allowlist, free-form rejection | done (on `tanzeel`) | 2026-10-10 | Below |
 | A2.2 socket-proxy-rw config; proxy security tests (RUN-017, TEST-015) | done (on `tanzeel`); one known limitation recorded | 2026-10-10 | Below |
 | A2.3 Dry runs for all 4 actions; state fingerprint (RUN-007) | done (on `tanzeel`, not pushed) | 2026-10-10 | Below |
+| A2.4a rollback_deploy execute, structural health check (RUN-008, RUN-011, RUN-013, RUN-014, RUN-015) | done (on `tanzeel`, not pushed); restart, scale, clear_cache in A2.4b | 2026-10-11 | Below |
 
 ### A2.1 — runner verification (RUN-001…RUN-004, RUN-018; RUN-005's SET NX brought forward)
 
@@ -182,6 +183,100 @@
 **For A2.4 and A2.5:**
 - §7.6 exempts rollback proposals from the cooldown, but a C5 request does not say whether it comes from a rollback proposal, so the runner cannot apply the exemption. That needs a contract change before A2.5.
 - C5 does not say how the worker treats a **refused** dry run (here: Docker or the ledger unreadable). Usman's worker should treat it like `dry_run_unavailable`.
+
+### A2.4a — rollback_deploy execute and the structural health check (RUN-008, RUN-011, RUN-013, RUN-014, RUN-015)
+
+**Read first** (2026-10-11): architecture §2.10, §5.10, §5.11, §7.4–§7.6, §9.5 and §9.6; C5 (`runner.py`: results, `captured`); C6 (`ledger.py`); C1 `StructuralHealth`, `ProbeResult`, `StepStatus`; RUN-008 to RUN-015; the chaos CLI's ledger writer (`chaos_cli/helper.py`).
+
+**Rulings (2026-10-11)**, asked before coding:
+1. **Probes:** each target's own `/healthz` on chaos_net (api :8000, worker :8001), plus `http://cs-lb/healthz` for api. §5.10 names only `cs-lb/healthz`, but cs-lb answers that path itself (`location = /healthz`, never forwarded), so on its own it proves nothing about the api release. **Architecture §5.10 should say so** (shared doc: not edited here).
+2. **A new release that never becomes healthy** ends `failed`: the runner stops the slots it started, the old release keeps running, no ledger record is written, and `captured.previous_release` is the still-active release. This is contract-review-a issue 14.
+3. **Restart count stable:** a passing sample, then a second passing sample 10 s later with the same restart counts, all within 60 s.
+
+**Built** (`runner/oncallpilot_runner/`):
+- **`execute.py`:** an execute reaches it only after every A2.1 check and the idempotency claim.
+  - **Before any change:** the state is read again exactly as the dry run read it.
+    - A different fingerprint → `aborted` / `STATE_DRIFT`.
+    - An unreadable state, or target slots that were already missing at the dry run → `aborted` / `VALIDATION_ERROR`.
+  - **rollback_deploy:**
+    1. start slots 1..N of `target_release` (N from the ledger);
+    2. wait until they pass health (one passing sample, at most 60 s);
+    3. stop the running containers of the active release (SIGTERM, 10 s timeout);
+    4. append the ledger record;
+    5. run the structural check.
+  - **Never zero healthy replicas:**
+    - If the new slots do not become healthy, or a later start fails, the slots already started are stopped again and the old release is never touched.
+    - After the old release has been stopped, a failure never stops the healthy new release.
+  - **Every write** (start, stop) comes right after a fresh `inspect` and both allowlist checks, and goes by container ID.
+  - **restart, scale, clear_cache:** no execute handler until A2.4b. Such an execute ends `aborted` / `ACTION_NOT_ALLOWED` and changes nothing.
+- **`health.py`:** the structural check (rulings 1 and 3), returning C1 `StructuralHealth`. Probes return C1 `ProbeResult` with a 3 s timeout.
+- **`docker_client.py`:** `DockerControl` adds `inspect`, `start` and `stop` by ID. There is no create, remove, exec, kill or pull.
+- **`ledger.py`:** `runner_record()` and `append()`.
+  - The record is `kind=rollback`, `deployed_by=runner`, with `replicas` = N and the neutral reason `rolled back to release X` (TB-010).
+  - Commit, message, image tag and config hash are copied from that release's own latest ledger record: the runner has no copy of `releases.yaml`, and a rollback target must already be in the ledger history.
+  - The record is checked against C6's rules before writing.
+  - `append()` writes one whole line in one `write()` on an `O_APPEND` descriptor, then fsyncs. It never uses `O_CREAT`, so it never creates or replaces the file.
+- **Consumer:**
+  - Each step publishes a signed `progress` result: `validated`, `starting …`, `healthy …` (`running`, then `succeeded` or `failed`), `stopping …`, `recording the rollback in the deploy ledger`, `structural health check` (`running`), `done`.
+  - Then one signed `execution_result`: `succeeded` and `failed` carry `health_after.structural` (when it ran) and `captured`; `aborted` carries only `error_code`.
+  - A bug during an execution still answers `failed`. Before this change, it fell back to a refusal, which the claimed ID turned into silence.
+  - The final result is retried 5 times on a Redis error before the entry is acknowledged. A progress result that cannot be published is only logged.
+  - Long waits keep the heartbeat fresh, so the healthcheck stays green.
+- **`tests/publish_signed.py`:** a new `--state-fingerprint` option (an execute carried the placeholder `b…b` before, which can only drift). It now prints the entry ID, `request_id` and `execution_id` it published.
+
+**The ledger: who writes it, and the mount** (the runner never wrote it before):
+- **Writers:**
+  - the chaos CLI, through its helper container, which runs as root: it appends with `O_APPEND`, `chaos reset` replaces the file by rename, and both chown it to uid 10001;
+  - the runner, uid 10001 (A2.4a), which only appends.
+  - backend-worker will mount it read-only.
+- **Ownership on the volume:** the directory is `10001:10001` with mode 0755, and `deploys.jsonl` is `10001:10001` with mode 0644. The runner already runs as uid 10001, so it can append without any permission change.
+- **Mount the runner needs:** `deploy_ledger:/ledger` read-write, the **directory**. A file-only mount would keep the old inode after `chaos reset` renames a new file over it, and the runner would then append to a deleted file.
+- **What changed:** only the A2.4a live test mounts the volume read-write. The dry-run live test keeps it read-only. No compose file changed: the runner service does not exist in `runner.yml` yet (it waits for copilot-redis), and it will get `deploy_ledger:/ledger` (rw) when added. No ownership or mode changed.
+- **Residual write permission:** because uid 10001 owns the directory, the runner *could* create or rename files in `/ledger`, although its code only appends to `deploys.jsonl`. Tightening it is possible, but it changes the chaos CLI. The helper would leave the directory owned by root with mode 0755, keeping the file 10001:10001 0644. The runner could then still append, but could no longer create, rename or delete. **Proposed, not done.**
+- **Concurrency:** both writers append whole lines with `O_APPEND`, so lines never interleave. A `chaos reset` during a runner append would lose that one record (the runner's descriptor points at the replaced file). `chaos reset` is an operator action between runs, so this is accepted.
+
+**Tests:**
+- **Unit** (`test_execute.py`, new probe and SDK cases): **193 passed**, coverage **95.9 %**; ruff and `mypy --strict` clean. `FakeDockerClient` records every call in order, and each test states the exact inspects and writes.
+  - **A successful rollback:** inspect 140-1, start 140-1, inspect 150-1, stop 150-1. The steps come in order, the structural check passes, `captured.previous_release` is 1.5.0, and the ledger is unchanged except for one valid runner record.
+  - **A drifted state** (a ledger record since the dry run, or a missing slot) aborts with `STATE_DRIFT`: no write, no step, ledger unchanged.
+  - **A new release that stays unhealthy, exits or restarts** (and one whose probe fails): writes are exactly start 140-1 then stop 140-1, 150-1 keeps running, no ledger record, and the runner gives up after 60 s.
+  - **Also covered:**
+    - a start failure on slot 2 of 3 undoes slot 1;
+    - a container that fails the allowlist at write time is never touched;
+    - a stop failure or a ledger failure after the switch keeps the new release running;
+    - a structural check that fails after the switch reports `failed`;
+    - the stability window catches a restart.
+  - **Through the consumer:**
+    - signed progress then exactly one signed result;
+    - a replay of the same signed execute → `Duplicate`, with writes made once;
+    - forged, unapproved, free-form, expired and wrong-key executes never reach Docker;
+    - a bug answers `failed`;
+    - `aborted` carries only its code;
+    - the final result is retried and gives up unacknowledged.
+  - **Ledger writer:** never creates the file; refuses a record that would break C6.
+- **Live** (`tests/live/test_live_execute.py`, real testbed and proxy, ledger mounted read-write):
+  - After `chaos inject 2`, a large checkout through cs-lb fails.
+  - A signed dry run gives the fingerprint, then `publish_signed.py` publishes the signed execute twice (`--repeat 2`).
+  - **Result:** `succeeded`, with every step in order and every message signed with RUNNER_LINK_KEY. The structural check passed: `cs-api-140-1` running and healthy, every probe OK.
+  - **Recovery:** 140-1 is running and 150-1 exited, and the large checkout succeeds again.
+  - **Ledger:** unchanged except for one record that **validates with C6 `DeployRecord`** (`rollback`, api, 1.4.0, 1 replica, `runner`).
+  - **Replay:** the second message was a `duplicate`, executed once.
+  - `chaos reset` restores the testbed at the end.
+- **Live, all modules:** **6/6** (A2.1 ×3, A2.3 ×2, A2.4a ×1).
+  - The A2.1 test now expects its accepted execute to end `aborted` / `VALIDATION_ERROR`: that stack has no proxy, so the state cannot be read, and it fails closed.
+  - All live tests take the Docker API version from the host daemon.
+- **C5 check:** 13 progress results, 1 `succeeded`, 1 `failed` and 1 `aborted` validate as `RunnerResult` with Usman's models, and every signature verifies with `oncallpilot_contracts.signing` (one-off, in the contracts environment).
+- **CI:** `runner-live` already runs `pytest -m live`, so the execute test runs there too.
+  - It sets no `DOCKER_API_VERSION`: the stack gets none from `.env.example`, and the live tests read `docker version` on the runner host (1.48 on GitHub).
+  - Not run on GitHub yet: nothing is pushed.
+
+**Memory:** the runner uses 33 MiB of its 128 MiB after the rollback. No limits changed.
+
+**Incident:** after midnight the Docker engine was still starting when the A2.1 test ran (3 errors: no Docker pipe). Once it answered, `ocp up` brought back 9 healthy services and the whole live suite passed.
+
+**Open for A2.4b and A2.5:**
+- **Rate limit and cooldown counters (A2.5):** an execute does not yet check or write `ocp:runner:ratelimit:*` and `ocp:runner:cooldown:*`.
+- **Architecture §5.10:** should name the per-container probes (ruling 1).
 
 ## Phase 0 close-out, part 2 (2026-10-10): one PR into `main`
 
