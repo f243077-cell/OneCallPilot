@@ -1,0 +1,33 @@
+# The intended `runner` service (architecture §2.10, §7.3; RUN-016, CLAUDE.md §4.8).
+#
+# Not in infrastructure/compose/runner.yml yet: it is added there once
+# copilot-redis and its `runner` ACL user exist (Usman's copilot.yml). Until
+# then this file is the spec that tests/test_isolation.py checks, and the live
+# stack (tests/live/stack.py) runs the image with the same settings, which
+# tests/live/test_live_limits.py checks with `docker inspect`. When the service
+# moves to runner.yml, test_isolation.py checks it there too.
+#
+# SAFETY: never loosen any line below. No Docker socket; Docker only through
+# socket-proxy-rw. No DATABASE_URL, LLM keys, FCM credentials, INGEST_TOKEN or
+# Supabase keys (§7.3).
+
+runner:
+  image: oncallpilot/runner:0.1.0
+  user: "10001:10001"
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  mem_limit: 128m
+  networks: [rw_proxy_net, copilot_net, chaos_net]
+  volumes:
+    - deploy_ledger:/ledger  # rw: the runner appends rollback and scale records
+  environment:
+    RUNNER_REDIS_URL: ${RUNNER_REDIS_URL}
+    ACTION_SIGNING_KEY: ${ACTION_SIGNING_KEY}
+    RUNNER_LINK_KEY: ${RUNNER_LINK_KEY}
+    LEDGER_PATH: /ledger/deploys.jsonl
+    DOCKER_HOST: tcp://socket-proxy-rw:2375
+    DOCKER_API_VERSION: ${DOCKER_API_VERSION}
+    RUNNER_ADMIN_TOKEN: ${RUNNER_ADMIN_TOKEN}
+  restart: unless-stopped
