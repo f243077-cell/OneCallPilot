@@ -120,6 +120,7 @@ def runner_stack(keys: Keys, *, ledger_writable: bool) -> Iterator[dict[str, Any
             "backend": backend,
             "backend_url": f"redis://backend:{backend_pw}@127.0.0.1:{port}/0",
             "runner": runner,
+            "network": net,
             "token": token,
         }
     finally:

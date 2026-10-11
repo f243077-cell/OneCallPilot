@@ -23,6 +23,12 @@ execute through publish_signed.py):
 
 The deploy ledger is mounted READ-WRITE here, as the runner service will mount
 it. `chaos reset` restores everything at the end of the module.
+
+These tests run many actions on api within minutes, which the runner's own
+rate limit and cooldown (A2.5) would refuse. `execute_signed` therefore clears
+the runner's counters before each execute (through the test's admin Redis
+user, never the runner's). The limits themselves are tested live in
+test_live_limits.py.
 """
 
 import json
@@ -185,12 +191,24 @@ def test_rollback_deploy_executes_end_to_end(stack: dict[str, Any], keys: Keys) 
 # === A2.4b: restart_service, scale_service, clear_cache (after the rollback above) ======
 
 
+LIMITED = ("api", "worker", "redis")
+
+
+def clear_limits(backend: redis.Redis) -> None:
+    keys = [f"ocp:runner:{kind}:{s}" for s in LIMITED for kind in ("ratelimit", "cooldown")]
+    backend.delete(*keys)
+
+
 def execute_signed(
-    stack: dict[str, Any], keys: Keys, action: str, params: dict[str, str | int]
-) -> tuple[dict[str, Any], list[tuple[str, str, str]]]:
+    stack: dict[str, Any], keys: Keys, action: str, params: dict[str, str | int],
+    *, fresh_limits: bool = True,
+) -> tuple[dict[str, Any], list[tuple[str, str, str]]]:  # fmt: skip
     """A signed dry run for the fingerprint, then the signed execute through
-    publish_signed.py; returns the verified final result and its steps."""
+    publish_signed.py; returns the verified final result and its steps.
+    `fresh_limits` clears the runner's counters first (see the module docstring)."""
     backend: redis.Redis = stack["backend"]
+    if fresh_limits:
+        clear_limits(backend)
     dry = signed_for(build_request("dry_run", action, params, now=datetime.now(UTC)), keys)
     backend.xadd(REQUESTS, entry(dry))  # type: ignore[arg-type]
     preview = wait_for(backend, "request_id", dry["request_id"], "dry_run_result", 30)
