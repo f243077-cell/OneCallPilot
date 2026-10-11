@@ -11,6 +11,7 @@
 | A2.3 Dry runs for all 4 actions; state fingerprint (RUN-007) | done (on `tanzeel`, not pushed) | 2026-10-10 | Below |
 | A2.4a rollback_deploy execute, structural health check (RUN-008, RUN-011, RUN-013, RUN-014, RUN-015) | done (on `tanzeel`, not pushed) | 2026-10-11 | Below |
 | A2.4b restart_service, scale_service, clear_cache executes (RUN-009, RUN-010, RUN-012, RUN-013, RUN-015) | done (on `tanzeel`, not pushed) | 2026-10-11 | Below |
+| A2.5 Second gate: idempotency, rate limit and cooldown, drift abort, structural check, isolation (RUN-005, RUN-006, RUN-008, RUN-014, RUN-016) | done (on `tanzeel`, not pushed); rollback cooldown exemption waits for C5 issue 12 | 2026-10-11 | Below |
 
 ### A2.1 — runner verification (RUN-001…RUN-004, RUN-018; RUN-005's SET NX brought forward)
 
@@ -355,6 +356,59 @@
 - **CI:** `runner-live` runs every live test, these included. It still sets no Docker API version. Not run on GitHub yet: nothing is pushed.
 
 **Memory:** no limits changed. The runner was not measured again in A2.4b; it used 33 MiB of its 128 MiB in A2.4a. Windows had only 1.0 GB free at the end, because of other programs on the host.
+
+### A2.5 — the runner's second gate: idempotency, rate limit and cooldown, drift abort, structural check, isolation (RUN-005, RUN-006, RUN-008, RUN-014, RUN-016)
+
+**Read first** (2026-10-11): architecture §5.9, §5.10, §5.12, §7.3, §7.5, §7.6; C5 (`runner.py`: the check order, check 8); C8 §2 (approval checks 6 and 7); RUN-005, RUN-006, RUN-008, RUN-014, RUN-016, RUN-017; the `runner` ACL rules (§2.7).
+
+**Built:**
+- **`limits.py` (RUN-006):** the runner's own counters, independent of the backend's (§5.12):
+  - `ocp:runner:ratelimit:{service}`: a sorted set of execution timestamps (member: the execution ID); at most 3 in 1800 s. Old entries are pruned and the key expires after 1800 s.
+  - `ocp:runner:cooldown:{service}`: a string with a 120 s TTL.
+  - clear_cache counts under service `api`.
+  - Only commands the `runner` ACL user has: `ZCOUNT`, `ZADD`, `ZREMRANGEBYSCORE`, `EXPIRE`, `SET … EX`, `EXISTS`, `TTL` (no `MULTI`).
+- **Order in `execute.py`**, as C5 check 8 says: the idempotency claim (checks.py), then the rate limit (`RATE_LIMITED`), then the cooldown (`COOLDOWN_ACTIVE`), then the state fingerprint (`aborted`, `STATE_DRIFT`).
+  - A closed gate gives a signed `execution_result` with `status: refused` and the code; nothing is read from Docker and nothing changes. The reason ("3 executions on api in the last 30 min (limit 3)", "redis is cooling down for 116 s more") goes to the runner's log; C5's result has no field for it.
+  - **Only executions that ran count.** The execution is counted after the fingerprint passed, right before its first change. Refusals, `aborted` results (drift, validation) and dry runs use no budget. A `failed` execution counts: it ran and may have changed something.
+  - The dry run's `preconditions.rate_limit_ok` and `cooldown_ok` read the same counters (read only).
+- **Idempotency (RUN-005)** is the `SET NX ocp:runner:idem:{execution_id}` claim from A2.1, unchanged. A replay, during the run or after it, is acknowledged and ignored with no result (C5: "a duplicate is acknowledged and ignored, with no result"); the first result stands.
+- **Drift (RUN-008):** the state is read again after the gate, immediately before the first change, for every action. Container state, health and restart counts stay out of the fingerprint (§7.5, C8).
+- **Structural check (RUN-014):** every action ends with it (per-container probes, §5.10). On failure the result is `failed` with `health_after.structural.passed: false`, and every progress step already sent stays.
+- **Isolation (RUN-016):** `runner/tests/runner_service.yml` is the intended `runner` service (non-root uid 10001, read-only root, `/tmp` tmpfs, `cap_drop: [ALL]`, `no-new-privileges`, 128m, networks rw_proxy_net, copilot_net and chaos_net, only the deploy_ledger volume, and only the §7.3 variables plus `DOCKER_API_VERSION`). It is not in `runner.yml` yet (waits for copilot-redis). `tests/isolation.py` holds the policy, checked against that spec, against `runner.yml` once the service is there, and against the running container (`docker inspect`).
+
+**Tests:**
+- **Unit:** **325 passed, 1 skipped** (the `runner.yml` check, until the service is there); coverage **96.0 %** (`limits.py` 100 %); ruff and `mypy --strict` clean.
+  - **Limits:** 3 executions close the rate limit per service, and the window slides; the cooldown holds 120 s, then opens; the rate limit is checked before the cooldown; old timestamps are pruned; clear_cache counts under api.
+  - **Every action** (4) with the rate limit or the cooldown closed: `refused` with the code, no Docker call at all, no cache call, no progress step, the ledger and the counters unchanged.
+  - **What counts:** a succeeded or failed execution counts once and starts the cooldown; a drift abort, a validation abort, dry runs and refused (forged) executes use nothing.
+  - **Through the consumer:** the 4th execution in 30 min gets a signed `refused`/`RATE_LIMITED`; a second one 119 s after the first gets `COOLDOWN_ACTIVE`, and at 120 s it runs.
+  - **Rollbacks are not exempt** from the cooldown (a test says so; see below).
+  - **Fail closed:** a Redis error while reading (`ZCOUNT`, `EXISTS`) or counting (`ZADD`, `SET EX`): nothing runs, no result, the entry stays pending; when Redis is back the redelivered entry is a duplicate and never runs. A claim (`SET NX`) that fails, or whose reply is lost after Redis stored it: the same. A cooldown that cannot be renewed at the end keeps the one set before the first change, and the result still goes out.
+  - **Idempotency:** a replay that a second runner reads while the first is in its health wait; a replay after success and after failure; a runner that dies after acting but before the acknowledgement, then restarts (same consumer name) and re-reads its pending entry while a fresh copy arrives too. Each case: exactly one Docker write and one final result.
+  - **Drift:** a deploy between the dry run and the execute aborts `STATE_DRIFT` for rollback, restart and scale (signed, no write, the ledger unchanged, no budget); a deploy that lands while the gate is checked is still caught; no Docker write ever comes before the state is read again; container state alone is not drift.
+  - **Structural:** for each of the 4 actions, a target that goes unhealthy as the check starts gives `failed`, `passed: false`, and the full list of steps ending in "structural health check" (running) and "done" (failed).
+  - **Isolation:** the spec passes, and each of 35 loosenings fails it (root user, writable root, extra tmpfs, missing or partial `cap_drop`, `cap_add`, no `no-new-privileges`, privileged, host pid or network, devices, ports, env_file, more or no memory limit, a socket mount, an extra mount or network, a unix or read-only-proxy `DOCKER_HOST`, each forbidden variable, any unlisted variable). The Dockerfile's only `USER` is `runner` (uid 10001).
+- **Live** (`tests/live/test_live_limits.py`, the real image, socket-proxy-rw, the testbed and a Redis with the real `runner` ACL user). This module never clears or edits the counters; it only reads them to wait for a cooldown to end.
+  - Isolation: `docker inspect` of the running runner passes the policy; no `DATABASE_URL`; `docker top` shows its only process as uid 10001.
+  - Cooldown: restart_service of redis succeeded; a second one at once was refused `COOLDOWN_ACTIVE` (runner log: "redis is cooling down for 116 s more") and cs-redis was not restarted; after the real 120 s it succeeded. 2 executions counted.
+  - Rate limit: 3 restarts of worker, each after its real cooldown ended; the 4th, also after its cooldown, was refused `RATE_LIMITED` and cs-worker-210 was not restarted; a dry run then showed `rate_limit_ok: false`; still 3 counted.
+  - clear_cache counts under api: a restart of api right after a clear was refused `COOLDOWN_ACTIVE` ("api is cooling down for 113 s more").
+  - **Every refusal changed nothing:** no progress step, the same ledger, and no request but GET in socket-proxy-rw's debug log (clear_cache's dry run reads no container, so it logged none).
+  - Then `chaos reset` (the module's teardown), and a final one after the whole run.
+- **Live, all modules:** **17/17 passed** in **18 min 22 s (the limits module about 11 min 31 s of it: 7 min 12 s for the rate-limit test with its three real cooldowns, 2 min 39 s for the cooldown test)** on this laptop (the CI job's limit is 30 min, unchanged). The A2.4 execute module clears the runner's counters before each execute, in test code only, through the test's admin Redis user (accepted 2026-10-11): it runs many api actions within minutes. Nothing in the runner can reset its own counters.
+- **Unchanged:** memory limits; the CI job (`pytest -m live` picks up the new module; no Docker API version is set anywhere, so GitHub's Docker 28 / API 1.48 is still what the live tests use there).
+
+**Memory** (runner, 128 MiB limit, `docker stats` every ~4 s across all live runner containers, 205 samples): **typical 33.7 MiB** (median; 95th percentile 34.2 MiB), **peak 38.5 MiB**, about 30 % of the limit. The two earlier runs that day (399 samples) agree: median 33.7 MiB, peak 38.6 MiB. Windows had 0.6 GB free at the end.
+
+**Deviations and notes:**
+1. **The cooldown is set twice:** when the execution is counted (before its first change) and again when it ends. §5.12 says "set when an execution finishes"; the extra one only makes the gate stricter, and it holds if the runner dies mid-run.
+2. **Drift is `aborted`, not `refused`:** C5 and §5.10 step 6 give `STATE_DRIFT` as `aborted` (the worker then supersedes the proposal and asks for a new one), so the runner keeps that.
+3. **clear_cache's fingerprint covers no containers** (active release and replicas null, no targets, ruled in A2.3), so no deploy can make it drift; only a fingerprint from elsewhere aborts it.
+4. **The rollback cooldown exemption (§7.6) is not implemented.** Nothing signed says that a request is a rollback (contract-review-a issue 12). Until Usman decides, a rollback is subject to the cooldown like any other action. **For Usman:** a rollback whose execute reaches the runner within 120 s of the end of the failed action it undoes is refused `COOLDOWN_ACTIVE` by the runner (and counts against nothing).
+5. **For Usman to confirm: Redis failures.** If Redis fails while the runner reads or counts its limits, or claims the execution ID, the runner sends **no result** (it could not publish one anyway) and leaves the entry pending; its redelivery is a duplicate and never runs. The backend's sweeper then ends the execution `failed` with `RUNNER_TIMEOUT` after `EXECUTION_TIMEOUT_SECONDS` (§5.10 step 8). Nothing has changed on the testbed in that case.
+6. **`retry_after`:** the backend's 429 carries it (C8); the runner's result has no field for it (C5), so the remaining time is only in the runner's log.
+7. **§7.3 lists the runner's environment without `DOCKER_API_VERSION`**, which CLAUDE.md §10.2 and RUN-017 require. The isolation policy allows exactly the §7.3 list plus that one. The architecture line could add it (shared doc: not edited).
+8. **The first full live run had one failure in my own test:** `docker top … -eo uid` is refused by the daemon ("Couldn't find PID field in ps output"); it now asks for `pid,uid`. The isolation itself held. The rate-limit test was then rewritten so that this module clears nothing (your condition), and the whole live suite was run again.
 
 ## Phase 0 close-out, part 2 (2026-10-10): one PR into `main`
 
