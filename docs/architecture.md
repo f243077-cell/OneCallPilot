@@ -656,7 +656,7 @@ No code path executes an action without an `approvals` row with `decision='appro
 ### 7.3 Runner isolation
 - Separate container running as a non-root user with a read-only root filesystem (`/tmp` as tmpfs) and `cap_drop: [ALL]`.
 - Its only routes out are `rw_proxy_net` (socket-proxy-rw), `copilot_net` (Redis as the `runner` user), and `chaos_net` (health probes and the `clear_cache` admin endpoint).
-- **Environment it receives:** `RUNNER_REDIS_URL`, `ACTION_SIGNING_KEY`, `RUNNER_LINK_KEY`, `DOCKER_HOST=tcp://socket-proxy-rw:2375`, `RUNNER_ADMIN_TOKEN`, `LEDGER_PATH`.
+- **Environment it receives:** `RUNNER_REDIS_URL`, `ACTION_SIGNING_KEY`, `RUNNER_LINK_KEY`, `DOCKER_HOST=tcp://socket-proxy-rw:2375`, `DOCKER_API_VERSION` (the pinned Docker API version, passed as `version=` because the proxy blocks `/version`; RUN-017), `RUNNER_ADMIN_TOKEN`, `LEDGER_PATH`.
 - **Environment it never receives:** `DATABASE_URL`, LLM keys, the FCM key, `INGEST_TOKEN`, Supabase keys.
 
 ### 7.4 Target allowlist — `runner/targets.yaml`
