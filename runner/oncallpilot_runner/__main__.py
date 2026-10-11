@@ -31,7 +31,7 @@ from oncallpilot_runner.execute import Executor
 from oncallpilot_runner.handlers import REGISTERED
 from oncallpilot_runner.health import HealthChecker, http_probe
 from oncallpilot_runner.ledger import ledger_releases
-from oncallpilot_runner.shop_admin import fetch_cache_stats
+from oncallpilot_runner.shop_admin import clear_cache, fetch_cache_stats
 from oncallpilot_runner.signing import Keys, SigningKeyError, key_from_hex
 from oncallpilot_runner.streams import RedisStreams, Streams
 from oncallpilot_runner.targets import Targets, TargetsError
@@ -125,7 +125,10 @@ def main(argv: list[str] | None = None) -> None:
         now=now,
     )
     health = HealthChecker(docker=docker, targets=targets, probe=http_probe, now=now)
-    executor = Executor(docker, dry_runner, health, targets, ledger, now)
+    executor = Executor(
+        docker, dry_runner, health, targets, ledger, now,
+        cache_clear=lambda cache: clear_cache(token, cache),
+    )  # fmt: skip
     consumer = Consumer(
         streams, checker, socket.gethostname(), dry_runner=dry_runner, executor=executor
     )

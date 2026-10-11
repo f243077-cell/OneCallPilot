@@ -100,14 +100,26 @@ class HealthChecker:
                 return current
             self._pause()
 
+    def sample_groups(self, groups: list[tuple[str, list[str]]]) -> Sample:
+        """One sample over the targets of several services (clear_cache: api and redis)."""
+        parts = [self.sample(service, names) for service, names in groups]
+        return Sample(
+            [c for p in parts for c in p.containers],
+            [probe for p in parts for probe in p.probes],
+            missing=[n for p in parts for n in p.missing],
+        )
+
     def structural(self, service: str, names: list[str]) -> dict[str, Any]:
         """C1 StructuralHealth for these target containers."""
+        return self.structural_groups([(service, names)])
+
+    def structural_groups(self, groups: list[tuple[str, list[str]]]) -> dict[str, Any]:
         deadline = self.monotonic() + CHECK_SECONDS
         while True:
-            first = self.sample(service, names)
+            first = self.sample_groups(groups)
             if first.passed and self.monotonic() + STABLE_SECONDS <= deadline:
                 self._wait(STABLE_SECONDS)
-                second = self.sample(service, names)
+                second = self.sample_groups(groups)
                 if second.passed and second.restarts() == first.restarts():
                     return self.report(second, passed=True)
                 first = second

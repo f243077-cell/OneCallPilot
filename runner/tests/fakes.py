@@ -159,8 +159,13 @@ class FakeDockerClient:
     def create(self, name: str) -> None:
         self._record("create", name)
 
-    def restart(self, name: str) -> None:
-        self._record("restart", name)
+    def restart(self, container_id: str, timeout: int = 10) -> None:
+        """Like start: the container ends up as `on_start` says (default running/healthy)."""
+        self._record("restart", container_id)
+        state, health = self.on_start.get(container_id, ("running", "healthy"))
+        self.containers[container_id] = replace(
+            self.containers[container_id], state=state, health=health
+        )
 
     def kill(self, name: str) -> None:
         self._record("kill", name)

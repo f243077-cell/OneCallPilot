@@ -11,8 +11,18 @@ checkouts fail, replaces 1.4.0. The test then does what the backend will do:
    (failing before, working after), and the runner's C6 ledger record,
    validated with the shared contract model (chaos CLI environment).
 
+Then (A2.4b) each other action, the same way (signed dry run, then the signed
+execute through publish_signed.py):
+- restart_service of worker, redis and api: each container really restarted
+  (new start time), running and healthy, and no ledger record;
+- scale_service of api 1 -> 3 -> 1: slots started, then the highest stopped
+  first, a C6-valid `scale` record each time, and the shop up throughout;
+- clear_cache of catalog and pricing: the step reports the keys cleared,
+  cs-api logged the clear, the structural check covers api and cs-redis, and
+  no ledger record.
+
 The deploy ledger is mounted READ-WRITE here, as the runner service will mount
-it. `chaos reset` restores everything at the end.
+it. `chaos reset` restores everything at the end of the module.
 """
 
 import json
@@ -170,3 +180,125 @@ def test_rollback_deploy_executes_end_to_end(stack: dict[str, Any], keys: Keys) 
     assert decisions.count("executed") == 1 and decisions.count("duplicate") == 1
     used = docker("stats", "--no-stream", "--format", "{{.MemUsage}}", stack["runner"])
     print(f"runner memory after the rollback: {used}")
+
+
+# === A2.4b: restart_service, scale_service, clear_cache (after the rollback above) ======
+
+
+def execute_signed(
+    stack: dict[str, Any], keys: Keys, action: str, params: dict[str, str | int]
+) -> tuple[dict[str, Any], list[tuple[str, str, str]]]:
+    """A signed dry run for the fingerprint, then the signed execute through
+    publish_signed.py; returns the verified final result and its steps."""
+    backend: redis.Redis = stack["backend"]
+    dry = signed_for(build_request("dry_run", action, params, now=datetime.now(UTC)), keys)
+    backend.xadd(REQUESTS, entry(dry))  # type: ignore[arg-type]
+    preview = wait_for(backend, "request_id", dry["request_id"], "dry_run_result", 30)
+    assert preview["status"] == "ok", preview
+    args = [f"--param={k}={v}" for k, v in params.items()]
+    out = run(
+        "uv", "run", "-q", "python", "-m", "tests.publish_signed",
+        "--redis", stack["backend_url"], "--type", "execute", "--action", action, *args,
+        "--state-fingerprint", preview["dry_run"]["state_fingerprint"],
+        cwd=ROOT / "runner",
+    )  # fmt: skip
+    execution_id = json.loads(out)["execution_id"]
+    final = wait_for(backend, "execution_id", execution_id, "execution_result", 200)
+    mine = answers(backend, "execution_id", execution_id)
+    assert all(verify(m, keys.link) and not verify(m, keys.action) for m in mine)
+    steps = [(m["step"]["name"], m["step"]["status"], m["step"]["message"])
+             for m in mine if m["type"] == "progress"]  # fmt: skip
+    return final, steps
+
+
+def started_at(name: str) -> str:
+    return docker("inspect", "-f", "{{.State.StartedAt}}", name)
+
+
+def states(*names: str) -> dict[str, str]:
+    return {n: docker("inspect", "-f", "{{.State.Status}}/{{.State.Health.Status}}", n)
+            for n in names}  # fmt: skip
+
+
+def active_api() -> tuple[str, int]:
+    records = [json.loads(x) for x in ledger_text().splitlines()]
+    latest = [r for r in records if r["service"] == "api"][-1]
+    return latest["release"], latest["replicas"]
+
+
+def slot(release: str, replica: int) -> str:
+    return f"cs-api-{release.replace('.', '')}-{replica}"
+
+
+def shop_up() -> int:
+    with urllib.request.urlopen(f"{SHOP}/products", timeout=10) as response:
+        return int(response.status)
+
+
+@pytest.mark.parametrize(("service", "container"),
+                         [("worker", "cs-worker-210"), ("redis", "cs-redis")])  # fmt: skip
+def test_restart_service_executes_end_to_end(
+    stack: dict[str, Any], keys: Keys, service: str, container: str
+) -> None:
+    ledger_before, before = ledger_text(), started_at(container)
+    final, steps = execute_signed(stack, keys, "restart_service", {"service": service})
+    assert (final["status"], final["captured"]) == ("succeeded", {}), steps
+    assert final["health_after"]["structural"]["passed"] is True
+    assert (f"restarting {container}", "succeeded") in [(n, s) for n, s, _ in steps]
+    assert started_at(container) != before  # it really restarted
+    assert states(container) == {container: "running/healthy"}
+    assert ledger_text() == ledger_before  # no record for a restart
+
+
+def test_restart_service_of_api_executes_end_to_end(stack: dict[str, Any], keys: Keys) -> None:
+    release, replicas = active_api()
+    names = [slot(release, r) for r in range(1, replicas + 1)]
+    before = {n: started_at(n) for n in names}
+    final, steps = execute_signed(stack, keys, "restart_service", {"service": "api"})
+    assert final["status"] == "succeeded", steps
+    assert all(started_at(n) != before[n] for n in names)
+    assert shop_up() == 200
+
+
+def test_scale_service_executes_end_to_end_up_and_down(stack: dict[str, Any], keys: Keys) -> None:
+    release, replicas = active_api()
+    assert replicas == 1
+    up, steps = execute_signed(stack, keys, "scale_service", {"service": "api", "replicas": 3})
+    assert (up["status"], up["captured"]) == ("succeeded", {"previous_replicas": 1}), steps
+    three = [slot(release, r) for r in (1, 2, 3)]
+    assert set(states(*three).values()) == {"running/healthy"}
+    added = validate_c6(ledger_text().splitlines()[-1])
+    assert (added["kind"], added["release"], added["replicas"], added["deployed_by"]) == (
+        "scale", release, 3, "runner",
+    )  # fmt: skip
+    assert active_api() == (release, 3)
+
+    down, steps = execute_signed(stack, keys, "scale_service", {"service": "api", "replicas": 1})
+    assert (down["status"], down["captured"]) == ("succeeded", {"previous_replicas": 3}), steps
+    assert [n for n, s, _ in steps if n.startswith("stopping")] == [
+        f"stopping {slot(release, 3)}", f"stopping {slot(release, 2)}",
+    ]  # fmt: skip
+    assert states(three[0]) == {three[0]: "running/healthy"}
+    assert [docker("inspect", "-f", "{{.State.Status}}", n) for n in three[1:]] == [
+        "exited", "exited",
+    ]  # fmt: skip
+    assert active_api() == (release, 1)
+    assert shop_up() == 200  # never down: slot 1 kept serving
+
+
+@pytest.mark.parametrize("cache", ["catalog", "pricing"])
+def test_clear_cache_executes_end_to_end(stack: dict[str, Any], keys: Keys, cache: str) -> None:
+    for _ in range(3):  # warm the caches through the shop
+        shop_up()
+    release, _ = active_api()
+    since = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    ledger_before = ledger_text()
+    final, steps = execute_signed(stack, keys, "clear_cache", {"cache": cache})
+    assert (final["status"], final["captured"]) == ("succeeded", {}), steps
+    (message,) = [m for n, s, m in steps if n == f"clearing the {cache} cache" and s == "succeeded"]
+    assert message.startswith(f"{cache}: ") and "keys cleared" in message
+    structural = final["health_after"]["structural"]
+    assert [c["name"] for c in structural["containers"]] == [slot(release, 1), "cs-redis"]
+    logs = docker("logs", "--since", since, slot(release, 1))
+    assert f"{cache} cache cleared" in logs  # cs-api logs every clear (shop.admin)
+    assert ledger_text() == ledger_before

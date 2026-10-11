@@ -20,6 +20,7 @@ from oncallpilot_runner.dry_run import DryRunner
 from oncallpilot_runner.execute import Executor, Outcome
 from oncallpilot_runner.health import LB_PROBE, HealthChecker, probe_urls
 from oncallpilot_runner.request import Request, parse
+from oncallpilot_runner.shop_admin import CacheClearFailed, CacheStatsUnavailable
 from oncallpilot_runner.signing import Keys, verify
 from oncallpilot_runner.targets import Targets
 from tests.conftest import NOW, TARGETS
@@ -59,6 +60,26 @@ def failing_probes() -> set[str]:
     return set()
 
 
+class FakeCache:
+    """The cache clear endpoint: records each call; `answer` or `error` scripts it."""
+
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+        self.answer = True
+        self.error: Exception | None = None
+
+    def __call__(self, cache: str) -> bool:
+        self.calls.append(cache)
+        if self.error is not None:
+            raise self.error
+        return self.answer
+
+
+@pytest.fixture
+def cache() -> FakeCache:
+    return FakeCache()
+
+
 @pytest.fixture
 def executor(
     docker: FakeDockerClient,
@@ -66,6 +87,7 @@ def executor(
     ledger: Path,
     ticks: FakeClock,
     failing_probes: set[str],
+    cache: FakeCache,
 ) -> Executor:
     def probe(url: str) -> dict[str, Any]:
         ok = url not in failing_probes
@@ -74,7 +96,7 @@ def executor(
 
     targets = Targets.load(TARGETS)
     health = HealthChecker(docker, targets, probe, lambda: NOW, ticks.monotonic, ticks.sleep)
-    return Executor(docker, dry_runner, health, targets, ledger, lambda: NOW)
+    return Executor(docker, dry_runner, health, targets, ledger, lambda: NOW, cache_clear=cache)
 
 
 def approved(dry_runner: DryRunner, target: str = "1.4.0", **overrides: Any) -> Request:
@@ -214,9 +236,10 @@ def test_missing_slots_approved_anyway_are_refused_before_any_change(
     assert docker.writes() == []
 
 
-def test_actions_without_an_execute_handler_yet_change_nothing(
+def test_an_action_without_an_execute_handler_changes_nothing(
     executor: Executor, docker: FakeDockerClient
 ) -> None:
+    executor.handlers = {}
     request = parse({**build_request(action="restart_service", params={"service": "api"},
                                      now=NOW), "sig": "0" * 64})  # fmt: skip
     outcome, _ = run(executor, request)
@@ -518,3 +541,378 @@ def test_the_final_result_gives_up_after_its_retries(
 
 def test_steps_carry_timestamps(executor: Executor) -> None:
     assert isinstance(executor.now(), datetime)
+
+
+# === A2.4b: restart_service, scale_service, clear_cache ===============================
+
+
+def approved_for(dry_runner: DryRunner, action: str, params: dict[str, str | int]) -> Request:
+    """An execute of any action, carrying the fingerprint of its own dry run."""
+    dry = parse({**build_request("dry_run", action, params, now=NOW), "sig": "0" * 64})
+    fingerprint = dry_runner.run(dry)["state_fingerprint"]
+    message = build_request("execute", action, params, now=NOW, state_fingerprint=fingerprint)
+    return parse({**message, "sig": "0" * 64})
+
+
+def names_of(steps: Steps) -> list[tuple[str, str]]:
+    return [(name, status) for name, status, _ in steps]
+
+
+def set_api_replicas(ledger: Path, docker: FakeDockerClient, replicas: int) -> None:
+    """The ledger says api 1.5.0 runs `replicas`, and that many slots are running."""
+    with ledger.open("a", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps({**record("api", "1.5.0", "scale", "runner"), "replicas": replicas})
+                + "\n")  # fmt: skip
+    for replica in range(1, replicas + 1):
+        docker.add(f"cs-api-150-{replica}", "api", "1.5.0", replica, "running", "healthy")
+
+
+# --- restart_service (RUN-009) --------------------------------------------------------
+
+
+def test_restart_restarts_the_active_release_and_writes_no_record(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    before = ledger.read_bytes()
+    outcome, steps = run(executor, approved_for(dry_runner, "restart_service", {"service": "api"}))
+    assert (outcome.status, outcome.captured) == ("succeeded", {})
+    assert docker.actions() == [("inspect", "cs-api-150-1"), ("restart", "cs-api-150-1")]
+    assert names_of(steps) == [
+        ("validated", "succeeded"),
+        ("restarting cs-api-150-1", "succeeded"),
+        ("healthy cs-api-150-1", "running"),
+        ("healthy cs-api-150-1", "succeeded"),
+        ("structural health check", "running"),
+        ("done", "succeeded"),
+    ]
+    assert ledger.read_bytes() == before  # §2.10: only rollback and scale write records
+
+
+def test_restart_starts_an_exited_container(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient
+) -> None:
+    docker.add("cs-worker-210", "worker", "2.1.0", 1, state="exited")
+    request = approved_for(dry_runner, "restart_service", {"service": "worker"})
+    outcome, steps = run(executor, request)
+    assert outcome.status == "succeeded"
+    assert docker.actions() == [("inspect", "cs-worker-210"), ("start", "cs-worker-210")]
+    assert ("starting cs-worker-210", "succeeded") in names_of(steps)
+    assert [p["url"] for p in outcome.structural["probes"]] == [  # type: ignore[index]
+        "http://cs-worker-210:8001/healthz"
+    ]
+
+
+def test_restart_of_redis_uses_no_ledger_values_and_no_probe(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    before = ledger.read_bytes()
+    outcome, _ = run(executor, approved_for(dry_runner, "restart_service", {"service": "redis"}))
+    assert outcome.status == "succeeded"
+    assert docker.actions() == [("inspect", "cs-redis"), ("restart", "cs-redis")]
+    assert outcome.structural is not None and outcome.structural["probes"] == []
+    assert ledger.read_bytes() == before
+
+
+def test_restart_goes_one_at_a_time(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    """Ruled 2026-10-11: each replica passes health before the next is restarted."""
+    set_api_replicas(ledger, docker, 3)
+    outcome, steps = run(executor, approved_for(dry_runner, "restart_service", {"service": "api"}))
+    assert outcome.status == "succeeded"
+    assert docker.writes() == [("restart", f"cs-api-150-{r}") for r in (1, 2, 3)]
+    order = [n for n, s in names_of(steps) if s == "succeeded"]
+    assert order[1:7] == [
+        "restarting cs-api-150-1", "healthy cs-api-150-1",
+        "restarting cs-api-150-2", "healthy cs-api-150-2",
+        "restarting cs-api-150-3", "healthy cs-api-150-3",
+    ]  # fmt: skip
+
+
+def test_a_restart_that_never_gets_healthy_stops_the_rolling_restart(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    set_api_replicas(ledger, docker, 3)
+    docker.on_start["cs-api-150-2"] = ("running", "unhealthy")
+    outcome, steps = run(executor, approved_for(dry_runner, "restart_service", {"service": "api"}))
+    assert outcome.status == "failed"
+    assert docker.writes() == [("restart", "cs-api-150-1"), ("restart", "cs-api-150-2")]
+    assert docker.containers["cs-api-150-3"].state == "running"  # never touched
+    assert ("healthy cs-api-150-2", "failed") in names_of(steps)
+    assert outcome.structural is not None and outcome.structural["passed"] is False
+
+
+def test_a_restart_call_that_fails_stops_there(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    set_api_replicas(ledger, docker, 2)
+    docker.fail.add(("restart", "cs-api-150-1"))
+    outcome, steps = run(executor, approved_for(dry_runner, "restart_service", {"service": "api"}))
+    assert outcome.status == "failed"
+    assert docker.writes() == [("restart", "cs-api-150-1")]  # attempted, refused; no more
+    assert ("restarting cs-api-150-1", "failed") in names_of(steps)
+
+
+def test_a_restart_after_drift_changes_nothing(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    request = approved_for(dry_runner, "restart_service", {"service": "api"})
+    del docker.containers["cs-api-150-1"]
+    outcome, steps = run(executor, request)
+    assert (outcome.status, outcome.error_code) == ("aborted", "STATE_DRIFT")
+    assert docker.writes() == [] and steps == []
+
+
+# --- scale_service (RUN-010) ----------------------------------------------------------
+
+
+def test_scale_up_starts_slots_waits_and_records_the_new_count(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    request = approved_for(dry_runner, "scale_service", {"service": "api", "replicas": 3})
+    outcome, steps = run(executor, request)
+    assert (outcome.status, outcome.captured) == ("succeeded", {"previous_replicas": 1})
+    assert docker.actions() == [
+        ("inspect", "cs-api-150-1"),  # already running: no write
+        ("inspect", "cs-api-150-2"), ("start", "cs-api-150-2"),
+        ("inspect", "cs-api-150-3"), ("start", "cs-api-150-3"),
+    ]  # fmt: skip
+    assert names_of(steps)[-4:] == [
+        ("healthy cs-api-150-1, cs-api-150-2, cs-api-150-3", "succeeded"),
+        ("recording the scale in the deploy ledger", "succeeded"),
+        ("structural health check", "running"),
+        ("done", "succeeded"),
+    ]
+    added = ledger_lines(ledger)[-1]
+    assert {k: added[k] for k in ("kind", "release", "replicas", "deployed_by", "reason")} == {
+        "kind": "scale", "release": "1.5.0", "replicas": 3, "deployed_by": "runner",
+        "reason": "scaled to 3 replicas",
+    }  # fmt: skip
+    assert ledger_module.active(ledger, "api") == ledger_module.Active("1.5.0", 3)
+    assert outcome.structural is not None
+    assert len(outcome.structural["containers"]) == 3
+
+
+def test_scale_down_stops_the_highest_slots_first(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    set_api_replicas(ledger, docker, 3)
+    request = approved_for(dry_runner, "scale_service", {"service": "api", "replicas": 1})
+    outcome, _ = run(executor, request)
+    assert (outcome.status, outcome.captured) == ("succeeded", {"previous_replicas": 3})
+    assert docker.actions() == [
+        ("inspect", "cs-api-150-1"),
+        ("inspect", "cs-api-150-3"), ("stop", "cs-api-150-3"),
+        ("inspect", "cs-api-150-2"), ("stop", "cs-api-150-2"),
+    ]  # fmt: skip
+    assert ledger_module.active(ledger, "api") == ledger_module.Active("1.5.0", 1)
+
+
+def test_scale_up_that_never_gets_healthy_is_undone_and_stops_nothing(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    docker.on_start["cs-api-150-3"] = ("exited", "none")
+    before = ledger.read_bytes()
+    request = approved_for(dry_runner, "scale_service", {"service": "api", "replicas": 3})
+    outcome, _ = run(executor, request)
+    assert outcome.status == "failed"
+    assert docker.writes() == [
+        ("start", "cs-api-150-2"), ("start", "cs-api-150-3"),
+        ("stop", "cs-api-150-2"), ("stop", "cs-api-150-3"),
+    ]  # fmt: skip
+    assert docker.containers["cs-api-150-1"].state == "running"
+    assert ledger.read_bytes() == before
+
+
+def test_scale_down_never_stops_when_the_kept_slots_are_unhealthy(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    set_api_replicas(ledger, docker, 2)
+    docker.add("cs-api-150-1", "api", "1.5.0", 1, "running", "unhealthy")
+    request = approved_for(dry_runner, "scale_service", {"service": "api", "replicas": 1})
+    outcome, _ = run(executor, request)
+    assert outcome.status == "failed" and docker.writes() == []  # cs-api-150-2 keeps serving
+
+
+def test_a_start_failure_while_scaling_up_undoes_the_started_slots(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient
+) -> None:
+    docker.fail.add(("start", "cs-api-150-3"))
+    request = approved_for(dry_runner, "scale_service", {"service": "api", "replicas": 3})
+    outcome, _ = run(executor, request)
+    assert outcome.status == "failed"
+    assert docker.writes() == [
+        ("start", "cs-api-150-2"), ("start", "cs-api-150-3"), ("stop", "cs-api-150-2"),
+    ]  # fmt: skip
+
+
+def test_scale_to_the_current_count_writes_nothing_to_docker_but_records_it(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    request = approved_for(dry_runner, "scale_service", {"service": "api", "replicas": 1})
+    outcome, _ = run(executor, request)
+    assert outcome.status == "succeeded" and docker.writes() == []
+    assert ledger_lines(ledger)[-1]["kind"] == "scale"
+
+
+def test_scale_after_drift_changes_nothing(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path
+) -> None:
+    request = approved_for(dry_runner, "scale_service", {"service": "api", "replicas": 3})
+    set_api_replicas(ledger, docker, 2)
+    before = ledger.read_bytes()
+    outcome, _ = run(executor, request)
+    assert (outcome.status, outcome.error_code) == ("aborted", "STATE_DRIFT")
+    assert docker.writes() == [] and ledger.read_bytes() == before
+
+
+@pytest.mark.parametrize("replicas", [0, 6, -1])
+def test_scale_outside_the_catalogue_bounds_never_runs_in_the_executor(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, replicas: int
+) -> None:
+    """checks.py refuses it first (below); the executor refuses it again."""
+    request = approved_for(dry_runner, "scale_service", {"service": "api", "replicas": replicas})
+    outcome, _ = run(executor, request)
+    assert (outcome.status, outcome.error_code) == ("aborted", "VALIDATION_ERROR")
+    assert docker.writes() == []
+
+
+@pytest.mark.parametrize("replicas", [0, 6, "3", 2.5, True])
+def test_scale_outside_the_catalogue_bounds_is_refused_by_the_checks(
+    checker: Checker, keys: Keys, replicas: Any
+) -> None:
+    message = signed_for(
+        build_request("execute", "scale_service", {"service": "api", "replicas": replicas},
+                      now=NOW), keys,
+    )  # fmt: skip
+    decision = checker.check(entry(message))
+    assert isinstance(decision, Refused) and decision.error_code == "VALIDATION_ERROR"
+
+
+def test_scale_of_a_service_the_catalogue_does_not_allow_is_refused(
+    checker: Checker, keys: Keys
+) -> None:
+    message = signed_for(
+        build_request("execute", "scale_service", {"service": "worker", "replicas": 2},
+                      now=NOW), keys,
+    )  # fmt: skip
+    decision = checker.check(entry(message))
+    assert isinstance(decision, Refused) and decision.error_code == "VALIDATION_ERROR"
+
+
+# --- clear_cache (RUN-012) -------------------------------------------------------------
+
+
+def test_clear_cache_clears_reports_the_keys_and_checks_api_and_redis(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, ledger: Path,
+    cache: FakeCache,
+) -> None:  # fmt: skip
+    before = ledger.read_bytes()
+    outcome, steps = run(executor, approved_for(dry_runner, "clear_cache", {"cache": "pricing"}))
+    assert (outcome.status, outcome.captured) == ("succeeded", {})
+    assert cache.calls == ["pricing"]
+    assert ("clearing the pricing cache", "succeeded", "pricing: 12 keys cleared") in steps
+    assert docker.writes() == [] and ledger.read_bytes() == before
+    assert outcome.structural is not None
+    assert [c["name"] for c in outcome.structural["containers"]] == ["cs-api-150-1", "cs-redis"]
+    assert [p["url"] for p in outcome.structural["probes"]] == [
+        "http://cs-api-150-1:8000/healthz", LB_PROBE,
+    ]  # fmt: skip
+
+
+def test_clear_cache_of_an_empty_cache_succeeds_with_zero(
+    executor: Executor, dry_runner: DryRunner, cache: FakeCache
+) -> None:
+    cache.answer = False
+    outcome, steps = run(executor, approved_for(dry_runner, "clear_cache", {"cache": "catalog"}))
+    assert outcome.status == "succeeded"
+    assert ("clearing the catalog cache", "succeeded",
+            "catalog: already empty, 0 keys cleared") in steps  # fmt: skip
+
+
+def test_clear_cache_without_stats_still_clears(
+    executor: Executor, dry_runner: DryRunner, cache: FakeCache
+) -> None:
+    request = approved_for(dry_runner, "clear_cache", {"cache": "catalog"})
+
+    def down() -> dict[str, Any]:
+        raise CacheStatsUnavailable("HTTP 503")
+
+    dry_runner.cache_stats = down
+    outcome, steps = run(executor, request)
+    assert outcome.status == "succeeded" and cache.calls == ["catalog"]
+    assert ("clearing the catalog cache", "succeeded",
+            "catalog: cleared (key count unavailable)") in steps  # fmt: skip
+
+
+def test_a_failed_clear_fails_without_a_structural_check(
+    executor: Executor, dry_runner: DryRunner, cache: FakeCache
+) -> None:
+    cache.error = CacheClearFailed("HTTP 401")
+    outcome, steps = run(executor, approved_for(dry_runner, "clear_cache", {"cache": "pricing"}))
+    assert outcome.status == "failed" and outcome.structural is None
+    assert ("clearing the pricing cache", "failed", "HTTP 401") in steps
+
+
+def test_clear_cache_without_a_cache_client_is_refused(
+    executor: Executor, dry_runner: DryRunner, cache: FakeCache
+) -> None:
+    executor.cache_clear = None
+    outcome, _ = run(executor, approved_for(dry_runner, "clear_cache", {"cache": "pricing"}))
+    assert (outcome.status, outcome.error_code) == ("aborted", "VALIDATION_ERROR")
+
+
+# --- A2.4b through the consumer: replays and refusals ---------------------------------
+
+
+def signed_action(dry_runner: DryRunner, keys: Keys, action: str, params: Any) -> dict[str, Any]:
+    request = approved_for(dry_runner, action, params)
+    message = build_request("execute", action, params, now=NOW,
+                            state_fingerprint=request.state_fingerprint)  # fmt: skip
+    return signed_for(message, keys)
+
+
+@pytest.mark.parametrize(
+    ("action", "params"),
+    [("restart_service", {"service": "api"}),
+     ("scale_service", {"service": "api", "replicas": 2}),
+     ("clear_cache", {"cache": "pricing"})],
+)  # fmt: skip
+def test_a_replayed_execute_of_each_action_runs_once(
+    consumer: Consumer, streams: FakeStreams, dry_runner: DryRunner, docker: FakeDockerClient,
+    cache: FakeCache, keys: Keys, action: str, params: Any,
+) -> None:  # fmt: skip
+    message = signed_action(dry_runner, keys, action, params)
+    streams.add("ocp:runner:requests", entry(message))
+    streams.add("ocp:runner:requests", entry(message))
+    entries = streams.read_group("runner", "runner-a", "ocp:runner:requests", ">", 10, None)
+    decisions = [consumer.handle(i, f) for i, f in entries]
+    assert [type(d) for d in decisions] == [Executed, Duplicate]
+    final = [r for r in results(streams) if r["type"] == "execution_result"]
+    assert len(final) == 1 and final[0]["status"] == "succeeded"
+    assert verify(final[0], keys.link)
+    assert len(docker.writes()) + len(cache.calls) == 1  # one write: restart, start or clear
+
+
+@pytest.mark.parametrize(
+    ("action", "params", "forged"),
+    [
+        ("restart_service", {"service": "api"}, True),
+        ("scale_service", {"service": "api", "replicas": 2}, True),
+        ("clear_cache", {"cache": "pricing"}, True),
+        ("clear_cache", {"cache": "sessions"}, False),  # outside the catalogue (RUN-012)
+        ("restart_service", {"service": "backend"}, False),  # outside the targets
+    ],
+)
+def test_refused_executes_of_each_action_change_nothing(
+    consumer: Consumer, streams: FakeStreams, docker: FakeDockerClient, cache: FakeCache,
+    keys: Keys, action: str, params: Any, forged: bool,
+) -> None:  # fmt: skip
+    message = build_request("execute", action, params, now=NOW)
+    sent = {**message, "sig": "7" * 64} if forged else signed_for(message, keys)
+    streams.add("ocp:runner:requests", entry(sent))
+    consumer.poll()
+    assert docker.writes() == [] and cache.calls == []
+    (final,) = results(streams)
+    expected = "BAD_SIGNATURE" if forged else ("VALIDATION_ERROR", "TARGET_NOT_ALLOWED")
+    assert final["status"] == "refused" and final["error_code"] in expected

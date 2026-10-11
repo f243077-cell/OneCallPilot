@@ -14,7 +14,12 @@ from docker.errors import APIError
 
 from oncallpilot_runner.docker_client import Container, DockerUnavailable, SdkDocker
 from oncallpilot_runner.health import http_probe
-from oncallpilot_runner.shop_admin import CacheStatsUnavailable, fetch_cache_stats
+from oncallpilot_runner.shop_admin import (
+    CacheClearFailed,
+    CacheStatsUnavailable,
+    clear_cache,
+    fetch_cache_stats,
+)
 
 
 class StubContainers:
@@ -79,6 +84,19 @@ class Shop(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802 (http.server's name)
         Shop.seen.append({"path": self.path, "auth": self.headers.get("Authorization", "")})
+        status, body = Shop.reply
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self) -> None:  # noqa: N802
+        length = int(self.headers.get("Content-Length", "0"))
+        Shop.seen.append({"path": self.path, "auth": self.headers.get("Authorization", ""),
+                          "body": self.rfile.read(length).decode()})  # fmt: skip
+        self.do_reply()
+
+    def do_reply(self) -> None:
         status, body = Shop.reply
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
@@ -169,3 +187,30 @@ def test_http_probe_reports_status_latency_and_errors(shop: str) -> None:
     assert (bad["ok"], bad["status_code"], bad["error"]) == (False, 503, "HTTP 503")
     down = http_probe("http://127.0.0.1:9/healthz")
     assert (down["ok"], down["status_code"], down["latency_ms"]) == (False, None, None)
+
+
+def test_clear_cache_posts_the_cache_with_the_bearer_token(shop: str) -> None:
+    Shop.reply = (200, b'{"cache":"pricing","cleared":true}')
+    assert clear_cache(TOKEN, "pricing", shop) is True
+    assert Shop.seen == [{"path": "/internal/cache/clear", "auth": f"Bearer {TOKEN}",
+                          "body": '{"cache": "pricing"}'}]  # fmt: skip
+    Shop.reply = (200, b'{"cache":"pricing","cleared":false}')
+    assert clear_cache(TOKEN, "pricing", shop) is False
+
+
+@pytest.mark.parametrize(
+    ("reply", "message"),
+    [((401, b"{}"), "HTTP 401"), ((200, b'{"cache":"catalog","cleared":true}'), "unexpected"),
+     ((200, b'{"cache":"pricing","cleared":1}'), "unexpected"), ((200, b"[]"), "ValueError")],
+)  # fmt: skip
+def test_a_clear_that_is_not_confirmed_fails(
+    shop: str, reply: tuple[int, bytes], message: str
+) -> None:
+    Shop.reply = reply
+    with pytest.raises(CacheClearFailed, match=message):
+        clear_cache(TOKEN, "pricing", shop)
+
+
+def test_an_unreachable_shop_cannot_clear() -> None:
+    with pytest.raises(CacheClearFailed):
+        clear_cache(TOKEN, "pricing", "http://127.0.0.1:9")

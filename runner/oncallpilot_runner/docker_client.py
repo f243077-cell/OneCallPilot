@@ -7,8 +7,9 @@ The runner never mounts the Docker socket: `DOCKER_HOST` is
 - `DockerReader` is the read-only view a dry run gets: it lists and inspects
   containers and returns plain values, never SDK objects, so dry-run code has no
   way to start, stop, restart, kill or remove anything (RUN-007).
-- `DockerControl` adds the only two writes the runner makes so far: start and
-  stop (graceful, with a timeout) of an existing container, by ID. Callers check
+- `DockerControl` adds the only three writes the runner makes: start, stop and
+  restart (graceful: SIGTERM, then SIGKILL after 10 s) of an existing container,
+  by ID. Callers check
   the allowlist on a fresh inspect immediately before each write (§7.4). There
   is no create, remove, exec or pull here, and the proxy refuses them anyway.
 """
@@ -53,10 +54,13 @@ class DockerControl(DockerReader, Protocol):
 
     def stop(self, container_id: str, timeout: int = STOP_TIMEOUT_SECONDS) -> None: ...
 
+    def restart(self, container_id: str, timeout: int = STOP_TIMEOUT_SECONDS) -> None: ...
+
 
 class SdkDocker:
     """`DockerControl` over the Docker SDK: `GET /containers/json`,
-    `GET /containers/{id}/json`, `POST /containers/{id}/start` and `/stop` only."""
+    `GET /containers/{id}/json`, `POST /containers/{id}/start`, `/stop` and
+    `/restart` only."""
 
     def __init__(self, client: Any) -> None:
         self.client = client
@@ -79,6 +83,9 @@ class SdkDocker:
 
     def stop(self, container_id: str, timeout: int = STOP_TIMEOUT_SECONDS) -> None:
         self._call(lambda: self.client.api.stop(container_id, timeout=timeout))
+
+    def restart(self, container_id: str, timeout: int = STOP_TIMEOUT_SECONDS) -> None:
+        self._call(lambda: self.client.api.restart(container_id, timeout=timeout))
 
     @staticmethod
     def _call(fn: Any) -> Any:

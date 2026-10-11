@@ -150,10 +150,10 @@ class DryRunner:
         if not slots_ok:
             warnings.append(f"{active.release} has fewer than {replicas} slot containers")
         mine = sorted(
-            (c for c in containers if _release(c) == active.release), key=_replica
+            (c for c in containers if _release(c) == active.release), key=replica_of
         )  # fmt: skip
-        start = [c for c in mine if _replica(c) <= replicas and c.state != "running"]
-        stop = [c for c in mine if _replica(c) > replicas and c.state in RESTARTABLE]
+        start = [c for c in mine if replica_of(c) <= replicas and c.state != "running"]
+        stop = [c for c in mine if replica_of(c) > replicas and c.state in RESTARTABLE]
         stray = [c.name for c in stop if c not in targets]
         if stray:
             warnings.append(f"running outside the desired slots: {', '.join(stray)}")
@@ -178,7 +178,7 @@ class DryRunner:
         warnings: list[str] = []
         keys: int | None
         try:
-            keys = _cache_keys(self.cache_stats(), cache)
+            keys = cache_keys_of(self.cache_stats(), cache)
         except CacheStatsUnavailable as exc:
             keys = None
             warnings.append(f"cache stats unavailable: {exc}")
@@ -254,7 +254,7 @@ def _release(c: Container) -> str | None:
     return c.labels.get(RELEASE_LABEL)
 
 
-def _replica(c: Container) -> int:
+def replica_of(c: Container) -> int:
     try:
         return int(c.labels.get(REPLICA_LABEL, ""))
     except ValueError:
@@ -263,8 +263,8 @@ def _replica(c: Container) -> int:
 
 def slots(containers: list[Container], release: str, n: int) -> list[Container]:
     """Slots 1..n of a release, in slot order."""
-    chosen = [c for c in containers if _release(c) == release and 1 <= _replica(c) <= n]
-    return sorted(chosen, key=_replica)
+    chosen = [c for c in containers if _release(c) == release and 1 <= replica_of(c) <= n]
+    return sorted(chosen, key=replica_of)
 
 
 def _running(containers: list[Container], release: str) -> int:
@@ -290,7 +290,7 @@ def _clip(text: str) -> str:
     return text if len(text) <= EFFECT_MAX else text[: EFFECT_MAX - 3] + "..."
 
 
-def _cache_keys(stats: dict[str, Any], cache: str) -> int:
+def cache_keys_of(stats: dict[str, Any], cache: str) -> int:
     """catalog is one key (present or not); pricing is a hash, counted by entries."""
     try:
         if cache == "catalog":
