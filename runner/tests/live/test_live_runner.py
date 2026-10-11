@@ -87,9 +87,10 @@ def stack(keys: Keys) -> Iterator[dict[str, Any]]:
             "-e", f"ACTION_SIGNING_KEY={keys.action.hex()}",
             "-e", f"RUNNER_LINK_KEY={keys.link.hex()}",
             "-e", "LEDGER_PATH=/ledger/deploys.jsonl",
-            # Required at start; no proxy on this network, and these tests make no Docker call.
+            # Required at start; no proxy on this network, and these tests make no Docker
+            # call. The version is the host daemon's own, never a fixed newer one.
             "-e", "DOCKER_HOST=tcp://socket-proxy-rw:2375",
-            "-e", "DOCKER_API_VERSION=1.48",
+            "-e", f"DOCKER_API_VERSION={docker('version', '--format', '{{.Server.APIVersion}}')}",
             "-e", f"RUNNER_ADMIN_TOKEN={secrets.token_hex(24)}",
             IMAGE,
         )  # fmt: skip
@@ -154,14 +155,14 @@ def test_the_runner_answers_every_request_and_fails_closed(
     while True:
         answered = backend.xlen(RESULTS)
         pending = backend.xpending(REQUESTS, "runner")["pending"]
-        if answered >= len(cases) and pending == 0:
+        if answered >= len(cases) + 1 and pending == 0:
             break
         assert time.monotonic() < deadline, f"{answered} results, {pending} pending"
         time.sleep(0.5)
-    time.sleep(2)  # nothing more may arrive (accepted, duplicate and dropped answer nothing)
+    time.sleep(2)  # nothing more may arrive (duplicates and dropped messages answer nothing)
     rows: Any = backend.xrange(RESULTS)
     results = [json.loads(f["msg"]) for _, f in rows]
-    assert len(results) == len(cases)
+    assert len(results) == len(cases) + 1  # every refusal, plus `good`'s final result
     by_request = {r["request_id"]: r for r in results}
     for label, message in cases.items():
         result = by_request[message["request_id"]]
@@ -169,11 +170,17 @@ def test_the_runner_answers_every_request_and_fails_closed(
         assert result["error_code"] == label.split()[0], label
         assert result["execution_id"] == message["execution_id"], label
         assert verify(result, keys.link) and not verify(result, keys.action), label
-    assert good["request_id"] not in by_request
+    # `good` passes every check and is executed (A2.4a). This stack has no
+    # socket-proxy-rw, so its state cannot be read: it fails closed, changing nothing.
+    ran = by_request[good["request_id"]]
+    assert (ran["type"], ran["status"], ran["error_code"]) == (
+        "execution_result", "aborted", "VALIDATION_ERROR",
+    )  # fmt: skip
+    assert verify(ran, keys.link)
 
     logs = [json.loads(line) for line in docker("logs", stack["runner"]).splitlines() if line]
     decisions = [line.get("decision") for line in logs]
-    assert decisions.count("accepted") == 1  # only `good`; `borrowed` must never run
+    assert decisions.count("executed") == 1  # only `good`; `borrowed` must never run
     assert decisions.count("duplicate") == 2  # the replay of `good`, and `borrowed`
     assert decisions.count("dropped") == 1
     assert decisions.count("refused") == len(cases)

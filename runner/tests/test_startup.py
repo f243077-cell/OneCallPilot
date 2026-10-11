@@ -5,7 +5,7 @@ import pytest
 
 from oncallpilot_runner import __main__ as entry
 from oncallpilot_runner.consumer import Consumer
-from oncallpilot_runner.docker_client import SdkDockerReader
+from oncallpilot_runner.docker_client import SdkDocker
 from tests.conftest import CATALOGUE, TARGETS
 
 GOOD = {
@@ -74,6 +74,6 @@ def test_good_settings_build_a_consumer_with_a_dry_runner(monkeypatch: pytest.Mo
     (consumer,) = started
     assert consumer.dry_runner is not None
     reader = consumer.dry_runner.docker
-    assert isinstance(reader, SdkDockerReader)
+    assert isinstance(reader, SdkDocker)
     assert reader.client.api.base_url == "http://socket-proxy-rw:2375"
     assert reader.client.api._version == "1.48"

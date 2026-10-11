@@ -12,7 +12,8 @@ import pytest
 import requests
 from docker.errors import APIError
 
-from oncallpilot_runner.docker_client import Container, DockerUnavailable, SdkDockerReader
+from oncallpilot_runner.docker_client import Container, DockerUnavailable, SdkDocker
+from oncallpilot_runner.health import http_probe
 from oncallpilot_runner.shop_admin import CacheStatsUnavailable, fetch_cache_stats
 
 
@@ -28,8 +29,8 @@ class StubContainers:
         return [SimpleNamespace(attrs=a) for a in self.attrs]
 
 
-def reader(attrs: list[dict[str, Any]], error: Exception | None = None) -> SdkDockerReader:
-    return SdkDockerReader(SimpleNamespace(containers=StubContainers(attrs, error)))
+def reader(attrs: list[dict[str, Any]], error: Exception | None = None) -> SdkDocker:
+    return SdkDocker(SimpleNamespace(containers=StubContainers(attrs, error)))
 
 
 def test_lists_every_container_with_all_labels_and_returns_plain_values() -> None:
@@ -62,7 +63,7 @@ def test_docker_errors_become_docker_unavailable(error: Exception) -> None:
 
 def test_connect_pins_the_api_version_and_makes_no_call() -> None:
     """The proxy blocks /version, so the SDK must never negotiate it."""
-    r = SdkDockerReader.connect("tcp://127.0.0.1:9", "1.48")  # nothing listens on port 9
+    r = SdkDocker.connect("tcp://127.0.0.1:9", "1.48")  # nothing listens on port 9
     assert r.client.api._version == "1.48"
     assert r.client.api.base_url == "http://127.0.0.1:9"
 
@@ -121,3 +122,50 @@ def test_bad_answers_are_cache_stats_unavailable(
 def test_an_unreachable_shop_is_cache_stats_unavailable() -> None:
     with pytest.raises(CacheStatsUnavailable):
         fetch_cache_stats(TOKEN, "http://127.0.0.1:9")
+
+
+class StubApi:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, Any]] = []
+
+    def inspect_container(self, name: str) -> dict[str, Any]:
+        self.calls.append(("inspect", name))
+        return {"Id": "abc", "Name": f"/{name}", "RestartCount": 2,
+                "Config": {"Labels": {}}, "State": {"Status": "running"}}  # fmt: skip
+
+    def start(self, container_id: str) -> None:
+        self.calls.append(("start", container_id))
+
+    def stop(self, container_id: str, timeout: int) -> None:
+        self.calls.append(("stop", (container_id, timeout)))
+
+
+def test_inspect_start_and_stop_go_by_id_with_a_graceful_timeout() -> None:
+    api = StubApi()
+    sdk = SdkDocker(SimpleNamespace(api=api))
+    c = sdk.inspect("cs-api-140-1")
+    assert (c.id, c.name, c.restart_count, c.health) == ("abc", "cs-api-140-1", 2, "none")
+    sdk.start(c.id)
+    sdk.stop(c.id)
+    assert api.calls == [("inspect", "cs-api-140-1"), ("start", "abc"), ("stop", ("abc", 10))]
+
+
+def test_a_refused_write_is_docker_unavailable() -> None:
+    class Refusing(StubApi):
+        def stop(self, container_id: str, timeout: int) -> None:
+            raise APIError("403 Forbidden")
+
+    with pytest.raises(DockerUnavailable):
+        SdkDocker(SimpleNamespace(api=Refusing())).stop("abc")
+
+
+def test_http_probe_reports_status_latency_and_errors(shop: str) -> None:
+    Shop.reply = (200, b"{}")
+    ok = http_probe(f"{shop}/healthz")
+    assert (ok["ok"], ok["status_code"], ok["error"]) == (True, 200, None)
+    assert ok["latency_ms"] is not None and ok["latency_ms"] >= 0
+    Shop.reply = (503, b"{}")
+    bad = http_probe(f"{shop}/healthz")
+    assert (bad["ok"], bad["status_code"], bad["error"]) == (False, 503, "HTTP 503")
+    down = http_probe("http://127.0.0.1:9/healthz")
+    assert (down["ok"], down["status_code"], down["latency_ms"]) == (False, None, None)

@@ -25,9 +25,11 @@ from oncallpilot_runner import log
 from oncallpilot_runner.catalogue import Catalogue, CatalogueError
 from oncallpilot_runner.checks import Checker
 from oncallpilot_runner.consumer import Consumer
-from oncallpilot_runner.docker_client import SdkDockerReader
+from oncallpilot_runner.docker_client import SdkDocker
 from oncallpilot_runner.dry_run import DryRunner
+from oncallpilot_runner.execute import Executor
 from oncallpilot_runner.handlers import REGISTERED
+from oncallpilot_runner.health import HealthChecker, http_probe
 from oncallpilot_runner.ledger import ledger_releases
 from oncallpilot_runner.shop_admin import fetch_cache_stats
 from oncallpilot_runner.signing import Keys, SigningKeyError, key_from_hex
@@ -61,6 +63,10 @@ def admin_token(environ: dict[str, str]) -> str:
     return token
 
 
+def now() -> datetime:
+    return datetime.now(UTC)
+
+
 def build_checker(
     streams: Streams, catalogue: Catalogue, targets: Targets, keys: Keys, ledger: Path
 ) -> Checker:
@@ -75,7 +81,7 @@ def build_checker(
         targets=targets,
         runtime_values=runtime_values,
         set_nx=streams.set_nx,
-        now=lambda: datetime.now(UTC),
+        now=now,
     )
 
 
@@ -109,16 +115,23 @@ def main(argv: list[str] | None = None) -> None:
     streams = RedisStreams.from_url(url)
     ledger = Path(os.environ.get("LEDGER_PATH", "/ledger/deploys.jsonl"))
     checker = build_checker(streams, catalogue, targets, keys, ledger)
+    docker = SdkDocker.connect(docker_host, api_version)
     dry_runner = DryRunner(
-        docker=SdkDockerReader.connect(docker_host, api_version),
+        docker=docker,
         targets=targets,
         ledger_path=ledger,
         counters=streams,
         cache_stats=lambda: fetch_cache_stats(token),
-        now=lambda: datetime.now(UTC),
+        now=now,
     )
+    health = HealthChecker(docker=docker, targets=targets, probe=http_probe, now=now)
+    executor = Executor(docker, dry_runner, health, targets, ledger, now)
+    consumer = Consumer(
+        streams, checker, socket.gethostname(), dry_runner=dry_runner, executor=executor
+    )
+    health.tick = consumer.beat  # long waits keep the heartbeat (healthcheck) fresh
     logger.info(f"runner starting; catalogue {catalogue.version}, Docker API {api_version}")
-    Consumer(streams, checker, socket.gethostname(), dry_runner=dry_runner).run_forever()
+    consumer.run_forever()
 
 
 if __name__ == "__main__":

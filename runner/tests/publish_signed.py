@@ -12,7 +12,12 @@ ocp:runner:requests. The tests use its functions; the CLI drives a live runner:
     --tamper      change a parameter after signing
     --expired     issue it 61 s in the past
     --repeat N    publish the same signed message N times (replay)
+    --state-fingerprint HEX   an execute's fingerprint, from the dry run's answer
+                  (without it an execute carries a placeholder and aborts STATE_DRIFT)
     --print       print the JSON instead of publishing
+
+Publishing prints one JSON line per entry: the stream entry ID, request_id and
+execution_id, so a caller can find the results.
 
 The vector keys are test data. Never use them, or this script, against a real stack.
 """
@@ -115,6 +120,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--tamper", action="store_true")
     parser.add_argument("--expired", action="store_true")
     parser.add_argument("--repeat", type=int, default=1)
+    parser.add_argument("--state-fingerprint", dest="fingerprint")
     parser.add_argument("--print", action="store_true", dest="print_only")
     args = parser.parse_args(argv)
 
@@ -127,8 +133,9 @@ def main(argv: list[str] | None = None) -> int:
         name, _, value = item.partition("=")
         params[name] = int(value) if value.lstrip("-").isdigit() else value
     now = datetime.now(UTC) - (timedelta(seconds=61) if args.expired else timedelta())
+    overrides = {"state_fingerprint": args.fingerprint} if args.fingerprint else {}
     message = signed_for(
-        build_request(args.type, args.action, params or None, now=now),
+        build_request(args.type, args.action, params or None, now=now, **overrides),
         vector_keys(path),
         wrong_key=args.wrong_key,
     )
@@ -145,7 +152,9 @@ def main(argv: list[str] | None = None) -> int:
 
     client = redis.Redis.from_url(args.redis, decode_responses=True, socket_connect_timeout=5)
     for _ in range(args.repeat):
-        print(client.xadd(REQUESTS_STREAM, entry(message)))  # type: ignore[arg-type]
+        entry_id = client.xadd(REQUESTS_STREAM, entry(message))  # type: ignore[arg-type]
+        print(json.dumps({"entry": entry_id, "request_id": message["request_id"],
+                          "execution_id": message["execution_id"]}))  # fmt: skip
     return 0
 
 

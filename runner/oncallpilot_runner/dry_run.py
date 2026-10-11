@@ -84,9 +84,9 @@ class DryRunner:
         if active.release is None or active.replicas is None:
             raise DryRunUnavailable(f"the ledger has no active release for {service}")
         n = active.replicas
-        containers = self._containers(service)
-        old = _slots(containers, active.release, n)
-        new = _slots(containers, target_release, n)
+        containers = self.containers(service)
+        old = slots(containers, active.release, n)
+        new = slots(containers, target_release, n)
         warnings = _replica_warnings(containers, active.release, n)
         if len(new) < n:
             warnings.append(f"{target_release} has {len(new)} of {n} slot containers")
@@ -112,12 +112,12 @@ class DryRunner:
 
     def _restart(self, service: str) -> dict[str, Any]:
         active = ledger.active(self.ledger_path, service)
-        containers = self._containers(service)
+        containers = self.containers(service)
         if active.release is None or active.replicas is None:
             targets, warnings, running = containers, [], None
             slots_ok = bool(containers)
         else:
-            targets = _slots(containers, active.release, active.replicas)
+            targets = slots(containers, active.release, active.replicas)
             warnings = _replica_warnings(containers, active.release, active.replicas)
             running = _running(containers, active.release)
             slots_ok = len(targets) == active.replicas
@@ -143,9 +143,9 @@ class DryRunner:
         active = ledger.active(self.ledger_path, service)
         if active.release is None or active.replicas is None:
             raise DryRunUnavailable(f"the ledger has no active release for {service}")
-        containers = self._containers(service)
-        targets = _slots(containers, active.release, max(active.replicas, replicas))
-        slots_ok = len(_slots(containers, active.release, replicas)) == replicas
+        containers = self.containers(service)
+        targets = slots(containers, active.release, max(active.replicas, replicas))
+        slots_ok = len(slots(containers, active.release, replicas)) == replicas
         warnings = _replica_warnings(containers, active.release, active.replicas)
         if not slots_ok:
             warnings.append(f"{active.release} has fewer than {replicas} slot containers")
@@ -201,7 +201,7 @@ class DryRunner:
 
     # --- shared --------------------------------------------------------------
 
-    def _containers(self, service: str) -> list[Container]:
+    def containers(self, service: str) -> list[Container]:
         spec = self.targets.services.get(service)
         if spec is None:  # check 7 refused it already; never list anything else
             raise DryRunUnavailable(f"{service} is not a target")
@@ -261,7 +261,7 @@ def _replica(c: Container) -> int:
         return 0  # never inside 1..N, so never a target
 
 
-def _slots(containers: list[Container], release: str, n: int) -> list[Container]:
+def slots(containers: list[Container], release: str, n: int) -> list[Container]:
     """Slots 1..n of a release, in slot order."""
     chosen = [c for c in containers if _release(c) == release and 1 <= _replica(c) <= n]
     return sorted(chosen, key=_replica)

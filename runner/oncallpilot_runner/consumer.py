@@ -10,6 +10,11 @@
   repeats the result, never loses it.
 - An accepted dry run is answered with its preview, signed (RUN-007,
   dry_run.py). If the state cannot be read it is refused (fail closed).
+- An accepted execute (its ID already claimed) runs in execute.py: a signed
+  `progress` result per step, then one signed `execution_result`. A bug during
+  the execution still ends in a `failed` result, because something may already
+  have changed. The final result is retried on a Redis error before the entry
+  is acknowledged; a progress result that cannot be published is only logged.
 - Nothing escapes the loop: a Redis error waits and retries without
   acknowledging; an unexpected error answers with a refusal (fail closed).
 """
@@ -26,8 +31,9 @@ from redis.exceptions import RedisError
 
 from oncallpilot_runner.checks import Accepted, Checker, Decision, Dropped, Duplicate, Refused
 from oncallpilot_runner.dry_run import DryRunner, DryRunUnavailable
+from oncallpilot_runner.execute import Executor, Outcome
 from oncallpilot_runner.request import Request
-from oncallpilot_runner.results import dry_run_ok
+from oncallpilot_runner.results import dry_run_ok, execution_result, progress
 from oncallpilot_runner.streams import Streams
 
 log = logging.getLogger("runner.consumer")
@@ -49,7 +55,17 @@ class Previewed:
     result: dict[str, Any]
 
 
-Handled = Decision | Previewed
+@dataclass(frozen=True)
+class Executed:
+    """An execute that ran: its outcome and the signed final result."""
+
+    request: Request
+    outcome: Outcome
+    result: dict[str, Any]
+
+
+Handled = Decision | Previewed | Executed
+PUBLISH_RETRIES = 5
 
 
 class Consumer:
@@ -60,12 +76,14 @@ class Consumer:
         consumer_name: str,
         *,
         dry_runner: DryRunner | None = None,
+        executor: Executor | None = None,
         heartbeat: Path | None = HEARTBEAT,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self.client = client
         self.checker = checker
         self.dry_runner = dry_runner
+        self.executor = executor
         self.name = consumer_name
         self.heartbeat = heartbeat
         self.sleep = sleep
@@ -116,11 +134,12 @@ class Consumer:
         except Exception:  # a bug must still fail closed, never execute
             log.exception("handling failed unexpectedly", extra={"entry_id": entry_id})
             decision = self.checker.refuse_unexpected(fields)
+        if isinstance(decision, Accepted) and decision.request.type == "execute" and self.executor:
+            decision = self._execute(decision.request)
         if isinstance(decision, Refused | Previewed):
-            self.client.add(
-                RESULTS_STREAM,
-                {"msg": json.dumps(decision.result, separators=(",", ":"), ensure_ascii=False)},
-            )
+            self._publish(decision.result)
+        elif isinstance(decision, Executed):
+            self._publish(decision.result, retries=PUBLISH_RETRIES)
         self.client.ack(REQUESTS_STREAM, REQUESTS_GROUP, entry_id)
         _log(entry_id, decision)
         return decision
@@ -141,6 +160,49 @@ class Consumer:
             link_key=self.checker.keys.link,
         )
         return Previewed(request, result)
+
+    def _execute(self, request: Request) -> Executed:
+        assert self.executor is not None and request.execution_id is not None
+        execution_id = request.execution_id
+
+        def emit(name: str, status: str, message: str) -> None:
+            step = progress(
+                request_id=request.request_id, execution_id=execution_id, name=name,
+                status=status, message=message, now=self.checker.now(),
+                link_key=self.checker.keys.link,
+            )  # fmt: skip
+            try:
+                self._publish(step)
+            except RedisError:
+                log.warning(f"progress not published: {name}",
+                            extra={"execution_id": execution_id})  # fmt: skip
+            self.beat()
+
+        try:
+            outcome = self.executor.execute(request, emit)
+        except Exception:  # a bug after the claim: answer failed, never stay silent
+            log.exception("execution failed unexpectedly", extra={"execution_id": execution_id})
+            outcome = Outcome("failed", reason="internal error during the execution")
+        result = execution_result(
+            request_id=request.request_id, execution_id=execution_id, status=outcome.status,
+            error_code=outcome.error_code, structural=outcome.structural,
+            captured=outcome.captured, now=self.checker.now(), link_key=self.checker.keys.link,
+        )  # fmt: skip
+        return Executed(request, outcome, result)
+
+    def _publish(self, result: dict[str, Any], *, retries: int = 0) -> None:
+        message = {"msg": json.dumps(result, separators=(",", ":"), ensure_ascii=False)}
+        wait = 1.0
+        for attempt in range(retries + 1):
+            try:
+                self.client.add(RESULTS_STREAM, message)
+                return
+            except RedisError:
+                if attempt == retries:
+                    raise
+                log.warning(f"result not published; retrying in {wait:.0f} s")
+                self.sleep(wait)
+                wait *= 2
 
     def beat(self) -> None:
         if self.heartbeat is not None:
@@ -174,6 +236,12 @@ def _log(entry_id: str, decision: Handled) -> None:
         extra |= {"request_id": r.request_id, "execution_id": r.execution_id, "action": r.action}
         # Nothing executes yet: the execute handlers arrive in task A2.4.
         log.info(f"{r.type} accepted; no execute handler runs in this build", extra=extra)
+    elif isinstance(decision, Executed):
+        r, o = decision.request, decision.outcome
+        extra |= {"request_id": r.request_id, "execution_id": r.execution_id, "action": r.action,
+                  "error_code": o.error_code}  # fmt: skip
+        level = logging.INFO if o.status == "succeeded" else logging.WARNING
+        log.log(level, f"execute {o.status}" + (f": {o.reason}" if o.reason else ""), extra=extra)
     elif isinstance(decision, Previewed):
         r, dry_run = decision.request, decision.result["dry_run"]
         extra |= {
