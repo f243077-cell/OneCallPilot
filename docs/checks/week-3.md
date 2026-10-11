@@ -232,8 +232,11 @@
 - **Ownership on the volume:** the directory is `10001:10001` with mode 0755, and `deploys.jsonl` is `10001:10001` with mode 0644. The runner already runs as uid 10001, so it can append without any permission change.
 - **Mount the runner needs:** `deploy_ledger:/ledger` read-write, the **directory**. A file-only mount would keep the old inode after `chaos reset` renames a new file over it, and the runner would then append to a deleted file.
 - **What changed:** only the A2.4a live test mounts the volume read-write. The dry-run live test keeps it read-only. No compose file changed: the runner service does not exist in `runner.yml` yet (it waits for copilot-redis), and it will get `deploy_ledger:/ledger` (rw) when added. No ownership or mode changed.
-- **Residual write permission:** because uid 10001 owns the directory, the runner *could* create or rename files in `/ledger`, although its code only appends to `deploys.jsonl`. Tightening it is possible, but it changes the chaos CLI. The helper would leave the directory owned by root with mode 0755, keeping the file 10001:10001 0644. The runner could then still append, but could no longer create, rename or delete. **Proposed, not done.**
-- **Concurrency:** both writers append whole lines with `O_APPEND`, so lines never interleave. A `chaos reset` during a runner append would lose that one record (the runner's descriptor points at the replaced file). `chaos reset` is an operator action between runs, so this is accepted.
+- **Residual write permission, closed (2026-10-11):** the chaos CLI's helper now leaves `/ledger` owned by **root, mode 0755**, on every ledger write (`chaos reset` and every append). `deploys.jsonl` stays `10001:10001` 0644.
+  - The runner (uid 10001) can append, but cannot create, rename or delete anything in the directory.
+  - **Proved live** (`tests/live/test_live_ledger_access.py`): the runner image, run as its own user with the volume mounted read-write, all capabilities dropped and a read-only root. Append is allowed; create, rename, delete and mkdir are refused.
+  - The chaos CLI unit test checks the owners: file 10001, directory 0.
+- **Concurrency:** both writers append whole lines with `O_APPEND`, so lines never interleave. **Accepted gap:** a `chaos reset` that lands in the middle of a runner append loses that one record, because the runner's descriptor points at the replaced file. `chaos reset` is an operator action between runs.
 
 **Tests:**
 - **Unit** (`test_execute.py`, new probe and SDK cases): **193 passed**, coverage **95.9 %**; ruff and `mypy --strict` clean. `FakeDockerClient` records every call in order, and each test states the exact inspects and writes.
