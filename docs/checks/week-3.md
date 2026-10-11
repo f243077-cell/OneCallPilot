@@ -9,7 +9,8 @@
 | A2.1 Runner: consumer group, signature and expiry verification (shared vector), catalogue and target allowlist, free-form rejection | done (on `tanzeel`) | 2026-10-10 | Below |
 | A2.2 socket-proxy-rw config; proxy security tests (RUN-017, TEST-015) | done (on `tanzeel`); one known limitation recorded | 2026-10-10 | Below |
 | A2.3 Dry runs for all 4 actions; state fingerprint (RUN-007) | done (on `tanzeel`, not pushed) | 2026-10-10 | Below |
-| A2.4a rollback_deploy execute, structural health check (RUN-008, RUN-011, RUN-013, RUN-014, RUN-015) | done (on `tanzeel`, not pushed); restart, scale, clear_cache in A2.4b | 2026-10-11 | Below |
+| A2.4a rollback_deploy execute, structural health check (RUN-008, RUN-011, RUN-013, RUN-014, RUN-015) | done (on `tanzeel`, not pushed) | 2026-10-11 | Below |
+| A2.4b restart_service, scale_service, clear_cache executes (RUN-009, RUN-010, RUN-012, RUN-013, RUN-015) | done (on `tanzeel`, not pushed) | 2026-10-11 | Below |
 
 ### A2.1 — runner verification (RUN-001…RUN-004, RUN-018; RUN-005's SET NX brought forward)
 
@@ -280,6 +281,80 @@
 **Open for A2.4b and A2.5:**
 - **Rate limit and cooldown counters (A2.5):** an execute does not yet check or write `ocp:runner:ratelimit:*` and `ocp:runner:cooldown:*`.
 - **Architecture §5.10:** should name the per-container probes (ruling 1).
+
+### A2.4b — restart_service, scale_service and clear_cache executes (RUN-009, RUN-010, RUN-012, RUN-013, RUN-015)
+
+**Read first** (2026-10-11): architecture §2.10, §5.10, §7.5, §9.5, §9.6; C4 (the three actions' descriptions, `captures`, parameter bounds); C5 results; C6; RUN-009 to RUN-013; cs-api's cache endpoints.
+
+**Rulings (2026-10-11)**, asked before coding:
+1. **Keys cleared:** cs-api's clear endpoint answers only `cleared: true|false`, and C5 has no `output` field. The runner reads the cache stats just before clearing (the count the dry run shows) and reports `"<cache>: N keys cleared"` in the signed progress step. `captured` stays `{}`. This is contract-review-a issue 15.
+2. **clear_cache's structural check:** the api's active slots (their `/healthz`, and cs-lb) **and** cs-redis.
+3. **restart_service goes one at a time:** each target passes health before the next is restarted.
+
+**Built** (`runner/oncallpilot_runner/execute.py`, reusing everything from A2.4a):
+- **Common to all four actions:**
+  - the fingerprint is checked before any change (`STATE_DRIFT` aborts with nothing changed);
+  - every start, stop and restart comes right after a fresh inspect and the allowlist check;
+  - signed progress per step, then one signed final result;
+  - the idempotency claim (from checks.py);
+  - the structural check at the end.
+- **restart_service:** the active release's slots 1..N; for redis, its allowlisted container, with null release and replicas.
+  - Each target in turn: `POST /restart` (SIGTERM, 10 s) if running, or `start` if exited, then wait until it passes health.
+  - If one never gets healthy, the handler stops there: `failed`, and the rest are untouched.
+  - **No ledger record** (§2.10 lists only rollback and scale). `captured = {}`.
+- **scale_service:** `replicas` is bounded 1–5 by the catalogue (checks.py) and checked again in the handler, so it is never zero.
+  1. Start the slots of 1..replicas that are not running.
+  2. Wait until all of them pass health.
+  3. Stop the running slots above `replicas`, highest first.
+  4. Append `kind=scale` with the new count (reason `scaled to N replicas`).
+  5. Run the structural check over slots 1..replicas.
+  - If the started slots never get healthy, or a start fails, the handler stops what it started and **stops nothing else**: `failed`, no record. A scale-down whose kept slots are unhealthy therefore stops nothing.
+  - `captured.previous_replicas` is the ledger's count before.
+  - A scale to the current count makes no Docker write, but still records the (identical) state.
+- **clear_cache:** read the stats, `POST http://cs-lb/internal/cache/clear {cache}` with RUNNER_ADMIN_TOKEN (`shop_admin.clear_cache`), report the count, then the structural check (ruling 2).
+  - If the clear is not confirmed (an HTTP error, an unreachable shop, or the wrong answer), the result is `failed` and no check runs.
+  - **No ledger record.**
+- **`docker_client.py`:** gains `restart` (`POST /containers/{id}/restart?t=10`, which socket-proxy-rw allows through `ALLOW_RESTARTS`). The runner's writes are now exactly start, stop and restart.
+- **`health.py`:** the structural check can now cover several services at once (`structural_groups`).
+- **Rate limit and cooldown** are left for A2.5, including the rollback cooldown exemption, which waits for contract-review-a issue 12.
+
+**Tests:**
+- **Unit:** **235 passed**, coverage **95.9 %**; ruff and `mypy --strict` clean. The fake records exact calls in order.
+  - **restart:**
+    - api restarted in place;
+    - an exited worker started;
+    - redis with no probe and no record;
+    - 3 replicas restarted strictly one at a time;
+    - an unhealthy second replica stops the rolling restart, with the third untouched;
+    - a refused restart call stops there;
+    - drift changes nothing.
+  - **scale:**
+    - 1→3 (inspect 1; inspect and start 2; inspect and start 3; a C6 record with 3);
+    - 3→1 (stop 3, then 2; record with 1);
+    - a failed scale-up is undone and stops nothing;
+    - a scale-down with unhealthy kept slots makes no write;
+    - a start failure is undone;
+    - drift changes nothing;
+    - replicas 0, 6 or −1 abort in the handler; 0, 6, `"3"`, 2.5 or `true` are refused by the checks; worker is refused (C4 allows scale for api only).
+  - **clear_cache:**
+    - cleared, with `"pricing: 12 keys cleared"`, no Docker write, no record, and the structural check over `cs-api-150-1` and `cs-redis`;
+    - an empty cache reports 0;
+    - stats unavailable still clears;
+    - a failed clear runs no structural check;
+    - no cache client means aborted.
+  - **Through the consumer:**
+    - a replayed execute of each action runs once (exactly one write: restart, start or clear) and gets one signed result;
+    - forged executes of each action, `cache=sessions` and `service=backend` are refused and never reach Docker or the cache.
+- **Live** (`tests/live/test_live_execute.py`, real testbed and proxy): **7/7**, then `chaos reset` at the end of the module.
+  - The rollback from A2.4a.
+  - restart_service of worker, redis and api: each container really restarted (new start time), running and healthy, no ledger record, and the shop up.
+  - scale_service of api 1→3→1: slots started, then the highest stopped first, a C6-valid `scale` record each time (validated with `DeployRecord`), and the shop up throughout.
+  - clear_cache of catalog and pricing: the step reports the keys cleared, cs-api logged the clear, the check covered api and cs-redis, and no ledger record.
+- **Live, all modules:** **13/13**.
+- **C5 check:** 33 progress results and 5 final results (restart ×2, scale succeeded and failed, clear_cache) validate as `RunnerResult` with Usman's models, and every signature verifies (one-off, contracts environment).
+- **CI:** `runner-live` runs every live test, these included. It still sets no Docker API version. Not run on GitHub yet: nothing is pushed.
+
+**Memory:** no limits changed. The runner was not measured again in A2.4b; it used 33 MiB of its 128 MiB in A2.4a. Windows had only 1.0 GB free at the end, because of other programs on the host.
 
 ## Phase 0 close-out, part 2 (2026-10-10): one PR into `main`
 
