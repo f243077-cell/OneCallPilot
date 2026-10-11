@@ -22,6 +22,7 @@ class FakeStreams:
     pending: dict[tuple[str, str], dict[str, Pending]] = field(default_factory=dict)
     keys: dict[str, int] = field(default_factory=dict)  # key -> expiry ms
     zsets: dict[str, dict[str, float]] = field(default_factory=dict)
+    expiries: dict[str, int] = field(default_factory=dict)  # sorted set -> expiry ms (EXPIRE)
     counter: int = 0
 
     def create_group(self, stream: str, group: str) -> None:
@@ -73,6 +74,8 @@ class FakeStreams:
         return True
 
     def zcount(self, key: str, min_score: float, max_score: float) -> int:
+        if self.expiries.get(key, self.now_ms + 1) <= self.now_ms:
+            return 0  # the whole sorted set expired
         return sum(
             1 for score in self.zsets.get(key, {}).values() if min_score <= score <= max_score
         )
@@ -80,6 +83,26 @@ class FakeStreams:
     def exists(self, key: str) -> bool:
         expiry = self.keys.get(key)
         return expiry is not None and expiry > self.now_ms
+
+    def zadd(self, key: str, member: str, score: float) -> None:
+        self.zsets.setdefault(key, {})[member] = score
+
+    def zremrangebyscore(self, key: str, min_score: float, max_score: float) -> None:
+        zset = self.zsets.get(key, {})
+        for member in [m for m, s in zset.items() if min_score <= s <= max_score]:
+            del zset[member]
+
+    def expire(self, key: str, ttl_seconds: int) -> None:
+        self.expiries[key] = self.now_ms + ttl_seconds * 1000
+
+    def set_ex(self, key: str, ttl_seconds: int) -> None:
+        self.keys[key] = self.now_ms + ttl_seconds * 1000
+
+    def ttl(self, key: str) -> int:
+        expiry = self.keys.get(key)
+        if expiry is None or expiry <= self.now_ms:
+            return -2
+        return -(-(expiry - self.now_ms) // 1000)
 
 
 WRITE_CALLS = frozenset({"create", "start", "stop", "restart", "kill", "remove"})

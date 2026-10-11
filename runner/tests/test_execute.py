@@ -19,6 +19,7 @@ from oncallpilot_runner.consumer import RESULTS_STREAM, Consumer, Executed
 from oncallpilot_runner.dry_run import DryRunner
 from oncallpilot_runner.execute import Executor, Outcome
 from oncallpilot_runner.health import LB_PROBE, HealthChecker, probe_urls
+from oncallpilot_runner.limits import Limits
 from oncallpilot_runner.request import Request, parse
 from oncallpilot_runner.shop_admin import CacheClearFailed, CacheStatsUnavailable
 from oncallpilot_runner.signing import Keys, verify
@@ -88,6 +89,8 @@ def executor(
     ticks: FakeClock,
     failing_probes: set[str],
     cache: FakeCache,
+    streams: FakeStreams,
+    clock: list[datetime],
 ) -> Executor:
     def probe(url: str) -> dict[str, Any]:
         ok = url not in failing_probes
@@ -96,7 +99,10 @@ def executor(
 
     targets = Targets.load(TARGETS)
     health = HealthChecker(docker, targets, probe, lambda: NOW, ticks.monotonic, ticks.sleep)
-    return Executor(docker, dry_runner, health, targets, ledger, lambda: NOW, cache_clear=cache)
+    limits = Limits(streams, lambda: clock[0])
+    return Executor(
+        docker, dry_runner, health, targets, ledger, lambda: NOW, limits, cache_clear=cache
+    )
 
 
 def approved(dry_runner: DryRunner, target: str = "1.4.0", **overrides: Any) -> Request:

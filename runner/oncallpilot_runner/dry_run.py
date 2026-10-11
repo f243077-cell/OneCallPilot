@@ -29,13 +29,17 @@ from typing import Any, Protocol
 from oncallpilot_runner import ledger
 from oncallpilot_runner.docker_client import Container, DockerReader, DockerUnavailable
 from oncallpilot_runner.fingerprint import state_fingerprint
+from oncallpilot_runner.limits import (
+    CLEAR_CACHE_LIMITS_SERVICE,
+    RATE_LIMIT,
+    RATE_WINDOW_SECONDS,
+    cooldown_key,
+    rate_key,
+)
 from oncallpilot_runner.request import Request
 from oncallpilot_runner.shop_admin import CacheStatsUnavailable
 from oncallpilot_runner.targets import Targets
 
-RATE_LIMIT = 3
-RATE_WINDOW_SECONDS = 1800
-CLEAR_CACHE_LIMITS_SERVICE = "api"
 RELEASE_LABEL = "oncallpilot.release"
 REPLICA_LABEL = "oncallpilot.replica"
 RESTARTABLE = ("running", "restarting", "paused")
@@ -210,8 +214,8 @@ class DryRunner:
 
     def _preconditions(self, service: str, slots_available: bool) -> dict[str, bool]:
         since = self.now().timestamp() - RATE_WINDOW_SECONDS
-        used = self.counters.zcount(f"ocp:runner:ratelimit:{service}", since, float("inf"))
-        cooling = self.counters.exists(f"ocp:runner:cooldown:{service}")
+        used = self.counters.zcount(rate_key(service), since, float("inf"))
+        cooling = self.counters.exists(cooldown_key(service))
         return {
             "rate_limit_ok": used < RATE_LIMIT,
             "cooldown_ok": not cooling,

@@ -2,17 +2,22 @@
 
 An execute arrives here only after every check of checks.py passed, including
 the idempotency claim (SET NX ocp:runner:idem:{execution_id}), so it runs at
-most once. Then, for every action:
+most once. Then, for every action, in C5's order:
 
-1. **Fingerprint** (RUN-008): the state is read again exactly as the dry run
+1. **Second gate** (RUN-006, limits.py): the runner's own rate limit, then its
+   cooldown. A closed gate ends the execution `refused` with `RATE_LIMITED` or
+   `COOLDOWN_ACTIVE`, and nothing changes.
+2. **Fingerprint** (RUN-008): the state is read again exactly as the dry run
    read it. A different fingerprint ends the execution `aborted` with
    `STATE_DRIFT`, before anything changes. A state that cannot be read, or target
    slots the dry run already showed missing, end it `aborted` with
-   `VALIDATION_ERROR` (fail closed).
-2. **The action**, step by step, each step a `progress` result (RUN-013).
+   `VALIDATION_ERROR` (fail closed). Only then is the execution counted against
+   the limits, right before its first change; the cooldown is set again when it
+   ends. A Redis error in the limits propagates (no result, nothing changed).
+3. **The action**, step by step, each step a `progress` result (RUN-013).
    Every Docker write (start, stop, restart) comes right after a fresh inspect
    and both allowlist checks (§7.4), by container ID.
-3. **Structural health check** (health.py), whose result goes in
+4. **Structural health check** (health.py), whose result goes in
    `health_after.structural`; `captured` holds what C4 `captures` names.
 
 The actions:
@@ -40,11 +45,14 @@ The actions:
   check: the api's active slots and cs-redis. No ledger record.
 """
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from redis.exceptions import RedisError
 
 from oncallpilot_runner import ledger
 from oncallpilot_runner.docker_client import Container, DockerControl, DockerUnavailable
@@ -58,9 +66,12 @@ from oncallpilot_runner.dry_run import (
     slots,
 )
 from oncallpilot_runner.health import HealthChecker, Sample
+from oncallpilot_runner.limits import Limits, limits_service
 from oncallpilot_runner.request import Request
 from oncallpilot_runner.shop_admin import CacheClearFailed, CacheStatsUnavailable
 from oncallpilot_runner.targets import Targets
+
+log = logging.getLogger("runner.execute")
 
 # name, status (running | succeeded | failed), message
 Emit = Callable[[str, str, str], None]
@@ -71,7 +82,7 @@ MIN_REPLICAS, MAX_REPLICAS = 1, 5  # C4 scale_service.replicas; checks.py enforc
 class Outcome:
     """The final answer, before it is signed as a C5 execution_result."""
 
-    status: str  # succeeded | failed | aborted
+    status: str  # succeeded | failed | aborted | refused
     error_code: str | None = None
     structural: dict[str, Any] | None = None
     captured: dict[str, str | int] | None = None
@@ -97,6 +108,7 @@ class Executor:
     targets: Targets
     ledger_path: Path
     now: Callable[[], datetime]
+    limits: Limits
     cache_clear: Callable[[str], bool] | None = None
     handlers: dict[str, str] = field(
         default_factory=lambda: {
@@ -111,6 +123,14 @@ class Executor:
         handler = self.handlers.get(request.action)
         if handler is None:
             return Outcome("aborted", "ACTION_NOT_ALLOWED", reason="no execute handler")
+        assert request.execution_id is not None  # checks.py: an execute always has one
+        service = limits_service(request.action, request.params)
+        closed = self.limits.refusal(service)  # a Redis error propagates: fail closed
+        if closed is not None:
+            return Outcome("refused", closed[0], reason=closed[1])
+        problem = self._precheck(request)
+        if problem is not None:
+            return Outcome("aborted", "VALIDATION_ERROR", reason=problem)
         try:
             preview = self.dry_runner.run(request)
         except DryRunUnavailable as exc:
@@ -119,9 +139,30 @@ class Executor:
             return Outcome("aborted", "STATE_DRIFT", reason="the state changed since the dry run")
         if not preview["preconditions"]["slots_available"]:
             return Outcome("aborted", "VALIDATION_ERROR", reason="target slots are missing")
-        emit("validated", "succeeded", "signature, catalogue, targets and fingerprint checked")
-        result: Outcome = getattr(self, handler)(request, emit)
+        self.limits.consume(service, request.execution_id)  # it runs now: it counts
+        emit("validated", "succeeded",
+             "signature, catalogue, targets, limits and fingerprint checked")  # fmt: skip
+        try:
+            result: Outcome = getattr(self, handler)(request, emit)
+        finally:
+            self._cool_down(service)
         return result
+
+    def _precheck(self, request: Request) -> str | None:
+        """Checked again here although checks.py refused it first (defence in depth)."""
+        if request.action == "scale_service":
+            replicas = request.params["replicas"]
+            if not isinstance(replicas, int) or not MIN_REPLICAS <= replicas <= MAX_REPLICAS:
+                return "replicas outside 1-5"
+        if request.action == "clear_cache" and self.cache_clear is None:
+            return "no cache client"
+        return None
+
+    def _cool_down(self, service: str) -> None:
+        try:
+            self.limits.finished(service)
+        except RedisError:  # the cooldown set before the first change still holds
+            log.warning(f"cooldown not renewed for {service}; the one set at the start holds")
 
     # --- rollback_deploy ---------------------------------------------------------
 
@@ -189,8 +230,7 @@ class Executor:
 
     def _scale(self, request: Request, emit: Emit) -> Outcome:
         service, replicas = str(request.params["service"]), request.params["replicas"]
-        if not isinstance(replicas, int) or not MIN_REPLICAS <= replicas <= MAX_REPLICAS:
-            return Outcome("aborted", "VALIDATION_ERROR", reason="replicas outside 1-5")
+        assert isinstance(replicas, int)  # _precheck
         active = ledger.active(self.ledger_path, service)
         assert active.release is not None and active.replicas is not None  # dry run checked
         captured: dict[str, str | int] = {"previous_replicas": active.replicas}
@@ -234,8 +274,7 @@ class Executor:
     def _clear_cache(self, request: Request, emit: Emit) -> Outcome:
         cache = str(request.params["cache"])
         captured: dict[str, str | int] = {}
-        if self.cache_clear is None:
-            return Outcome("aborted", "VALIDATION_ERROR", reason="no cache client")
+        assert self.cache_clear is not None  # _precheck
         try:
             keys: int | None = cache_keys_of(self.dry_runner.cache_stats(), cache)
         except CacheStatsUnavailable:

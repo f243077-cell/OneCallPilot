@@ -22,8 +22,8 @@ UUID request_id, or an execute without a UUID execution_id is logged and
 acknowledged.
 
 Every failure fails closed: the request is refused (or dropped) and nothing
-runs. Rate limit, cooldown and the fingerprint comparison (the rest of step 8)
-come in task A2.5; an accepted dry run is answered by dry_run.py (A2.3).
+runs. The rest of step 8 (rate limit, cooldown, then the fingerprint) runs in
+execute.py with limits.py (A2.5); an accepted dry run is answered by dry_run.py.
 """
 
 import json

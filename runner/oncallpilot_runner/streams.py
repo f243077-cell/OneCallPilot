@@ -22,6 +22,11 @@ class Streams(Protocol):
     def set_nx(self, key: str, ttl_seconds: int) -> bool: ...
     def zcount(self, key: str, min_score: float, max_score: float) -> int: ...
     def exists(self, key: str) -> bool: ...
+    def zadd(self, key: str, member: str, score: float) -> None: ...
+    def zremrangebyscore(self, key: str, min_score: float, max_score: float) -> None: ...
+    def expire(self, key: str, ttl_seconds: int) -> None: ...
+    def set_ex(self, key: str, ttl_seconds: int) -> None: ...
+    def ttl(self, key: str) -> int: ...
 
 
 class RedisStreams:
@@ -75,3 +80,18 @@ class RedisStreams:
 
     def exists(self, key: str) -> bool:
         return bool(cast(Any, self.client.exists(key)))
+
+    def zadd(self, key: str, member: str, score: float) -> None:
+        self.client.zadd(key, {member: score})
+
+    def zremrangebyscore(self, key: str, min_score: float, max_score: float) -> None:
+        self.client.zremrangebyscore(key, min_score, max_score)
+
+    def expire(self, key: str, ttl_seconds: int) -> None:
+        self.client.expire(key, ttl_seconds)
+
+    def set_ex(self, key: str, ttl_seconds: int) -> None:
+        self.client.set(key, "1", ex=ttl_seconds)
+
+    def ttl(self, key: str) -> int:
+        return int(cast(Any, self.client.ttl(key)))

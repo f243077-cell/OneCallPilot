@@ -11,7 +11,9 @@
 - An accepted dry run is answered with its preview, signed (RUN-007,
   dry_run.py). If the state cannot be read it is refused (fail closed).
 - An accepted execute (its ID already claimed) runs in execute.py: a signed
-  `progress` result per step, then one signed `execution_result`. A bug during
+  `progress` result per step, then one signed `execution_result`. A Redis
+  error in the second gate (limits.py) happens before any change and is not
+  answered: the entry stays pending, and its redelivery is a duplicate. A bug during
   the execution still ends in a `failed` result, because something may already
   have changed. The final result is retried on a Redis error before the entry
   is acknowledged; a progress result that cannot be published is only logged.
@@ -180,6 +182,8 @@ class Consumer:
 
         try:
             outcome = self.executor.execute(request, emit)
+        except RedisError:
+            raise  # the limits cannot be read or counted: nothing changed, no result
         except Exception:  # a bug after the claim: answer failed, never stay silent
             log.exception("execution failed unexpectedly", extra={"execution_id": execution_id})
             outcome = Outcome("failed", reason="internal error during the execution")
