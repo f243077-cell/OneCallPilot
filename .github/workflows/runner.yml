@@ -10,8 +10,10 @@
 # RUN-017) against the real proxy: GitHub-hosted runners have Docker and the
 # host socket, so the proxy starts and the test container reaches it.
 # The runner-live job runs `pytest -m live`: the runner image against a
-# throwaway Redis (A2.1), and its dry runs against the real testbed through
-# socket-proxy-rw (A2.3, RUN-007), with the TEST-ONLY values of .env.example.
+# throwaway Redis (A2.1), its dry runs (A2.3, RUN-007) and a rollback_deploy
+# execute (A2.4a) against the real testbed through socket-proxy-rw, with the
+# TEST-ONLY values of .env.example. No Docker API version is set anywhere: the
+# live tests read the runner host's own (`docker version`; GitHub serves 1.48).
 name: runner
 
 on:
@@ -102,7 +104,7 @@ jobs:
 
       # RUN-007: each dry run changes nothing (containers, ledger, Redis keys,
       # caches), and the proxy log of the dry runs holds only GET requests.
-      - name: Live tests (A2.1 runner, A2.3 dry runs)
+      - name: Live tests (A2.1 runner, A2.3 dry runs, A2.4a rollback execute)
         working-directory: runner
         run: uv run pytest -m live -v -p no:cacheprovider
 
