@@ -11,7 +11,8 @@
 # host socket, so the proxy starts and the test container reaches it.
 # The runner-live job runs `pytest -m live`: the runner image against a
 # throwaway Redis (A2.1), its dry runs (A2.3, RUN-007), the executes of all four
-# actions (A2.4a, A2.4b) and its ledger access (append only) against the real
+# actions (A2.4a, A2.4b), its ledger access (append only), and its own rate
+# limit, cooldown and isolation (A2.5, RUN-006, RUN-016) against the real
 # testbed through socket-proxy-rw, with the
 # TEST-ONLY values of .env.example. No Docker API version is set anywhere: the
 # live tests read the runner host's own (`docker version`; GitHub serves 1.48).
