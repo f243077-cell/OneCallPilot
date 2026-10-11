@@ -39,6 +39,14 @@ Read from `origin/usman` at `0582f37`. The signing vector itself is correct: eve
 
 **Status of issues 9–11 (2026-10-10):** resolved. Usman wrote the rules into C5 (`857b775`, `contract-review-b.md` §2), and the runner implements them (`e50ba21`, `docs/checks/week-3.md`).
 
+## Issues found while building dry runs and execute (A2.3, A2.4a, 2026-10-10)
+
+| # | File:line | Issue | Suggested fix |
+|---|---|---|---|
+| 12 | `python/oncallpilot_contracts/runner.py` (`RunnerRequest`) | Architecture §7.6 exempts rollback proposals from the 120 s cooldown, and the runner enforces the cooldown as a second gate (RUN-006). But an `execute` request does not say whether it comes from a rollback proposal (`kind=rollback`), so the runner cannot apply the exemption: a rollback right after a failed action would be refused with `COOLDOWN_ACTIVE`. **Needs a decision before A2.5** (not before A2.4). | Add a marker to `RunnerRequest`, for example `proposal_kind: "action" \| "rollback"`, set by backend-api from the proposal row. It must be **inside the signed payload** (covered by `sig`), so a forged or altered marker fails `BAD_SIGNATURE` and cannot be used to skip the cooldown. |
+| 13 | `runner.py` (docstring, Results) and architecture §5.6 step 5 | C5 does not say what the worker does with a **refused** `dry_run_result`. The runner refuses a dry run that passed every check but cannot read the state (Docker through the proxy, or the ledger, unreadable), with `VALIDATION_ERROR`, to fail closed. §5.6 only covers a dry run that gets no answer (wait 15 s, retry once, escalate `dry_run_unavailable`). | Treat a refused dry run like a missing one: retry once, then escalate `dry_run_unavailable`. Write the rule into C5. |
+| 14 | `runner.py` (docstring, `execution_result`, `captured`) and C4 `rollback_step` | A `rollback_deploy` whose new release never becomes healthy ends `failed` (ruled 2026-10-10): the runner stops the slots it started, keeps the old release running and writes no ledger record. C5 says `failed` results carry `captured`, so `captured.previous_release` is the release that is **still active**. The worker's rollback proposal (§5.11, C4 `rollback_step`) would then target the current release, which `values_from: ledger_releases` excludes, so the dry run of that rollback is refused. | Either the worker proposes no rollback when `captured.previous_release` equals the active release (escalate instead), or C5 adds a way to say "failed before any change took effect". Write the rule into C5. |
+
 ## For information
 
 - **C7 change on `tanzeel`:** logger names are now `shop.<area>` (`shop.access`, `shop.checkout`, …) instead of `chaosshop.*` (TB-010; `logger` is agent-visible). Nothing on `origin/usman` refers to `chaosshop`, so no contract file needs changing; Loki and Grafana queries must filter on `shop.*`.
