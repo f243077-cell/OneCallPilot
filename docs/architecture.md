@@ -458,7 +458,7 @@ All gathered evidence and hypotheses stay visible. The push says "Needs human in
    - its own rate limit and cooldown gates.
 2. It recomputes the **state fingerprint** (§7.5). On mismatch → result `aborted` with `STATE_DRIFT`. The backend then supersedes the proposal and requests a fresh dry run plus a new proposal with the same action and parameters, which needs re-approval.
 3. It executes step by step, emitting `execution.progress` after each step (`validated`, `stopping cs-api-150-1`, `starting cs-api-140-1`, …).
-4. **Structural health check** (runner, up to 60 s): target containers are `running`, Docker health is `healthy`, `GET http://cs-lb/healthz` returns 200 (api), and worker `/healthz` returns 200.
+4. **Structural health check** (runner, up to 60 s): target containers are `running`, Docker health is `healthy`, and each target answers its own `/healthz` with 200 on chaos_net (api `http://cs-api-…:8000/healthz`, worker `http://cs-worker-…:8001/healthz`). For api, `GET http://cs-lb/healthz` must also return 200, but that only proves the load balancer is up: cs-lb answers that path itself and never forwards it, so it proves nothing about the api release. The check passes when two passing samples 10 s apart show the same restart counts.
 5. It writes the result to `ocp:runner:results`: `{execution_id, status: succeeded|failed|aborted|refused, output, error_code, health_after: {structural}}`. A request that fails any check in step 1 gets `refused` and changes nothing.
 6. backend-worker verifies the result's signature (RUN-015) and handles the final result by its `status` (FR-024):
 
