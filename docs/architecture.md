@@ -458,7 +458,7 @@ All gathered evidence and hypotheses stay visible. The push says "Needs human in
    - its own rate limit and cooldown gates.
 2. It recomputes the **state fingerprint** (§7.5). On mismatch → result `aborted` with `STATE_DRIFT`. The backend then supersedes the proposal and requests a fresh dry run plus a new proposal with the same action and parameters, which needs re-approval.
 3. It executes step by step, emitting `execution.progress` after each step (`validated`, `stopping cs-api-150-1`, `starting cs-api-140-1`, …).
-4. **Structural health check** (runner, up to 60 s): target containers are `running`, Docker health is `healthy`, `GET http://cs-lb/healthz` returns 200 (api), and worker `/healthz` returns 200.
+4. **Structural health check** (runner, up to 60 s): target containers are `running`, Docker health is `healthy`, and each target answers its own `/healthz` with 200 on chaos_net (api `http://cs-api-…:8000/healthz`, worker `http://cs-worker-…:8001/healthz`). For api, `GET http://cs-lb/healthz` must also return 200, but that only proves the load balancer is up: cs-lb answers that path itself and never forwards it, so it proves nothing about the api release. The check passes when two passing samples 10 s apart show the same restart counts.
 5. It writes the result to `ocp:runner:results`: `{execution_id, status: succeeded|failed|aborted|refused, output, error_code, health_after: {structural}}`. A request that fails any check in step 1 gets `refused` and changes nothing.
 6. backend-worker verifies the result's signature (RUN-015) and handles the final result by its `status` (FR-024):
 
@@ -656,7 +656,7 @@ No code path executes an action without an `approvals` row with `decision='appro
 ### 7.3 Runner isolation
 - Separate container running as a non-root user with a read-only root filesystem (`/tmp` as tmpfs) and `cap_drop: [ALL]`.
 - Its only routes out are `rw_proxy_net` (socket-proxy-rw), `copilot_net` (Redis as the `runner` user), and `chaos_net` (health probes and the `clear_cache` admin endpoint).
-- **Environment it receives:** `RUNNER_REDIS_URL`, `ACTION_SIGNING_KEY`, `RUNNER_LINK_KEY`, `DOCKER_HOST=tcp://socket-proxy-rw:2375`, `RUNNER_ADMIN_TOKEN`, `LEDGER_PATH`.
+- **Environment it receives:** `RUNNER_REDIS_URL`, `ACTION_SIGNING_KEY`, `RUNNER_LINK_KEY`, `DOCKER_HOST=tcp://socket-proxy-rw:2375`, `DOCKER_API_VERSION` (the pinned Docker API version, passed as `version=` because the proxy blocks `/version`; RUN-017), `RUNNER_ADMIN_TOKEN`, `LEDGER_PATH`.
 - **Environment it never receives:** `DATABASE_URL`, LLM keys, the FCM key, `INGEST_TOKEN`, Supabase keys.
 
 ### 7.4 Target allowlist — `runner/targets.yaml`
@@ -739,6 +739,8 @@ These are accepted and must be stated in the README (SEC-018). They are document
 | L3 | **`socket-proxy-rw` filters by endpoint, not by container** (§2.11). | The proxy has no per-container rule set. | Runner code enforces the label and name allowlist; security tests prove it; create, exec, and delete remain impossible. |
 | L4 | **Cleartext HTTP and WS on the LAN** in debug and profile builds (ADR-16). | Self-signed TLS adds setup cost on a testbed network. | Release builds require HTTPS; tokens are short-lived; only port 8000 is exposed. |
 | L5 | **Interrupted investigations are escalated, not resumed** (§5.2). | Resuming would duplicate evidence refs and break the budgets. | The incident stays visible with all evidence gathered so far, and a human takes over. |
+| L6 | **`socket-proxy-rw` filters by API endpoint and method, not by action**, so a compromised runner can open `GET /containers/{id}/attach/ws` (stdio of a running container) in addition to stop/start/restart/kill and GET reads. Found in A2.2 (`docs/checks/proxy.md`). | Blocking it without also blocking `GET /containers/{id}/json`, which the runner needs for health checks, would need a second filtering proxy: more attack surface than it removes. | No command executes, because the monitored containers do not read commands from stdin, and create/exec/delete remain impossible. A security test fails if the endpoint's behaviour changes. |
+| L7 | **Container inspect exposes environment variables.** `GET /containers/{id}/json` returns `Config.Env` of every container, so a compromised runner (through `socket-proxy-rw`) can read secrets that other containers receive as env vars. Accepted risk for now. | Endpoint-level filtering cannot hide one field of a response. How secrets are stored is Usman's decision (Stream B) and is not changed here. | The worker's `get_service_health` tool never reads `Config.Env` (§6.3, §7.8). The runner's own code never reads or logs it. Secrets already held in mounted files (the FCM service account) are not exposed. |
 
 ---
 

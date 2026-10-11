@@ -8,6 +8,10 @@
 |---|---|---|---|
 | A2.1 Runner: consumer group, signature and expiry verification (shared vector), catalogue and target allowlist, free-form rejection | done (on `tanzeel`) | 2026-10-10 | Below |
 | A2.2 socket-proxy-rw config; proxy security tests (RUN-017, TEST-015) | done (on `tanzeel`); one known limitation recorded | 2026-10-10 | Below |
+| A2.3 Dry runs for all 4 actions; state fingerprint (RUN-007) | done (on `tanzeel`, not pushed) | 2026-10-10 | Below |
+| A2.4a rollback_deploy execute, structural health check (RUN-008, RUN-011, RUN-013, RUN-014, RUN-015) | done (on `tanzeel`, not pushed) | 2026-10-11 | Below |
+| A2.4b restart_service, scale_service, clear_cache executes (RUN-009, RUN-010, RUN-012, RUN-013, RUN-015) | done (on `tanzeel`, not pushed) | 2026-10-11 | Below |
+| A2.5 Second gate: idempotency, rate limit and cooldown, drift abort, structural check, isolation (RUN-005, RUN-006, RUN-008, RUN-014, RUN-016) | done (on `tanzeel`, not pushed); rollback cooldown exemption waits for C5 issue 12 | 2026-10-11 | Below |
 
 ### A2.1 — runner verification (RUN-001…RUN-004, RUN-018; RUN-005's SET NX brought forward)
 
@@ -117,14 +121,294 @@
 - **CI:** new job `runner-proxy` in `runner.yml` runs `run_proxy_test.sh` on every push and PR (GitHub-hosted runners have Docker). The script now derives the API version from the host's `docker version` when `DOCKER_API_VERSION` is unset; tested locally both ways (54/54 each).
 
 **Gaps between the docs and the proxy:**
-1. **`GET /containers/{id}/attach/ws` returns 101** (WebSocket stdio attach). It is a GET under `/containers`, which §2.10 allows, and the proxy cannot block it without also blocking inspect. No command can execute (the containers' PID 1 do not read commands from stdin), but it goes beyond "start, stop, restart". Ruled 2026-10-10: **documented as a known limitation**, with a test that records the behaviour, and a proposed line for architecture §7.12 in `proxy.md`.
+1. **`GET /containers/{id}/attach/ws` returns 101** (WebSocket stdio attach). It is a GET under `/containers`, which §2.10 allows, and the proxy cannot block it without also blocking inspect. No command can execute (the containers' PID 1 do not read commands from stdin), but it goes beyond "start, stop, restart". Ruled 2026-10-10: **documented as a known limitation**, with a test that records the behaviour, and added to architecture §7.12 as L6 (`fd7b1cc`).
 2. **`kill` is allowed:** §2.10 lists it, RUN-017 and §2.11 do not. The image grants it with `ALLOW_RESTARTS`; the runner does not use it.
 3. **The start/stop/restart/kill allow rules ignore the HTTP method,** so e.g. `DELETE /containers/x/stop` reaches Docker. Docker answers 404 (it reads it as a container named `x/stop`), so nothing happens; recorded, no test needed beyond the delete-is-403 test.
-4. **`GET /containers/{id}/json` returns every container's environment.** A compromised runner can read other containers' env vars through inspect, which §2.11's limitation note does not mention. Endpoint-level filtering cannot avoid it; keeping secrets in mounted files rather than env (as the FCM key already is) would. For Usman: an architecture-level question, not a runner change.
+4. **`GET /containers/{id}/json` returns every container's environment.** A compromised runner can read other containers' env vars through inspect, which §2.11's limitation note does not mention. Endpoint-level filtering cannot avoid it; keeping secrets in mounted files rather than env (as the FCM key already is) would. For Usman: an architecture-level question, not a runner change. Recorded in architecture §7.12 as L7, an accepted risk for now (`fd7b1cc`); how secrets are stored stays Usman's decision.
 
 **Not covered:** the ro-proxy half of TEST-015 (any POST through `socket-proxy-ro` → 403) waits for Usman's `observability.yml`.
 
 **Gate:** TEST-015 is Gate G2 criterion 3: `docs/checks/gate-g2.md` (created) records it as green for socket-proxy-rw.
+
+### A2.3 — dry runs for the four actions, and the state fingerprint (RUN-007)
+
+**Read first** (2026-10-10): architecture §2.10, §5.6, §5.10, §7.4, §7.5, §7.6 and §9.5; C4 (`actions.yaml`); C5 (`runner.py`, `signing.py`); C1 `DryRunResult`; C8 §2; RUN-006 to RUN-012.
+
+**Rulings (2026-10-10)**, asked before coding because the documents left them open:
+1. **Fingerprint as §7.5 says.** It covers the ledger's active release, the ledger's desired replica count, and the sorted names of the target containers that exist and pass the allowlist. Container state is shown in `current` but is not hashed, so a crash loop is not drift.
+2. **clear_cache counts under `api`** for rate limit and cooldown. C4 gives it no `service`. The backend must use the same key (tell Usman).
+3. **N is the ledger's desired count,** not the running count. RUN-011 says "current replica count"; the fingerprint hashes the ledger value, so both use it. A warning appears when fewer replicas are running.
+4. **redis has no ledger record:** release and replicas are null. Its fingerprint is the container name only.
+
+**Built** (`runner/oncallpilot_runner/`):
+- **`dry_run.py`:** one preview per action, returned as C1 `DryRunResult`. It holds `would_change`, `current` (release, running replicas, the targets' state and health, `cache_keys`), `preconditions`, `predicted_effect` (at most 300 characters), `warnings` and `state_fingerprint`.
+  - **rollback_deploy:** start slots 1..N of `target_release`, then stop the running containers of the active release.
+  - **restart_service:** restart the active release's slots 1..N; an exited target is started instead.
+  - **scale_service:** start or stop the active release's slots until `replicas` run. The targets are slots 1..max(N, replicas).
+  - **clear_cache:** reads `GET http://cs-lb/internal/cache/stats` with `RUNNER_ADMIN_TOKEN`. `catalog` counts as 1 key or 0; `pricing` counts its hash entries. If the stats are unreachable, the preview still comes back, with `cache_keys` null and a warning.
+  - **preconditions:** the dry run reads the runner's own counters `ocp:runner:ratelimit:{service}` (ZCOUNT over the last 1800 s, fewer than 3) and `ocp:runner:cooldown:{service}` (EXISTS). Nothing writes them before A2.5.
+- **`fingerprint.py`:** SHA-256 of C5's canonical JSON of `{"active_release", "desired_replicas", "target_containers"}`, in lower-case hex. Only the runner computes and compares it.
+- **`docker_client.py`:** `DockerReader`, the only Docker access a dry run has.
+  - It lists containers by label and returns plain values, never SDK objects, so dry-run code cannot call a write.
+  - `SdkDockerReader` uses `DOCKER_HOST` and passes `DOCKER_API_VERSION` as `version=`, so the SDK never calls `/version`.
+  - Every listed container must pass `container_allowed` (labels and name regex). `backend-api` carrying the api labels is never a target.
+- **`shop_admin.py`:** the stats call, with a 5 s timeout. The token is never logged.
+- **`ledger.py`:** `active(service)`, the latest record's release and replicas. A record without them is unreadable.
+- **Consumer:** an accepted dry run is answered with an `ok` `dry_run_result` signed with RUNNER_LINK_KEY.
+  - If Docker or the ledger cannot be read, the dry run is **refused** with `VALIDATION_ERROR` (fail closed).
+  - A Redis error leaves the entry pending for a retry.
+  - An execute still runs nothing (A2.4).
+- **Start-up:** the runner refuses to start without `DOCKER_HOST`, `DOCKER_API_VERSION` and `RUNNER_ADMIN_TOKEN`. It also refuses a `DOCKER_HOST` that is not `tcp://`, so a socket path is impossible.
+- **`.env.example`:** gains a commented `DOCKER_HOST` line (set per service in compose, never in `.env`, for the same reason as `DOCKER_API_VERSION`).
+
+**Tests:**
+- **Unit** (`test_dry_run.py`, `test_fingerprint.py`, `test_docker_client.py`, and new startup cases): **158 passed**, coverage **95.4 %**; ruff and `mypy --strict` clean.
+  - Every dry run goes through a check that the `FakeDockerClient` recorded no create, start, stop, restart, kill or remove call, that every container is exactly as before, and that the ledger is byte for byte the same. No Redis key is written.
+  - **Fingerprint:**
+    - the same state gives the same value;
+    - a new release, a new desired count, or a target that disappears or loses its labels changes it;
+    - container state or health, restart counts, non-targets, unrelated ledger records, a half-written last line and listing order do not.
+- **Live** (`tests/live/test_live_dry_run.py`, real testbed and real socket-proxy-rw):
+  - The test runs the image as compose will: on `rw_proxy_net` and `chaos_net`, with the ledger mounted **read-only** and no socket.
+  - Setup: proxy at debug level, then `chaos inject 2`. At the end: `chaos reset` and the proxy back to `info`.
+  - **Order:** rollback_deploy was proved first (api 1.5.0 → 1.4.0: start `cs-api-140-1`, stop `cs-api-150-1`, the expected fingerprint, the same value twice). Then restart (worker, redis), scale (api → 3) and clear_cache (catalog, pricing).
+  - **After each batch:** every testbed container has the same state, start time, PID and restart count; the ledger and the runner's Redis keys are unchanged; cs-api logged no `cache cleared`.
+  - **RUN-007's acceptance:** the proxy's request log of the dry runs holds **only GET**.
+  - The A2.1 live test (3/3) now passes the three new settings.
+- **C5 check:** 6 `ok` results and 1 refusal validate as `RunnerResult` with Usman's models, and the signatures verify with `oncallpilot_contracts.signing` (one-off check in the contracts environment).
+- **CI:** new job **`runner-live`** in `runner.yml` runs `ocp up` with the TEST-ONLY `.env.example` values, builds the image, and runs `pytest -m live`. It has not run on GitHub yet, because nothing is pushed.
+
+**Memory:** the runner uses 34 MiB of its 128 MiB after the dry runs; socket-proxy-rw uses 17.6 MiB of its 64 MiB. No limits changed.
+
+**Incident during the task:** Docker Desktop's engine VM stopped (every API call returned 500). It was restarted with `docker desktop restart`, then `ocp up`. Nothing was lost.
+
+**For A2.4 and A2.5:**
+- §7.6 exempts rollback proposals from the cooldown, but a C5 request does not say whether it comes from a rollback proposal, so the runner cannot apply the exemption. That needs a contract change before A2.5.
+- C5 does not say how the worker treats a **refused** dry run (here: Docker or the ledger unreadable). Usman's worker should treat it like `dry_run_unavailable`.
+
+### A2.4a — rollback_deploy execute and the structural health check (RUN-008, RUN-011, RUN-013, RUN-014, RUN-015)
+
+**Read first** (2026-10-11): architecture §2.10, §5.10, §5.11, §7.4–§7.6, §9.5 and §9.6; C5 (`runner.py`: results, `captured`); C6 (`ledger.py`); C1 `StructuralHealth`, `ProbeResult`, `StepStatus`; RUN-008 to RUN-015; the chaos CLI's ledger writer (`chaos_cli/helper.py`).
+
+**Rulings (2026-10-11)**, asked before coding:
+1. **Probes:** each target's own `/healthz` on chaos_net (api :8000, worker :8001), plus `http://cs-lb/healthz` for api. §5.10 names only `cs-lb/healthz`, but cs-lb answers that path itself (`location = /healthz`, never forwarded), so on its own it proves nothing about the api release. **Architecture §5.10 should say so** (shared doc: not edited here).
+2. **A new release that never becomes healthy** ends `failed`: the runner stops the slots it started, the old release keeps running, no ledger record is written, and `captured.previous_release` is the still-active release. This is contract-review-a issue 14.
+3. **Restart count stable:** a passing sample, then a second passing sample 10 s later with the same restart counts, all within 60 s.
+
+**Built** (`runner/oncallpilot_runner/`):
+- **`execute.py`:** an execute reaches it only after every A2.1 check and the idempotency claim.
+  - **Before any change:** the state is read again exactly as the dry run read it.
+    - A different fingerprint → `aborted` / `STATE_DRIFT`.
+    - An unreadable state, or target slots that were already missing at the dry run → `aborted` / `VALIDATION_ERROR`.
+  - **rollback_deploy:**
+    1. start slots 1..N of `target_release` (N from the ledger);
+    2. wait until they pass health (one passing sample, at most 60 s);
+    3. stop the running containers of the active release (SIGTERM, 10 s timeout);
+    4. append the ledger record;
+    5. run the structural check.
+  - **Never zero healthy replicas:**
+    - If the new slots do not become healthy, or a later start fails, the slots already started are stopped again and the old release is never touched.
+    - After the old release has been stopped, a failure never stops the healthy new release.
+  - **Every write** (start, stop) comes right after a fresh `inspect` and both allowlist checks, and goes by container ID.
+  - **restart, scale, clear_cache:** no execute handler until A2.4b. Such an execute ends `aborted` / `ACTION_NOT_ALLOWED` and changes nothing.
+- **`health.py`:** the structural check (rulings 1 and 3), returning C1 `StructuralHealth`. Probes return C1 `ProbeResult` with a 3 s timeout.
+- **`docker_client.py`:** `DockerControl` adds `inspect`, `start` and `stop` by ID. There is no create, remove, exec, kill or pull.
+- **`ledger.py`:** `runner_record()` and `append()`.
+  - The record is `kind=rollback`, `deployed_by=runner`, with `replicas` = N and the neutral reason `rolled back to release X` (TB-010).
+  - Commit, message, image tag and config hash are copied from that release's own latest ledger record: the runner has no copy of `releases.yaml`, and a rollback target must already be in the ledger history.
+  - The record is checked against C6's rules before writing.
+  - `append()` writes one whole line in one `write()` on an `O_APPEND` descriptor, then fsyncs. It never uses `O_CREAT`, so it never creates or replaces the file.
+- **Consumer:**
+  - Each step publishes a signed `progress` result: `validated`, `starting …`, `healthy …` (`running`, then `succeeded` or `failed`), `stopping …`, `recording the rollback in the deploy ledger`, `structural health check` (`running`), `done`.
+  - Then one signed `execution_result`: `succeeded` and `failed` carry `health_after.structural` (when it ran) and `captured`; `aborted` carries only `error_code`.
+  - A bug during an execution still answers `failed`. Before this change, it fell back to a refusal, which the claimed ID turned into silence.
+  - The final result is retried 5 times on a Redis error before the entry is acknowledged. A progress result that cannot be published is only logged.
+  - Long waits keep the heartbeat fresh, so the healthcheck stays green.
+- **`tests/publish_signed.py`:** a new `--state-fingerprint` option (an execute carried the placeholder `b…b` before, which can only drift). It now prints the entry ID, `request_id` and `execution_id` it published.
+
+**The ledger: who writes it, and the mount** (the runner never wrote it before):
+- **Writers:**
+  - the chaos CLI, through its helper container, which runs as root: it appends with `O_APPEND`, `chaos reset` replaces the file by rename, and both chown it to uid 10001;
+  - the runner, uid 10001 (A2.4a), which only appends.
+  - backend-worker will mount it read-only.
+- **Ownership on the volume:** the directory is `10001:10001` with mode 0755, and `deploys.jsonl` is `10001:10001` with mode 0644. The runner already runs as uid 10001, so it can append without any permission change.
+- **Mount the runner needs:** `deploy_ledger:/ledger` read-write, the **directory**. A file-only mount would keep the old inode after `chaos reset` renames a new file over it, and the runner would then append to a deleted file.
+- **What changed:** only the A2.4a live test mounts the volume read-write. The dry-run live test keeps it read-only. No compose file changed: the runner service does not exist in `runner.yml` yet (it waits for copilot-redis), and it will get `deploy_ledger:/ledger` (rw) when added. No ownership or mode changed.
+- **Residual write permission, closed (2026-10-11):** the chaos CLI's helper now leaves `/ledger` owned by **root, mode 0755**, on every ledger write (`chaos reset` and every append). `deploys.jsonl` stays `10001:10001` 0644.
+  - The runner (uid 10001) can append, but cannot create, rename or delete anything in the directory.
+  - **Proved live** (`tests/live/test_live_ledger_access.py`): the runner image, run as its own user with the volume mounted read-write, all capabilities dropped and a read-only root. Append is allowed; create, rename, delete and mkdir are refused.
+  - The chaos CLI unit test checks the owners: file 10001, directory 0.
+- **Concurrency:** both writers append whole lines with `O_APPEND`, so lines never interleave. **Accepted gap:** a `chaos reset` that lands in the middle of a runner append loses that one record, because the runner's descriptor points at the replaced file. `chaos reset` is an operator action between runs.
+
+**Tests:**
+- **Unit** (`test_execute.py`, new probe and SDK cases): **193 passed**, coverage **95.9 %**; ruff and `mypy --strict` clean. `FakeDockerClient` records every call in order, and each test states the exact inspects and writes.
+  - **A successful rollback:** inspect 140-1, start 140-1, inspect 150-1, stop 150-1. The steps come in order, the structural check passes, `captured.previous_release` is 1.5.0, and the ledger is unchanged except for one valid runner record.
+  - **A drifted state** (a ledger record since the dry run, or a missing slot) aborts with `STATE_DRIFT`: no write, no step, ledger unchanged.
+  - **A new release that stays unhealthy, exits or restarts** (and one whose probe fails): writes are exactly start 140-1 then stop 140-1, 150-1 keeps running, no ledger record, and the runner gives up after 60 s.
+  - **Also covered:**
+    - a start failure on slot 2 of 3 undoes slot 1;
+    - a container that fails the allowlist at write time is never touched;
+    - a stop failure or a ledger failure after the switch keeps the new release running;
+    - a structural check that fails after the switch reports `failed`;
+    - the stability window catches a restart.
+  - **Through the consumer:**
+    - signed progress then exactly one signed result;
+    - a replay of the same signed execute → `Duplicate`, with writes made once;
+    - forged, unapproved, free-form, expired and wrong-key executes never reach Docker;
+    - a bug answers `failed`;
+    - `aborted` carries only its code;
+    - the final result is retried and gives up unacknowledged.
+  - **Ledger writer:** never creates the file; refuses a record that would break C6.
+- **Live** (`tests/live/test_live_execute.py`, real testbed and proxy, ledger mounted read-write):
+  - After `chaos inject 2`, a large checkout through cs-lb fails.
+  - A signed dry run gives the fingerprint, then `publish_signed.py` publishes the signed execute twice (`--repeat 2`).
+  - **Result:** `succeeded`, with every step in order and every message signed with RUNNER_LINK_KEY. The structural check passed: `cs-api-140-1` running and healthy, every probe OK.
+  - **Recovery:** 140-1 is running and 150-1 exited, and the large checkout succeeds again.
+  - **Ledger:** unchanged except for one record that **validates with C6 `DeployRecord`** (`rollback`, api, 1.4.0, 1 replica, `runner`).
+  - **Replay:** the second message was a `duplicate`, executed once.
+  - `chaos reset` restores the testbed at the end.
+- **Live, all modules:** **6/6** (A2.1 ×3, A2.3 ×2, A2.4a ×1).
+  - The A2.1 test now expects its accepted execute to end `aborted` / `VALIDATION_ERROR`: that stack has no proxy, so the state cannot be read, and it fails closed.
+  - All live tests take the Docker API version from the host daemon.
+- **C5 check:** 13 progress results, 1 `succeeded`, 1 `failed` and 1 `aborted` validate as `RunnerResult` with Usman's models, and every signature verifies with `oncallpilot_contracts.signing` (one-off, in the contracts environment).
+- **CI:** `runner-live` already runs `pytest -m live`, so the execute test runs there too.
+  - It sets no `DOCKER_API_VERSION`: the stack gets none from `.env.example`, and the live tests read `docker version` on the runner host (1.48 on GitHub).
+  - Not run on GitHub yet: nothing is pushed.
+
+**Memory:** the runner uses 33 MiB of its 128 MiB after the rollback. No limits changed.
+
+**Incident:** after midnight the Docker engine was still starting when the A2.1 test ran (3 errors: no Docker pipe). Once it answered, `ocp up` brought back 9 healthy services and the whole live suite passed.
+
+**Open for A2.4b and A2.5:**
+- **Rate limit and cooldown counters (A2.5):** an execute does not yet check or write `ocp:runner:ratelimit:*` and `ocp:runner:cooldown:*`.
+- **Architecture §5.10:** should name the per-container probes (ruling 1).
+
+### A2.4b — restart_service, scale_service and clear_cache executes (RUN-009, RUN-010, RUN-012, RUN-013, RUN-015)
+
+**Read first** (2026-10-11): architecture §2.10, §5.10, §7.5, §9.5, §9.6; C4 (the three actions' descriptions, `captures`, parameter bounds); C5 results; C6; RUN-009 to RUN-013; cs-api's cache endpoints.
+
+**Rulings (2026-10-11)**, asked before coding:
+1. **Keys cleared:** cs-api's clear endpoint answers only `cleared: true|false`, and C5 has no `output` field. The runner reads the cache stats just before clearing (the count the dry run shows) and reports `"<cache>: N keys cleared"` in the signed progress step. `captured` stays `{}`. This is contract-review-a issue 15.
+2. **clear_cache's structural check:** the api's active slots (their `/healthz`, and cs-lb) **and** cs-redis.
+3. **restart_service goes one at a time:** each target passes health before the next is restarted.
+
+**Built** (`runner/oncallpilot_runner/execute.py`, reusing everything from A2.4a):
+- **Common to all four actions:**
+  - the fingerprint is checked before any change (`STATE_DRIFT` aborts with nothing changed);
+  - every start, stop and restart comes right after a fresh inspect and the allowlist check;
+  - signed progress per step, then one signed final result;
+  - the idempotency claim (from checks.py);
+  - the structural check at the end.
+- **restart_service:** the active release's slots 1..N; for redis, its allowlisted container, with null release and replicas.
+  - Each target in turn: `POST /restart` (SIGTERM, 10 s) if running, or `start` if exited, then wait until it passes health.
+  - If one never gets healthy, the handler stops there: `failed`, and the rest are untouched.
+  - **No ledger record** (§2.10 lists only rollback and scale). `captured = {}`.
+- **scale_service:** `replicas` is bounded 1–5 by the catalogue (checks.py) and checked again in the handler, so it is never zero.
+  1. Start the slots of 1..replicas that are not running.
+  2. Wait until all of them pass health.
+  3. Stop the running slots above `replicas`, highest first.
+  4. Append `kind=scale` with the new count (reason `scaled to N replicas`).
+  5. Run the structural check over slots 1..replicas.
+  - If the started slots never get healthy, or a start fails, the handler stops what it started and **stops nothing else**: `failed`, no record. A scale-down whose kept slots are unhealthy therefore stops nothing.
+  - `captured.previous_replicas` is the ledger's count before.
+  - A scale to the current count makes no Docker write, but still records the (identical) state.
+- **clear_cache:** read the stats, `POST http://cs-lb/internal/cache/clear {cache}` with RUNNER_ADMIN_TOKEN (`shop_admin.clear_cache`), report the count, then the structural check (ruling 2).
+  - If the clear is not confirmed (an HTTP error, an unreachable shop, or the wrong answer), the result is `failed` and no check runs.
+  - **No ledger record.**
+- **`docker_client.py`:** gains `restart` (`POST /containers/{id}/restart?t=10`, which socket-proxy-rw allows through `ALLOW_RESTARTS`). The runner's writes are now exactly start, stop and restart.
+- **`health.py`:** the structural check can now cover several services at once (`structural_groups`).
+- **Rate limit and cooldown** are left for A2.5, including the rollback cooldown exemption, which waits for contract-review-a issue 12.
+
+**Tests:**
+- **Unit:** **235 passed**, coverage **95.9 %**; ruff and `mypy --strict` clean. The fake records exact calls in order.
+  - **restart:**
+    - api restarted in place;
+    - an exited worker started;
+    - redis with no probe and no record;
+    - 3 replicas restarted strictly one at a time;
+    - an unhealthy second replica stops the rolling restart, with the third untouched;
+    - a refused restart call stops there;
+    - drift changes nothing.
+  - **scale:**
+    - 1→3 (inspect 1; inspect and start 2; inspect and start 3; a C6 record with 3);
+    - 3→1 (stop 3, then 2; record with 1);
+    - a failed scale-up is undone and stops nothing;
+    - a scale-down with unhealthy kept slots makes no write;
+    - a start failure is undone;
+    - drift changes nothing;
+    - replicas 0, 6 or −1 abort in the handler; 0, 6, `"3"`, 2.5 or `true` are refused by the checks; worker is refused (C4 allows scale for api only).
+  - **clear_cache:**
+    - cleared, with `"pricing: 12 keys cleared"`, no Docker write, no record, and the structural check over `cs-api-150-1` and `cs-redis`;
+    - an empty cache reports 0;
+    - stats unavailable still clears;
+    - a failed clear runs no structural check;
+    - no cache client means aborted.
+  - **Through the consumer:**
+    - a replayed execute of each action runs once (exactly one write: restart, start or clear) and gets one signed result;
+    - forged executes of each action, `cache=sessions` and `service=backend` are refused and never reach Docker or the cache.
+- **Live** (`tests/live/test_live_execute.py`, real testbed and proxy): **7/7**, then `chaos reset` at the end of the module.
+  - The rollback from A2.4a.
+  - restart_service of worker, redis and api: each container really restarted (new start time), running and healthy, no ledger record, and the shop up.
+  - scale_service of api 1→3→1: slots started, then the highest stopped first, a C6-valid `scale` record each time (validated with `DeployRecord`), and the shop up throughout.
+  - clear_cache of catalog and pricing: the step reports the keys cleared, cs-api logged the clear, the check covered api and cs-redis, and no ledger record.
+- **Live, all modules:** **13/13**.
+- **C5 check:** 33 progress results and 5 final results (restart ×2, scale succeeded and failed, clear_cache) validate as `RunnerResult` with Usman's models, and every signature verifies (one-off, contracts environment).
+- **CI:** `runner-live` runs every live test, these included. It still sets no Docker API version. Not run on GitHub yet: nothing is pushed.
+
+**Memory:** no limits changed. The runner was not measured again in A2.4b; it used 33 MiB of its 128 MiB in A2.4a. Windows had only 1.0 GB free at the end, because of other programs on the host.
+
+### A2.5 — the runner's second gate: idempotency, rate limit and cooldown, drift abort, structural check, isolation (RUN-005, RUN-006, RUN-008, RUN-014, RUN-016)
+
+**Read first** (2026-10-11): architecture §5.9, §5.10, §5.12, §7.3, §7.5, §7.6; C5 (`runner.py`: the check order, check 8); C8 §2 (approval checks 6 and 7); RUN-005, RUN-006, RUN-008, RUN-014, RUN-016, RUN-017; the `runner` ACL rules (§2.7).
+
+**Built:**
+- **`limits.py` (RUN-006):** the runner's own counters, independent of the backend's (§5.12):
+  - `ocp:runner:ratelimit:{service}`: a sorted set of execution timestamps (member: the execution ID); at most 3 in 1800 s. Old entries are pruned and the key expires after 1800 s.
+  - `ocp:runner:cooldown:{service}`: a string with a 120 s TTL.
+  - clear_cache counts under service `api`.
+  - Only commands the `runner` ACL user has: `ZCOUNT`, `ZADD`, `ZREMRANGEBYSCORE`, `EXPIRE`, `SET … EX`, `EXISTS`, `TTL` (no `MULTI`).
+- **Order in `execute.py`**, as C5 check 8 says: the idempotency claim (checks.py), then the rate limit (`RATE_LIMITED`), then the cooldown (`COOLDOWN_ACTIVE`), then the state fingerprint (`aborted`, `STATE_DRIFT`).
+  - A closed gate gives a signed `execution_result` with `status: refused` and the code; nothing is read from Docker and nothing changes. The reason ("3 executions on api in the last 30 min (limit 3)", "redis is cooling down for 116 s more") goes to the runner's log; C5's result has no field for it.
+  - **Only executions that ran count.** The execution is counted after the fingerprint passed, right before its first change. Refusals, `aborted` results (drift, validation) and dry runs use no budget. A `failed` execution counts: it ran and may have changed something.
+  - The dry run's `preconditions.rate_limit_ok` and `cooldown_ok` read the same counters (read only).
+- **Idempotency (RUN-005)** is the `SET NX ocp:runner:idem:{execution_id}` claim from A2.1, unchanged. A replay, during the run or after it, is acknowledged and ignored with no result (C5: "a duplicate is acknowledged and ignored, with no result"); the first result stands.
+- **Drift (RUN-008):** the state is read again after the gate, immediately before the first change, for every action. Container state, health and restart counts stay out of the fingerprint (§7.5, C8).
+- **Structural check (RUN-014):** every action ends with it (per-container probes, §5.10). On failure the result is `failed` with `health_after.structural.passed: false`, and every progress step already sent stays.
+- **Isolation (RUN-016):** `runner/tests/runner_service.yml` is the intended `runner` service (non-root uid 10001, read-only root, `/tmp` tmpfs, `cap_drop: [ALL]`, `no-new-privileges`, 128m, networks rw_proxy_net, copilot_net and chaos_net, only the deploy_ledger volume, and only the §7.3 variables plus `DOCKER_API_VERSION`). It is not in `runner.yml` yet (waits for copilot-redis). `tests/isolation.py` holds the policy, checked against that spec, against `runner.yml` once the service is there, and against the running container (`docker inspect`).
+
+**Tests:**
+- **Unit:** **325 passed, 1 skipped** (the `runner.yml` check, until the service is there); coverage **96.0 %** (`limits.py` 100 %); ruff and `mypy --strict` clean.
+  - **Limits:** 3 executions close the rate limit per service, and the window slides; the cooldown holds 120 s, then opens; the rate limit is checked before the cooldown; old timestamps are pruned; clear_cache counts under api.
+  - **Every action** (4) with the rate limit or the cooldown closed: `refused` with the code, no Docker call at all, no cache call, no progress step, the ledger and the counters unchanged.
+  - **What counts:** a succeeded or failed execution counts once and starts the cooldown; a drift abort, a validation abort, dry runs and refused (forged) executes use nothing.
+  - **Through the consumer:** the 4th execution in 30 min gets a signed `refused`/`RATE_LIMITED`; a second one 119 s after the first gets `COOLDOWN_ACTIVE`, and at 120 s it runs.
+  - **Rollbacks are not exempt** from the cooldown (a test says so; see below).
+  - **Fail closed:** a Redis error while reading (`ZCOUNT`, `EXISTS`) or counting (`ZADD`, `SET EX`): nothing runs, no result, the entry stays pending; when Redis is back the redelivered entry is a duplicate and never runs. A claim (`SET NX`) that fails, or whose reply is lost after Redis stored it: the same. A cooldown that cannot be renewed at the end keeps the one set before the first change, and the result still goes out.
+  - **Idempotency:** a replay that a second runner reads while the first is in its health wait; a replay after success and after failure; a runner that dies after acting but before the acknowledgement, then restarts (same consumer name) and re-reads its pending entry while a fresh copy arrives too. Each case: exactly one Docker write and one final result.
+  - **Drift:** a deploy between the dry run and the execute aborts `STATE_DRIFT` for rollback, restart and scale (signed, no write, the ledger unchanged, no budget); a deploy that lands while the gate is checked is still caught; no Docker write ever comes before the state is read again; container state alone is not drift.
+  - **Structural:** for each of the 4 actions, a target that goes unhealthy as the check starts gives `failed`, `passed: false`, and the full list of steps ending in "structural health check" (running) and "done" (failed).
+  - **Isolation:** the spec passes, and each of 35 loosenings fails it (root user, writable root, extra tmpfs, missing or partial `cap_drop`, `cap_add`, no `no-new-privileges`, privileged, host pid or network, devices, ports, env_file, more or no memory limit, a socket mount, an extra mount or network, a unix or read-only-proxy `DOCKER_HOST`, each forbidden variable, any unlisted variable). The Dockerfile's only `USER` is `runner` (uid 10001).
+- **Live** (`tests/live/test_live_limits.py`, the real image, socket-proxy-rw, the testbed and a Redis with the real `runner` ACL user). This module never clears or edits the counters; it only reads them to wait for a cooldown to end.
+  - Isolation: `docker inspect` of the running runner passes the policy; no `DATABASE_URL`; `docker top` shows its only process as uid 10001.
+  - Cooldown: restart_service of redis succeeded; a second one at once was refused `COOLDOWN_ACTIVE` (runner log: "redis is cooling down for 116 s more") and cs-redis was not restarted; after the real 120 s it succeeded. 2 executions counted.
+  - Rate limit: 3 restarts of worker, each after its real cooldown ended; the 4th, also after its cooldown, was refused `RATE_LIMITED` and cs-worker-210 was not restarted; a dry run then showed `rate_limit_ok: false`; still 3 counted.
+  - clear_cache counts under api: a restart of api right after a clear was refused `COOLDOWN_ACTIVE` ("api is cooling down for 113 s more").
+  - **Every refusal changed nothing:** no progress step, the same ledger, and no request but GET in socket-proxy-rw's debug log (clear_cache's dry run reads no container, so it logged none).
+  - Then `chaos reset` (the module's teardown), and a final one after the whole run.
+- **Live, all modules:** **17/17 passed** in **18 min 22 s (the limits module about 11 min 31 s of it: 7 min 12 s for the rate-limit test with its three real cooldowns, 2 min 39 s for the cooldown test)** on this laptop (the CI job's limit is 30 min, unchanged). The A2.4 execute module clears the runner's counters before each execute, in test code only, through the test's admin Redis user (accepted 2026-10-11): it runs many api actions within minutes. Nothing in the runner can reset its own counters.
+- **Unchanged:** memory limits; the CI job (`pytest -m live` picks up the new module; no Docker API version is set anywhere, so GitHub's Docker 28 / API 1.48 is still what the live tests use there).
+
+**Memory** (runner, 128 MiB limit, `docker stats` every ~4 s across all live runner containers, 205 samples): **typical 33.7 MiB** (median; 95th percentile 34.2 MiB), **peak 38.5 MiB**, about 30 % of the limit. The two earlier runs that day (399 samples) agree: median 33.7 MiB, peak 38.6 MiB. Windows had 0.6 GB free at the end.
+
+**Deviations and notes:**
+1. **The cooldown is set twice:** when the execution is counted (before its first change) and again when it ends. §5.12 says "set when an execution finishes"; the extra one only makes the gate stricter, and it holds if the runner dies mid-run.
+2. **Drift is `aborted`, not `refused`:** C5 and §5.10 step 6 give `STATE_DRIFT` as `aborted` (the worker then supersedes the proposal and asks for a new one), so the runner keeps that.
+3. **clear_cache's fingerprint covers no containers** (active release and replicas null, no targets, ruled in A2.3), so no deploy can make it drift; only a fingerprint from elsewhere aborts it.
+4. **The rollback cooldown exemption (§7.6) is not implemented.** Nothing signed says that a request is a rollback (contract-review-a issue 12). Until Usman decides, a rollback is subject to the cooldown like any other action. **For Usman:** a rollback whose execute reaches the runner within 120 s of the end of the failed action it undoes is refused `COOLDOWN_ACTIVE` by the runner (and counts against nothing).
+5. **For Usman to confirm: Redis failures.** If Redis fails while the runner reads or counts its limits, or claims the execution ID, the runner sends **no result** (it could not publish one anyway) and leaves the entry pending; its redelivery is a duplicate and never runs. The backend's sweeper then ends the execution `failed` with `RUNNER_TIMEOUT` after `EXECUTION_TIMEOUT_SECONDS` (§5.10 step 8). Nothing has changed on the testbed in that case.
+6. **`retry_after`:** the backend's 429 carries it (C8); the runner's result has no field for it (C5), so the remaining time is only in the runner's log.
+7. **§7.3 lists the runner's environment without `DOCKER_API_VERSION`**, which CLAUDE.md §10.2 and RUN-017 require. The isolation policy allows exactly the §7.3 list plus that one. The architecture line could add it (shared doc: not edited).
+8. **The first full live run had one failure in my own test:** `docker top … -eo uid` is refused by the daemon ("Couldn't find PID field in ps output"); it now asks for `pid,uid`. The isolation itself held. The rate-limit test was then rewritten so that this module clears nothing (your condition), and the whole live suite was run again.
 
 ## Phase 0 close-out, part 2 (2026-10-10): one PR into `main`
 
@@ -188,3 +472,28 @@ This is Usman's condition for approving C7 (`contract-review-b.md` §1).
   - `backend/` is still the CI skeleton.
   - The extra fixtures of review-A issue 8 are still to come.
 
+
+## Phase 0 close-out, part 3 (2026-10-10): after the merge into `main`
+
+- **`main`:** PR #1 merged as `8942520` (merge commit). It contains `tanzeel` and `usman`, with C1–C9. Its tree is identical to `7d576ac`, the tree tested in part 2.
+- **CI on `main` (`8942520`):** backend, contracts, migrations, chaos-shop, runner (`runner` and `runner-proxy`), mobile: **all green**.
+- **Tag:** annotated `contracts-v0.1.0` on `8942520`, pushed; `contracts/VERSION` is `0.1.0`.
+- **`tanzeel` synced:** fast-forward to `8942520`.
+- **Answers to the A2.2 questions:**
+  - attach/ws and the env exposure of inspect are in architecture §7.12 as L6 and L7 (`fd7b1cc`, docs only). L7 is an accepted risk for now; how secrets are stored stays Usman's decision.
+  - socket-proxy-rw has `mem_limit: 64m` (`7012459`); it uses about 18–22 MiB.
+  - A2.2 deviations 1 and 2 are accepted; the ro half of TEST-015 waits for Usman's observability compose.
+- **Full local run on `tanzeel` (`7012459`):**
+
+  | Suite | Result |
+  |---|---|
+  | Lockfiles | `uv lock --check` and `uv sync --locked` pass in `contracts/python`, `chaos-shop`, `chaos-shop/cli`, `runner`, `tools/ocp`; `flutter pub get --enforce-lockfile` passes |
+  | contracts | ruff and `mypy --strict` clean; **259 passed**; schemas regenerate with no diff |
+  | chaos-shop / chaos CLI / `tools/ocp` | ruff and mypy clean; **77 / 37 / 24 passed** |
+  | runner | ruff and mypy clean; **88 passed**, coverage **91.7 %**; live **3/3** (image rebuilt) |
+  | proxy security test (TEST-015) | **54/54** (with the 64 MiB limit) |
+  | app | `flutter analyze` clean; **90 passed** |
+  | `ocp up` / `ocp doctor` | 9 services healthy in 34 s; doctor: all checks passed |
+
+- **Memory:** the 9 running containers use about 283 MiB. socket-proxy-rw uses 17.8 MiB of its 64 MiB. socket-proxy-ro (Usman's) uses 21 MiB and has no limit yet. Windows had 3.5 GB free.
+- **Phase 0 status table:** `week-1.md`, "Phase 0 status (2026-10-10, after PR #1)".

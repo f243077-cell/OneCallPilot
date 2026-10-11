@@ -13,6 +13,12 @@ Steps (``op``):
 - ``ledger_read``: the ledger text ("" when it does not exist yet).
 - ``ledger_append``: append whole lines in one write, then fsync.
 - ``ledger_replace``: write a temporary file, fsync, rename over the ledger.
+
+Ledger ownership (A2.4a, ruled 2026-10-11): ``deploys.jsonl`` belongs to uid
+10001 (mode 0644), so the runner (uid 10001) can append to it. The directory
+belongs to root (mode 0755), so the runner cannot create, rename or delete
+anything in it; only this helper (root) replaces the file. Every ledger write
+re-applies both.
 - ``sleep``: wait ``seconds``.
 """
 
@@ -81,6 +87,12 @@ def _own(path: str) -> None:
     os.chmod(path, 0o644)
 
 
+def _lock_dir() -> None:
+    """Root-owned, 0755: uid 10001 may append to the file but not change the directory."""
+    _chown(LEDGER_DIR, 0, 0)
+    os.chmod(LEDGER_DIR, 0o755)
+
+
 def ledger_read() -> str:
     try:
         with open(LEDGER_FILE, encoding="utf-8") as handle:
@@ -98,6 +110,7 @@ def ledger_append(lines: list[str]) -> None:
     finally:
         os.close(fd)
     _own(LEDGER_FILE)
+    _lock_dir()
 
 
 def ledger_replace(lines: list[str]) -> None:
@@ -108,7 +121,7 @@ def ledger_replace(lines: list[str]) -> None:
         os.fsync(handle.fileno())
     _own(temporary)
     os.replace(temporary, LEDGER_FILE)
-    _chown(LEDGER_DIR, LEDGER_UID, LEDGER_UID)
+    _lock_dir()
 
 
 def run(plan: list[dict[str, Any]], token: str) -> list[Any]:

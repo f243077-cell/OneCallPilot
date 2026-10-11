@@ -31,6 +31,8 @@ services:
     networks: [rw_proxy_net]
     read_only: true
     tmpfs: [/run]
+    # Uses about 22 MiB; 64m leaves room for a burst of requests (32m is too tight).
+    mem_limit: 64m
     restart: unless-stopped
     healthcheck:
       # Port check only: PING and VERSION are blocked on purpose.

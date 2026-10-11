@@ -22,8 +22,8 @@ UUID request_id, or an execute without a UUID execution_id is logged and
 acknowledged.
 
 Every failure fails closed: the request is refused (or dropped) and nothing
-runs. Rate limit, cooldown and the state fingerprint (the rest of step 8) come
-in tasks A2.5 and A2.3.
+runs. The rest of step 8 (rate limit, cooldown, then the fingerprint) runs in
+execute.py with limits.py (A2.5); an accepted dry run is answered by dry_run.py.
 """
 
 import json
@@ -140,6 +140,13 @@ class Checker:
         if isinstance(target, Dropped):
             return target
         return self._refusal(target, "VALIDATION_ERROR", "internal error while checking")
+
+    def refuse_request(self, request: shape.Request, code: str, reason: str) -> Refused | Duplicate:
+        """Refuse a request that passed the checks but could not be handled
+        (a dry run that cannot read the state): fail closed."""
+        return self._refusal(
+            _Answer(request.type, request.request_id, request.execution_id), code, reason
+        )
 
     def _claim(self, execution_id: str) -> bool:
         return self.set_nx(f"ocp:runner:idem:{execution_id}", IDEM_TTL_SECONDS)

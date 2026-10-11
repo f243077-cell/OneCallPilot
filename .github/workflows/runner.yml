@@ -9,10 +9,13 @@
 # The runner-proxy job runs the socket-proxy-rw security test (TEST-015,
 # RUN-017) against the real proxy: GitHub-hosted runners have Docker and the
 # host socket, so the proxy starts and the test container reaches it.
-# Not here: the live runner test (`uv run pytest -m live`) needs the built
-# runner image on the integration host. The shared signing-vector tests run
-# once the vector is in contracts/fixtures/signing/ on this branch; until then
-# they skip.
+# The runner-live job runs `pytest -m live`: the runner image against a
+# throwaway Redis (A2.1), its dry runs (A2.3, RUN-007), the executes of all four
+# actions (A2.4a, A2.4b), its ledger access (append only), and its own rate
+# limit, cooldown and isolation (A2.5, RUN-006, RUN-016) against the real
+# testbed through socket-proxy-rw, with the
+# TEST-ONLY values of .env.example. No Docker API version is set anywhere: the
+# live tests read the runner host's own (`docker version`; GitHub serves 1.48).
 name: runner
 
 on:
@@ -78,3 +81,37 @@ jobs:
       # script derives the API version from the host's `docker version`.
       - name: Proxy security test
         run: bash runner/tests/security/run_proxy_test.sh
+
+  runner-live:
+    name: runner-live
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pipx install uv==0.12.7
+
+      - name: Dummy env (TEST-ONLY values from .env.example)
+        run: cp .env.example .env
+
+      # Builds the testbed images, starts the stack (socket-proxy-rw included)
+      # and runs `chaos reset`, which seeds the deploy ledger.
+      - name: Stack up
+        run: uv run --project tools/ocp ocp up
+
+      - name: Runner image
+        run: docker build --build-context contracts=contracts -t oncallpilot/runner:0.1.0 runner
+
+      # RUN-007: each dry run changes nothing (containers, ledger, Redis keys,
+      # caches), and the proxy log of the dry runs holds only GET requests.
+      - name: Live tests (A2.1 runner, A2.3 dry runs, A2.4 executes, ledger access)
+        working-directory: runner
+        run: uv run pytest -m live -v -p no:cacheprovider
+
+      - name: Stack state on failure
+        if: failure()
+        run: |
+          docker ps -a --format '{{.Names}} {{.Status}}'
+          docker logs --tail 50 oncallpilot-socket-proxy-rw-1 || true

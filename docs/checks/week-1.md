@@ -407,6 +407,8 @@ Architecture §12.1 lists four profiles (`testbed`, `obs`, `copilot`, `runner`).
 
 ## Phase 0 close-out (2026-10-09)
 
+> Superseded by "Phase 0 status (2026-10-10, after PR #1)" below.
+
 **Definition of done** (`phases.md`, Phase 0):
 
 | Item | Status | Owner of what is left |
@@ -479,6 +481,37 @@ Architecture §12.1 lists four profiles (`testbed`, `obs`, `copilot`, `runner`).
   - `doctor`: baseline passes; it fails on a non-loopback `cs-lb`, a wrong port, a port on a service that may publish nothing, a socket mount, an exited service, a service without a health check, and an unpinned image; another project's LAN port only warns.
 - Live (`uv run pytest -m live`): 2 passed (`ocp up` healthy, `ocp doctor` passes).
 - CI: a step in `chaos-shop.yml` runs the `tools/ocp` checks.
+
+## Phase 0 status (2026-10-10, after PR #1)
+
+PR #1 (`tanzeel` → `main`) is merged as `8942520` (a merge commit). The tree on `main` is identical to `7d576ac`, the tree tested in close-out part 2 (`git diff 7d576ac 8942520` is empty). The annotated tag **`contracts-v0.1.0`** is on `8942520`, and `contracts/VERSION` is `0.1.0`. This table replaces the 2026-10-09 close-out table above.
+
+**Definition of done** (`phases.md`, Phase 0):
+
+| Item | Status | Evidence |
+|---|---|---|
+| All contracts merged and read by the other developer | **Done** | C1–C9 are on `main` (PR #1, 19 commits that touch only `contracts/`). Each developer read the other's set in writing: `contract-review-a.md` (Tanzeel on C1, C2, C3, C5, C8, C9: issues 1–7 and 9–11 fixed, 8 deferred to a later contract PR) and `contract-review-b.md` (Usman on C4, C6, C7: approved; the C7 deviations are in `telemetry.md`). |
+| Python fixtures validate against the schemas | **Done on `main`** | `contracts.yml` green on `8942520`. Locally: 259 passed; schemas regenerate with no diff. |
+| Dart parses the fixtures | **Done on `main`** | `mobile/test/contracts/fixtures_test.dart` now runs against the merged fixtures, with nothing skipped; `mobile.yml` green; locally 90 passed. |
+| The phone reached the laptop | **Done** | S0.5, `network.md`. |
+| Deliverable: `contracts-v0.1.0` tag | **Done** | Annotated tag on `8942520`, pushed 2026-10-10. |
+| Deliverable: green CI | **Done** | All six workflows green on `8942520`: backend, contracts, migrations, chaos-shop, runner (with `runner-proxy`), mobile. |
+| Deliverable: network spike result | **Done** | `network.md`. |
+| Integration checkpoint: 30-minute fixture walkthrough | **Replaced** | The written reviews `contract-review-a.md` and `contract-review-b.md` replaced the walkthrough (Tanzeel's decision). |
+
+**Stream A's Phase 0 tasks are all done:** A0.1, A0.2, A0.3, S0.5, S0.6 (Tanzeel's laptop), S0.7 (a) for socket-proxy-rw, and S0.7 (b).
+
+**Still open:**
+
+| Item | Owner | Status, and what it blocks |
+|---|---|---|
+| B0.1 Supabase projects `ocp-dev` and `ocp-bench` (sign-ups off, user accounts, asymmetric JWT signing key) | Usman | Not started. Blocks S0.7 (d), MOB-001 on a device, live mode, and `ocp smoke`. |
+| B0.3 LLM and embedding API keys | Usman | Not started. Blocks S0.7 (c) and real-provider agent runs (CI uses fakes). |
+| S0.7 (c) `gemini-embedding-001` at 768 dimensions | Usman | Needs B0.3. |
+| S0.7 (d) Supabase login and live JWKS | Usman | Needs B0.1. |
+| S0.7 (a) Alloy through socket-proxy-ro | Usman | socket-proxy-ro is healthy in `ocp up` on Tanzeel's laptop. The Alloy check (which endpoints it calls; whether `NETWORKS=1` stays) has not run yet. The ro half of TEST-015 waits for the observability compose. |
+| S0.6 Docker Desktop on Usman's laptop | Usman | Installed; the engine does not run yet, because WSL 2 is missing (`handoff.md`, 2026-10-10). |
+| S0.2 branch protection on `main` (required checks, no required reviewers) | Tanzeel, by hand | Not set: GitHub reports `protected: false` for `main` (2026-10-10). |
 
 ## Phase 1 status — Stream A (2026-10-10)
 

@@ -320,11 +320,18 @@ def test_token_comes_from_the_env_file_and_is_required(
 def test_helper_ledger_append_and_replace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(helper, "LEDGER_DIR", str(tmp_path))
     monkeypatch.setattr(helper, "LEDGER_FILE", str(tmp_path / "deploys.jsonl"))
-    monkeypatch.setattr(helper, "_chown", lambda *_: None)
+    owners: list[tuple[str, int, int]] = []
+    monkeypatch.setattr(helper, "_chown", lambda path, uid, gid: owners.append((path, uid, gid)))
     assert helper.run([{"op": "ledger_read"}], "") == [""]
     helper.run([{"op": "ledger_replace", "lines": ["a", "b"]}], "")
     helper.run([{"op": "ledger_append", "lines": ["c"]}], "")
     assert helper.run([{"op": "ledger_read"}], "") == ["a\nb\nc\n"]
+    # The file belongs to the runner's uid; the directory to root (A2.4a, 2026-10-11).
+    ledger_file = str(tmp_path / "deploys.jsonl")
+    assert owners == [
+        (ledger_file + ".tmp", 10001, 10001), (str(tmp_path), 0, 0),
+        (ledger_file, 10001, 10001), (str(tmp_path), 0, 0),
+    ]  # fmt: skip
     with pytest.raises(ValueError):
         helper.run([{"op": "rm -rf"}], "")
 

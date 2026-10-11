@@ -6,7 +6,10 @@ import logging
 import sys
 from datetime import UTC, datetime
 
-FIELDS = ("request_id", "execution_id", "action", "error_code", "entry_id", "decision")
+FIELDS = (
+    "request_id", "execution_id", "action", "error_code", "entry_id", "decision",
+    "state_fingerprint",
+)  # fmt: skip
 
 
 class JsonFormatter(logging.Formatter):

@@ -24,7 +24,7 @@ The image enables **`EVENTS=1`, `PING=1`, `VERSION=1`, `LIBPOD_PING=1`, `LIBPOD_
 
 `infrastructure/compose/runner.yml`, profile `runner`:
 
-`CONTAINERS=1, ALLOW_START=1, ALLOW_STOP=1, ALLOW_RESTARTS=1, POST=0, EVENTS=0, PING=0, VERSION=0, LIBPOD_PING=0, LIBPOD_VERSION=0`, Docker socket mounted read-only, `read_only: true` with `tmpfs: /run`, only on the internal network `rw_proxy_net`, no published ports, healthcheck `nc -z 127.0.0.1 2375`.
+`CONTAINERS=1, ALLOW_START=1, ALLOW_STOP=1, ALLOW_RESTARTS=1, POST=0, EVENTS=0, PING=0, VERSION=0, LIBPOD_PING=0, LIBPOD_VERSION=0`, Docker socket mounted read-only, `read_only: true` with `tmpfs: /run`, only on the internal network `rw_proxy_net`, no published ports, healthcheck `nc -z 127.0.0.1 2375`. Memory limit **64 MiB** (added after A2.2: the proxy uses about 22 MiB, and 32 MiB would be too tight for a burst of requests).
 
 Checked on the running container: no published ports, read-only root filesystem, only network `oncallpilot_rw_proxy_net`, and that network is `internal=true`.
 
@@ -72,7 +72,7 @@ The WebSocket attach endpoint (`GET /containers/{id}/attach/ws`) is reachable th
 
 **Impact:** low. The containers' PID 1 (uvicorn for `cs-api`, the worker loop, `redis-server`) do not execute stdin, so no command runs; the capability is reading/writing the stdio of a container the runner can already inspect and stop. It is recorded, not fixed: blocking it would need a second filtering proxy, which is more attack surface than it removes. The test `test_container_stdio_hijack_is_a_known_limitation` documents the current behaviour (it fails if `attach/ws` ever stops returning 101, so a future proxy fix is noticed).
 
-**Proposed for architecture §7.12 "Known limitations" (shared doc — for Usman/Tanzeel to add):**
+**Added to architecture §7.12 "Known limitations" as L6 (2026-10-10, `fd7b1cc`):**
 > socket-proxy-rw filters by API endpoint and method, not by action, so a compromised runner can open `GET /containers/{id}/attach/ws` (stdio of a running container) in addition to stop/start/restart/kill and GET reads. No command executes, because the monitored containers do not read commands from stdin, and create/exec/delete remain impossible.
 
 ### Covered in CI (A2.2)
