@@ -2,6 +2,23 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 10: detector follows settings, regression suite
+
+### Done
+- **Detector follows `monitor_settings`** (`56e384c`): each cycle the worker's detector re-reads `monitor_settings`; on a new version it rebuilds its rules from `detector.yaml` + threshold overrides and evaluates only the monitored services (baselines kept; an unreadable or invalid version keeps the last good rules).
+- **B2.12** (`e96549c`): `tests/agent_regression/` replays all **8 scenarios** through the real pipeline (ingest, `DbEffects`, real tools over mocked Loki/Prometheus/socket-proxy-ro, redaction, citations, reflection, prompts v1, catalogue validation, signed dry run via the `FakeRunnerConsumer`). Asserts terminal state, action/params or escalation reason, budgets, citations, suspicious flags, and that a planted secret never reaches evidence. New CI step "Agent regression suite (TEST-002)"; ruff/mypy cover the folder.
+- Expected outcomes encoded (architecture §11.3): 1 → `restart_service(worker)`, 2 → `rollback_deploy(api, 1.4.0)`, 3 → `restart_service(api)`, 4 → `restart_service(redis)`, 5 → `scale_service(api, 3)`, 6 → `rollback_deploy(worker, 2.1.0)`, 7 → escalate `no_catalogue_action_fits`, 8 → escalate `low_confidence` with the injected log evidence flagged.
+
+### Decisions to confirm (Tanzeel)
+- The scenario tool outputs are **synthetic**; B2.6 must replace them with outputs recorded from the live testbed (you inject, the worker records). The second half of TEST-002 (recorded real-model replies, `@pytest.mark.recorded`) needs the Gemini key.
+- Scenario 4's alert can only be the `restarts` signal with value 0 (the FR-006 sev1 "no running container" contract gap from chunk 3 still applies).
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged (chunks 7–9).
+
 ## 2026-10-21 — Cloud session 1, chunk 9: operations endpoints (B3.2)
 
 ### Done
