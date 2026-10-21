@@ -1,4 +1,4 @@
-# Backend checks (B1.2; TEST-012): lint, format, strict type-check, unit tests
+# Backend checks (B1.2, B1.3; TEST-012): lint, format, strict type-check, unit tests
 # (backend/tests: auth, error envelope, routes with fakes), then the
 # integration suite (tests/integration: backend-api against a real
 # pgvector/pgvector Postgres, a fake Redis and a local JWKS). CI never calls
@@ -55,18 +55,31 @@ jobs:
         run: uv sync --locked
 
       - name: Ruff lint
-        run: uv run ruff check . ../tests/integration
+        run: uv run ruff check . ../tests/integration ../tests/security
 
       - name: Ruff format
-        run: uv run ruff format --check . ../tests/integration
+        run: uv run ruff format --check . ../tests/integration ../tests/security
 
       - name: Mypy (strict)
         run: |
           uv run mypy
           uv run mypy ../tests/integration
+          uv run mypy ../tests/security
 
       - name: Pytest (unit tests)
         run: uv run pytest -q tests
 
       - name: Pytest (integration, Postgres)
         run: uv run pytest -c pyproject.toml ../tests/integration -q
+
+      # SEC-004: a throwaway copilot-redis from infrastructure/redis/ (published on
+      # 127.0.0.1 for the test only); the runner user is NOPERM outside its rules.
+      - name: Redis ACL (SEC-004)
+        run: uv run pytest -c pyproject.toml ../tests/security/test_redis_acl.py -q
+
+      - name: copilot-redis starts healthy through Compose (dummy values)
+        working-directory: .
+        run: |
+          cp .env.example .env
+          docker compose --profile copilot up -d --wait --wait-timeout 60 copilot-redis
+          docker compose --profile copilot down

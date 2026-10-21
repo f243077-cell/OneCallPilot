@@ -1,0 +1,41 @@
+# Owner: Tanzeel (Stream B). Copilot services (architecture §2.2, §2.3, §2.7, §3, §12.1).
+# B1.3 adds copilot-redis. backend-api and backend-worker are added once their
+# images and a database exist (they need the Supabase project; `ocp up` must
+# keep working on main without it).
+#
+# SAFETY (SEC-004): ACL users only (default is off); the runner user reaches only
+# ocp:runner:*. copilot-redis is never published on the host.
+
+services:
+  copilot-redis:
+    image: redis:7.4.11-alpine
+    profiles: [copilot]
+    entrypoint: ["/bin/sh", "/etc/ocp/start-redis.sh"]
+    environment:
+      REDIS_URL: ${REDIS_URL}
+      RUNNER_REDIS_URL: ${RUNNER_REDIS_URL}
+    volumes:
+      - ../redis/users.acl:/etc/ocp/users.acl.template:ro
+      - ../redis/start-redis.sh:/etc/ocp/start-redis.sh:ro
+    user: "999:1000"
+    read_only: true
+    tmpfs:
+      - /run/ocp:uid=999,gid=1000,mode=0700
+      - /data:uid=999,gid=1000
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [copilot_net]
+    mem_limit: 128m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/ocp/healthcheck.pw)\" redis-cli --user backend ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+networks:
+  copilot_net:
+    # Internal: no internet egress. Members: copilot-redis, and later
+    # backend-api, backend-worker and the runner (architecture §3).
+    internal: true

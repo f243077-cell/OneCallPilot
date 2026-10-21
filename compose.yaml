@@ -9,3 +9,4 @@ include:
   - infrastructure/compose/testbed.yml
   - infrastructure/compose/runner.yml
   - infrastructure/compose/observability.yml
+  - infrastructure/compose/copilot.yml

@@ -1,0 +1,14 @@
+# copilot-redis ACL users (architecture §2.7, §5.12; SEC-004). Owner: Tanzeel (Stream B).
+#
+# A TEMPLATE: start-redis.sh drops these comment lines (ACL files allow none), replaces __BACKEND_PASSWORD__ and __RUNNER_PASSWORD__
+# with the passwords inside REDIS_URL and RUNNER_REDIS_URL, writes the result to a
+# tmpfs, and starts redis-server with it. No password is ever in git.
+#
+# SAFETY (CLAUDE.md §6): never widen the runner line. It may touch only
+# ocp:runner:* keys, with stream commands (requests and results), sorted-set
+# commands (its rate limit), SET/GET/DEL/EXPIRE/TTL/EXISTS (idempotency keys
+# and cooldown) and PING. KEYS, FLUSHALL, CONFIG, scripting and pub/sub stay
+# denied. `default` is disabled.
+user default off
+user backend on >__BACKEND_PASSWORD__ resetkeys ~ocp:* resetchannels -@all +@all -@dangerous
+user runner on >__RUNNER_PASSWORD__ resetkeys ~ocp:runner:* resetchannels -@all +@stream +@sortedset +set +get +del +expire +ttl +exists +ping

@@ -47,7 +47,7 @@ markers = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-include = ["../tests/db/*.py", "../tests/integration/*.py"]
+extend-include = ["../tests/db/*.py", "../tests/integration/*.py", "../tests/security/*.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
