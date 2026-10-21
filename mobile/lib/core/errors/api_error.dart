@@ -80,6 +80,20 @@ class ApiError implements Exception {
   String toString() => 'ApiError($status ${code.wire}: $message)';
 }
 
+/// The request may not have reached the server, or its answer was lost (no
+/// connection, a timeout). Retrying with the same `Idempotency-Key` is safe.
+class NetworkError implements Exception {
+  const NetworkError([this.message = 'No connection']);
+
+  final String message;
+
+  @override
+  String toString() => 'NetworkError($message)';
+}
+
 /// Text for any error a screen shows: the ApiError's message, or a generic one.
-String describeError(Object error) =>
-    error is ApiError ? error.userMessage : 'Something went wrong';
+String describeError(Object error) => switch (error) {
+  ApiError() => error.userMessage,
+  NetworkError() => 'No connection — check the network and try again',
+  _ => 'Something went wrong',
+};

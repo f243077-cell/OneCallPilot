@@ -140,7 +140,9 @@ class _IncidentDetailBodyState extends State<IncidentDetailBody> {
               child: FilledButton.icon(
                 icon: const Icon(Icons.fact_check_outlined),
                 label: const Text('Review proposed action'),
-                onPressed: () => context.push('/proposals/$proposalId'),
+                onPressed: () => context.push(
+                  '/proposals/$proposalId?incident=${incident.id}',
+                ),
               ),
             ),
           _Section('Hypotheses'),

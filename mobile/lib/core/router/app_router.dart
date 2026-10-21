@@ -5,6 +5,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/action_review/presentation/action_review_screen.dart';
 import '../../features/auth/application/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/incident_detail/presentation/incident_detail_screen.dart';
@@ -48,10 +49,9 @@ GoRouter buildRouter(AuthSession session) => GoRouter(
     ),
     GoRoute(
       path: '/proposals/:id',
-      builder: (_, state) => PlaceholderScreen(
-        title: 'Action review',
-        task: 'A2.7',
-        id: state.pathParameters['id'],
+      builder: (_, state) => ActionReviewScreen(
+        proposalId: state.pathParameters['id']!,
+        incidentId: state.uri.queryParameters['incident'],
       ),
     ),
     GoRoute(

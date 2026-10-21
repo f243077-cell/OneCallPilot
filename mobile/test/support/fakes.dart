@@ -6,9 +6,9 @@ import 'package:oncallpilot/data/models/incident.dart';
 import 'package:oncallpilot/data/models/ws_event.dart';
 import 'package:oncallpilot/data/repositories/incident_repository.dart';
 
-/// An IncidentRepository the test drives: set what the next list or detail
-/// call returns (a value, an error, or a future that never completes) and
-/// push events.
+/// An IncidentRepository the test drives: set what the next list, detail or
+/// approval call returns (a value, an error, or a future that never
+/// completes) and push events.
 class FakeIncidentRepository implements IncidentRepository {
   Future<List<IncidentSummary>> Function() onList = () async => [];
   Future<IncidentDetail> Function(String id) onDetail = (id) =>
@@ -32,25 +32,36 @@ class FakeIncidentRepository implements IncidentRepository {
   @override
   Stream<WsEvent> events() => eventsController.stream;
 
+  Future<ChallengeResponse> Function(String proposalId, String fingerprint)
+  onChallenge = (_, _) => throw UnimplementedError();
+  Future<ApproveAccepted> Function(String id, ApproveRequest body, String key)
+  onApprove = (_, _, _) => throw UnimplementedError();
+  Future<RejectResponse> Function(String id, String reason, String key)
+  onReject = (_, _, _) => throw UnimplementedError();
+  final rejects = <(String reason, String key)>[];
+
   @override
   Future<ChallengeResponse> challenge(
     String proposalId, {
     required String proposalFingerprint,
-  }) => throw UnimplementedError();
+  }) => onChallenge(proposalId, proposalFingerprint);
 
   @override
   Future<ApproveAccepted> approve(
     String proposalId,
     ApproveRequest body, {
     required String idempotencyKey,
-  }) => throw UnimplementedError();
+  }) => onApprove(proposalId, body, idempotencyKey);
 
   @override
   Future<RejectResponse> reject(
     String proposalId, {
     required String reason,
     required String idempotencyKey,
-  }) => throw UnimplementedError();
+  }) {
+    rejects.add((reason, idempotencyKey));
+    return onReject(proposalId, reason, idempotencyKey);
+  }
 
   @override
   void dispose() {}

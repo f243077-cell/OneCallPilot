@@ -115,10 +115,19 @@ void main() {
 
   testWidgets('a pending proposal opens Action Review', (tester) async {
     serve(incidentJson());
-    await pump(tester);
+    final router = await pumpScreens(
+      tester,
+      repository: repo,
+      clock: () => now,
+      initialLocation: '/incidents/$detailId',
+    );
     await tester.tap(find.text('Review proposed action'));
     await tester.pumpAndSettle();
-    expect(find.text('proposal $pendingId'), findsOneWidget);
+    expect(
+      router.state.uri.toString(),
+      '/proposals/$pendingId?incident=$detailId',
+    );
+    expect(find.text('Action review'), findsOneWidget);
   });
 
   testWidgets('no hypotheses or evidence yet', (tester) async {
