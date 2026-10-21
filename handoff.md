@@ -2,6 +2,32 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 7: approvals, worker entry point, execution outcomes
+
+### Done
+- **B2.9** (`e511e35`): `POST /proposals/{id}/challenge|approve|reject` with the C8 checks in order (`oncallpilot/approvals/`: single-use `GETDEL` challenges with only the nonce hash stored, Idempotency-Key store with replay/conflict and a `SET NX` claim so a concurrent double tap yields one execution, rate limit 3/30 min and 120 s cooldown with `retry_after`, rollbacks exempt from cooldown). Approval + execution + statuses + SEC-017 audit snapshot in one transaction, then the `execute` request signed with `ACTION_SIGNING_KEY`, built only in `approvals/execute.py` (SEC-001 code-search test in `tests/security/`). Redis down → refused. CI now also enforces approvals coverage ≥ 90 % (91 %).
+- **Detector live source** (`85da8f6`): Prometheus instant queries (same templates as `query_metrics`), Loki `Traceback` counts by `exc_type`, container states through socket-proxy-ro (GET only).
+- **Worker entry point** (`d58c0b7`): `python -m oncallpilot.worker` runs the agent-job consumer (Investigation + DbEffects + RunnerProposer), the detector loop, runbook ingestion at start-up; SIGTERM drains. The backend image now contains `catalogue/actions.yaml`, `catalogue/targets.yaml` and `runbooks/` (build contexts `targets=runner`, `runbooks=runbooks`; CI build line and `copilot.yml` updated; Compose v2 config check passed). Tried by hand against local Postgres/Redis with every source down: starts, logs, stops cleanly.
+- **Refactor** (`d768a14`): `oncallpilot/proposal_store.py` stores every kind of pending proposal.
+- **B2.10** (`b904900`): `worker/outcomes.py` + `worker/loops.py`: runner-result consumer (group `backend`, signatures verified), the FR-024 status table, rollback proposals (FR-015) from the runner's `captured` values, drift → supersede + fresh dry run + new proposal (FR-017), DB-driven signal verifier (FR-014/FR-016), sweeper for expiry (FR-013) and runner timeouts (FR-024). 12 integration tests with signed fake results (`tests/integration/test_outcomes.py`); the approval test fixture moved to `tests/integration/approval_env.py`.
+- Totals: 291 unit, 104 integration, 112 security tests passing locally; agent coverage 98 %, approvals 91 %.
+
+### Decisions to confirm (Tanzeel)
+- **Contract gap:** a failed action **without** a rollback step (restart_service, clear_cache) should be `escalated` (FR-015), but C1's `EscalationReason` has no fitting value. For now the incident stays `action_failed` (a human resolves it). Proposed contract change (minor bump): add `action_failed` (or `no_rollback_available`) to `EscalationReason`, then escalate with it.
+- **Signal verification bounds** (`detector/verify.py`): a triggering signal counts as normal when it is under the rule's absolute floors (stricter than the detector, and independent of in-memory baselines so a restart cannot break it). No data is never normal.
+- **Restarts signal:** only containers that are running or restarting count, so a slot stopped by a rollback no longer blocks verification.
+- **Approve after the sweeper expired a proposal** returns `PROPOSAL_EXPIRED` (FR-013), not `PROPOSAL_NOT_PENDING`.
+- An unregistered `device_id` on approve is recorded in the audit snapshot but not linked in `approvals.device_id` (FK to `devices`, which B2.11 fills).
+- A dropped runner result (bad signature, malformed) is logged as a WARNING; no new audit event name was invented.
+- New env vars (documented in `.env.example`): `INGEST_URL`, `PROMETHEUS_URL`, `LOKI_URL`, `CATALOGUE_PATH`, `TARGETS_PATH`, `RUNBOOKS_DIR`, `EXECUTION_TIMEOUT_SECONDS`, `VERIFY_WINDOW_SECONDS`, `VERIFY_TIMEOUT_SECONDS`, plus the agent limits from `CLAUDE.md` §10.2.
+- FR-011 auto-resolve: the detector's `on_recovered` hook exists but nothing resolves incidents yet (next task list).
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged: delete branches `tanzeel`/`usman`, the `contracts-v0.1.0` tag, Supabase (B0.1), Gemini key (B0.3), Firebase (A0.1); plus the decisions above and in chunks 3–6. backend-api and backend-worker are not in `copilot.yml` yet because they need the Supabase `DATABASE_URL`.
+
 ## 2026-10-21 — Cloud session 1, chunk 6: proposal validation and dry run (B2.8)
 
 ### Done
