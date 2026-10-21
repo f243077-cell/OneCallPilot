@@ -36,6 +36,7 @@ from redis.exceptions import RedisError
 from oncallpilot.agent.effects import DbEffects
 from oncallpilot.agent.prompts import FilePrompts
 from oncallpilot.agent.proposer import RunnerProposer
+from oncallpilot.agent.providers.anthropic import AnthropicProvider, anthropic_client
 from oncallpilot.agent.providers.base import LLMProvider, LLMUnavailableError
 from oncallpilot.agent.providers.embeddings import EmbeddingProvider, FakeEmbeddingProvider
 from oncallpilot.agent.providers.fake import FakeProvider
@@ -89,12 +90,21 @@ def build_providers(
     if settings.llm_provider == "fake":
         # Development without a key: every investigation escalates (nothing is scripted).
         return FakeProvider(model="fake-1"), FakeEmbeddingProvider()
+    # Embeddings are always Gemini (ADR-14); Claude has no embedding API.
+    embedder: EmbeddingProvider
+    if settings.gemini_api_key is not None:
+        embedder = GeminiEmbeddingProvider(http, settings.gemini_api_key)
+    else:
+        log.warning("GEMINI_API_KEY is not set: runbook search uses fake embeddings")
+        embedder = FakeEmbeddingProvider()
+    if settings.llm_provider == "anthropic":
+        if settings.anthropic_api_key is None:
+            raise SystemExit("LLM_PROVIDER=anthropic needs ANTHROPIC_API_KEY")
+        client = anthropic_client(settings.anthropic_api_key)
+        return AnthropicProvider(client, settings.llm_model), embedder
     if settings.gemini_api_key is None:
         raise SystemExit("LLM_PROVIDER=gemini needs GEMINI_API_KEY")
-    return (
-        GeminiProvider(http, settings.gemini_api_key, settings.llm_model),
-        GeminiEmbeddingProvider(http, settings.gemini_api_key),
-    )
+    return GeminiProvider(http, settings.gemini_api_key, settings.llm_model), embedder
 
 
 def run_meta(

@@ -48,9 +48,10 @@ class WorkerSettings(BaseSettings):
     runner_link_key: SecretStr  # hex; signs dry_run requests, verifies runner results
     ingest_token: SecretStr
     ingest_url: str = "http://backend-api:8000/ingest/alert"
-    llm_provider: Literal["gemini", "fake"] = "gemini"
+    llm_provider: Literal["gemini", "anthropic", "fake"] = "gemini"
     llm_model: str = "gemini-2.5-flash"
-    gemini_api_key: SecretStr | None = None
+    gemini_api_key: SecretStr | None = None  # LLM and embeddings (ADR-14)
+    anthropic_api_key: SecretStr | None = None  # Claude adapter (ADR-13 fallback)
     prompt_version: str = "v1"
     confidence_threshold: float = 0.70
     max_agent_seconds: float = 90.0

@@ -60,3 +60,23 @@ def test_run_meta_hash_changes_with_agent_settings() -> None:
 
 def test_worker_settings_have_no_action_signing_key() -> None:
     assert "action_signing_key" not in WorkerSettings.model_fields
+
+
+async def test_anthropic_provider_needs_its_key_and_keeps_gemini_embeddings() -> None:
+    from oncallpilot.agent.providers.anthropic import AnthropicProvider
+    from oncallpilot.agent.providers.gemini import GeminiEmbeddingProvider
+
+    async with httpx.AsyncClient() as http:
+        with pytest.raises(SystemExit):
+            build_providers(settings(llm_provider="anthropic"), http)
+        provider, embedder = build_providers(
+            settings(
+                llm_provider="anthropic",
+                llm_model="claude-opus-5-5",
+                anthropic_api_key=SecretStr("k"),
+                gemini_api_key=SecretStr("g"),
+            ),
+            http,
+        )
+    assert isinstance(provider, AnthropicProvider) and provider.model == "claude-opus-5-5"
+    assert isinstance(embedder, GeminiEmbeddingProvider)
