@@ -70,3 +70,4 @@ class WorkerSettings(BaseSettings):
     targets_path: Path = Path("catalogue") / "targets.yaml"
     runbooks_dir: Path = Path("runbooks")
     fcm_credentials_path: Path | None = None  # mounted service-account file (FR-018)
+    worker_metrics_port: int = 9464  # /metrics for Prometheus on obs_net, never published

@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.115,<1",
     "httpx>=0.28,<1",
     "oncallpilot-contracts",
+    "prometheus-client>=0.26.0",
     "pydantic-settings>=2.6,<3",
     "pyjwt[crypto]>=2.10,<3",
     "pyyaml>=6.0,<7",

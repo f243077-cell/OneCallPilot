@@ -33,6 +33,7 @@ from oncallpilot_contracts.signing import key_from_hex
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
+from oncallpilot import metrics
 from oncallpilot.agent.effects import DbEffects
 from oncallpilot.agent.prompts import FilePrompts
 from oncallpilot.agent.proposer import RunnerProposer
@@ -287,6 +288,7 @@ async def main() -> None:
             # The worker still runs; search_runbooks finds less until the next start.
             log.error("runbook ingestion failed: %s", type(exc).__name__)
 
+        metrics.serve(settings.worker_metrics_port)
         stop = asyncio.Event()
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGTERM, signal.SIGINT):

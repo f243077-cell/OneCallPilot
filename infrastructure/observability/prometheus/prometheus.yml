@@ -24,3 +24,12 @@ scrape_configs:
         type: A
         port: 8001
         refresh_interval: 5s
+  # backend-worker's own metrics (NFR-006, B3.5): agent duration, tool calls, LLM
+  # latency and errors. Resolves only once backend-worker runs in Compose and joins
+  # obs_net; until then the job simply has no targets.
+  - job_name: copilot
+    dns_sd_configs:
+      - names: [backend-worker]
+        type: A
+        port: 9464
+        refresh_interval: 15s

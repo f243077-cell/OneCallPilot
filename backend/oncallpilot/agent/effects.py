@@ -21,6 +21,7 @@ from oncallpilot_contracts.enums import EscalationReason, EvidenceKind
 from oncallpilot_contracts.ws import cut_evidence_payload
 from redis.exceptions import RedisError
 
+from oncallpilot import metrics
 from oncallpilot.agent.proposer import PreparedProposal, Refusal
 from oncallpilot.agent.providers.base import Usage
 from oncallpilot.agent.redaction import looks_suspicious, redact, redact_payload
@@ -218,7 +219,9 @@ class DbEffects:
             )
         except ToolRefusedError as exc:
             log.info("tool refused: %s", name, extra={"incident_id": self.incident_id})
+            metrics.TOOL_CALLS.labels(name, purpose, "refused").inc()
             return ToolOutcome(None, redact(str(exc)))
+        metrics.TOOL_CALLS.labels(name, purpose, "stored").inc()
         payload = redact_payload(result.payload)
         params = redact_payload(result.params)
         summary = redact(summarise(result.kind, params, payload))
@@ -345,9 +348,15 @@ class DbEffects:
         return "proposed" if stored else "dry_run_unavailable"
 
     async def escalate(self, reason: EscalationReason) -> None:
+        metrics.ESCALATIONS.labels(reason).inc()
+        if reason == "llm_unavailable":
+            metrics.LLM_ERRORS.labels("any", self.provider_name, "unavailable").inc()
         await escalate_incident(self.pool, self.events, self.incident_id, reason, self.clock())
 
     async def finish(self, meta: RunMeta) -> None:
+        seconds = meta.duration_ms / 1000
+        metrics.AGENT_DURATION.labels(meta.terminal_state).observe(seconds)
+        metrics.INCIDENT_DURATION.labels(str(self.incident_id), meta.terminal_state).set(seconds)
         async with self.pool.acquire() as conn:
             await db.merge_agent_meta(
                 conn,
@@ -365,6 +374,9 @@ class DbEffects:
     async def record_llm_call(
         self, kind: str, prompt: str, response: str, usage: Usage, latency_ms: int
     ) -> None:
+        metrics.LLM_LATENCY.labels(kind, self.provider_name).observe(latency_ms / 1000)
+        if response.startswith("INVALID:"):
+            metrics.LLM_ERRORS.labels(kind, self.provider_name, "invalid_output").inc()
         async with self.pool.acquire() as conn:
             await db.audit(
                 conn, "agent", "llm.call", self.incident_id, payload={
