@@ -18,7 +18,7 @@
    `cd backend && OCP_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54329/postgres uv run pytest -c pyproject.toml ../tests/db -q` (70 tests); the same for `../tests/integration` (10) and `../tests/security` (22, needs Docker; `docker tag mirror.gcr.io/library/redis:7.4.11-alpine redis:7.4.11-alpine` first). Unit tests: `uv run pytest -q tests`.
 
 ## 2. Next tasks, in order
-Done: Phase 1 Stream B (B1.1–B1.8); B2.1–B2.5, B2.7–B2.12 (B2.12 with synthetic fixtures), FR-011, the worker entry point, B3.2, the detector following `monitor_settings`, B3.8 (Claude adapter), B3.6–B3.7 (benchmark harness), B3.5 (copilot metrics). Stream A is at A2.5 (earlier work).
+Done: Phase 1 Stream B (B1.1–B1.8); B2.1–B2.5, B2.7–B2.12 (B2.12 with synthetic fixtures), FR-011, the worker entry point, B3.2, the detector following `monitor_settings`, B3.8 (Claude adapter), B3.6–B3.7 (benchmark harness), B3.5 (copilot metrics), backend Compose services (profile `backend`), README with Known limitations (S3.2 draft, SEC-018). Stream A is at A2.5 (earlier work).
 0. **CI first:** check all six workflows on the last pushed commit (`git log origin/main -1`); push any held local commits (`git log origin/main..main`) only once they are green. A runner job that dies pulling images (`toomanyrequests`) before any test ran may be re-run once.
 1. **B2.6 / TEST-002 recorded half** (needs the live testbed and the Gemini key, so Tanzeel's laptop): record real tool outputs per scenario into `tests/agent_regression/scenarios/*.yaml` (same format as the synthetic ones) and add the `@pytest.mark.recorded` real-model replay.
 2. **B3.9** procedure dry run (2 scenarios × 2 modes) and **B3.3/B3.4** need the live stack, Supabase and a real LLM key — Tanzeel's laptop.

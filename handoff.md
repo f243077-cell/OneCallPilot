@@ -2,6 +2,21 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 14: README
+
+### Done
+- **S3.2 draft + SEC-018** (`6fc7548`): `README.md` rewritten (overview, architecture, setup, safety model, **Known limitations** — the five items SEC-018 names plus the two other §7.12 items and one new one, results pointer). The backend workflow now greps for the `## Known limitations` heading.
+- CI: all six workflows green on `978fcfc`; the held commits (B3.6 part 2, B3.7, B3.5, Compose services, README) pushed together.
+
+### Decisions to confirm (Tanzeel)
+- Known limitation 8 is new: the Claude fallback cannot run at temperature 0 (chunk 11). Review the list at Gate G4 (SEC-018).
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged (chunks 7–13).
+
 ## 2026-10-21 — Cloud session 1, chunk 13: copilot metrics
 
 ### Done
