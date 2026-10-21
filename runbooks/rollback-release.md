@@ -1,4 +1,4 @@
-# Rolling back a bad release
+# Rolling back a failing release
 
 ## Symptoms
 Errors or latency rise shortly after a new release of a service starts serving
@@ -12,7 +12,7 @@ same way.
   service. A release deployed within a few minutes before the rise is the prime
   suspect; one deployed hours or days earlier usually is not.
 - Read the error logs of the service: exceptions in code paths the release
-  touched, appearing only after the deploy, support a bad release.
+  touched, appearing only after the deploy, support a failing release.
 - Check the other signals. If request rate, memory and dependency latency are
   all normal, a capacity or dependency problem is unlikely.
 - A disproof check: if the same errors also appear before the deploy, or on the

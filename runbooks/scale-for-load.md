@@ -11,7 +11,7 @@ and backing services answer at their usual speed.
 - Per-request cost is unchanged: the latency of a single request at low load,
   and the database and dependency timings, look normal.
 - A disproof check: if the request rate is normal, more replicas will not help;
-  look for a slow dependency or a bad release instead.
+  look for a slow dependency or a failing release instead.
 
 ## Action
 Add replicas of the active release (`scale_service`), within the catalogue's

@@ -1,7 +1,7 @@
 # Restarting a service
 
 ## When a restart helps
-A restart clears state that has gone bad inside a running process while the
+A restart clears state that has gone wrong inside a running process while the
 code and configuration are fine:
 - memory that grows steadily over hours until the process slows down, is
   killed for running out of memory, or restarts in a loop;
@@ -19,7 +19,7 @@ code and configuration are fine:
 - A stopped dependency: the container health shows it exited or restarting, and
   the dependent service logs connection-refused or timeout errors.
 - A disproof check: if the same symptom started right after a deploy, suspect
-  the release before suspecting state (see "Rolling back a bad release").
+  the release before suspecting state (see "Rolling back a failing release").
 
 ## Action
 Restart the affected service (`restart_service`). The runner restarts the
