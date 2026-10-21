@@ -44,6 +44,8 @@ services:
       context: ../../backend
       additional_contexts:
         contracts: ../../contracts
+        targets: ../../runner
+        runbooks: ../../runbooks
     profiles: [tools]
     entrypoint: ["python", "-m", "oncallpilot.seed"]
     environment:

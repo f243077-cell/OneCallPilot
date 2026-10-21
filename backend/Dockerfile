@@ -1,8 +1,10 @@
 # syntax=docker/dockerfile:1
 # The backend image (architecture §2.2, §2.3, ADR-09): one image, two processes
 # (backend-api, backend-worker), plus one-off tools such as the seed command.
-# The contracts package comes from the `contracts` build context:
-#   docker build --build-context contracts=contracts -t oncallpilot/backend:0.1.0 backend
+# Three extra build contexts: `contracts` (the contracts package and the action
+# catalogue), `targets` (runner/, for targets.yaml only) and `runbooks`:
+#   docker build --build-context contracts=contracts --build-context targets=runner \
+#     --build-context runbooks=runbooks -t oncallpilot/backend:0.1.0 backend
 #
 # Runs as an unprivileged user with no Docker socket. Secrets arrive only as
 # environment variables at run time; none is baked into the image.
@@ -30,6 +32,11 @@ RUN useradd --system --uid 10002 --no-create-home --shell /usr/sbin/nologin back
 WORKDIR /app
 # The detector rules; their hash is detector_config_version (relative to /app).
 COPY config/ config/
+# The agent's validator reads the same catalogue and target allowlist as the runner
+# (architecture §5.6), and the worker ingests the runbooks at start-up.
+COPY --from=contracts actions.yaml catalogue/actions.yaml
+COPY --from=targets targets.yaml catalogue/targets.yaml
+COPY --from=runbooks . runbooks/
 USER backend
 EXPOSE 8000
 CMD ["uvicorn", "--factory", "oncallpilot.api.app:create_production_app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

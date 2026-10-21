@@ -118,7 +118,9 @@ jobs:
 
       - name: Backend image builds
         working-directory: .
-        run: docker build --build-context contracts=contracts -t oncallpilot/backend:ci backend
+        run: >-
+          docker build --build-context contracts=contracts --build-context targets=runner
+          --build-context runbooks=runbooks -t oncallpilot/backend:ci backend
 
       # TEST-015 (ro half), SEC-014: only reads through socket-proxy-ro (ADR-21).
       - name: socket-proxy-ro security test

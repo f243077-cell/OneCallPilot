@@ -7,6 +7,7 @@ so they never appear in a repr or a log line.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -32,3 +33,32 @@ class ApiSettings(BaseSettings):
     @property
     def jwks_url(self) -> str:
         return f"{self.jwt_issuer}/.well-known/jwks.json"
+
+
+class WorkerSettings(BaseSettings):
+    """backend-worker settings. It never receives ``ACTION_SIGNING_KEY`` (SEC-002)."""
+
+    model_config = SettingsConfigDict(extra="ignore", frozen=True)
+
+    database_url: SecretStr
+    redis_url: SecretStr
+    runner_link_key: SecretStr  # hex; signs dry_run requests, verifies runner results
+    ingest_token: SecretStr
+    ingest_url: str = "http://backend-api:8000/ingest/alert"
+    llm_provider: Literal["gemini", "fake"] = "gemini"
+    llm_model: str = "gemini-2.5-flash"
+    gemini_api_key: SecretStr | None = None
+    prompt_version: str = "v1"
+    confidence_threshold: float = 0.70
+    max_agent_seconds: float = 90.0
+    agent_concurrency: int = 2
+    proposal_ttl_seconds: int = 900
+    detector_interval_seconds: float = 5.0
+    detector_config_path: Path = Path("config") / "detector.yaml"
+    prometheus_url: str = "http://prometheus:9090"
+    loki_url: str = "http://loki:3100"
+    docker_host: str = "tcp://socket-proxy-ro:2375"
+    ledger_path: Path = Path("/ledger/deploys.jsonl")
+    catalogue_path: Path = Path("catalogue") / "actions.yaml"
+    targets_path: Path = Path("catalogue") / "targets.yaml"
+    runbooks_dir: Path = Path("runbooks")
