@@ -82,10 +82,10 @@ jobs:
       - name: Pytest (integration, Postgres and Redis)
         run: uv run pytest -c pyproject.toml ../tests/integration -q
 
-      # SEC-004: a throwaway copilot-redis from infrastructure/redis/ (published on
-      # 127.0.0.1 for the test only); the runner user is NOPERM outside its rules.
-      - name: Redis ACL (SEC-004)
-        run: uv run pytest -c pyproject.toml ../tests/security/test_redis_acl.py -q
+      # SEC-004 (a throwaway copilot-redis from infrastructure/redis/, published on
+      # 127.0.0.1 for the test only) and TEST-008 (the redaction corpus).
+      - name: Security tests (SEC-004, TEST-008)
+        run: uv run pytest -c pyproject.toml ../tests/security -q
 
       - name: Backend image builds
         working-directory: .
