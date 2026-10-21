@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oncallpilot/core/errors/api_error.dart';
+import 'package:oncallpilot/data/api/ws_client.dart';
 import 'package:oncallpilot/data/models/approval.dart';
 import 'package:oncallpilot/data/models/incident.dart';
 import 'package:oncallpilot/data/repositories/mock_incident_repository.dart';
@@ -22,6 +23,15 @@ import '../../support/sample_timeline.dart' as timeline;
 import '../../support/screen_harness.dart';
 
 final _fixture = File('${contractFixturesDir().path}/ws/proposal.created.json');
+
+class _FixedStatus extends ConnectionStatusNotifier {
+  _FixedStatus(this.status);
+
+  final ConnectionStatus status;
+
+  @override
+  ConnectionStatus build() => status;
+}
 
 class _Gate implements BiometricGate {
   int calls = 0;
@@ -184,6 +194,31 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     expect(button(tester, 'approve').onPressed, isNull);
   });
+
+  for (final status in [
+    ConnectionStatus.connecting,
+    ConnectionStatus.stale,
+    ConnectionStatus.offline,
+  ]) {
+    testWidgets('MOB-015: ${status.name}: Approve disabled, Reject enabled', (
+      tester,
+    ) async {
+      final json = incidentJson();
+      repo.onDetail = (_) async => IncidentDetail.fromJson(json);
+      await pumpScreens(
+        tester,
+        repository: repo,
+        clock: () => openedAt.add(const Duration(minutes: 3)),
+        initialLocation: '/proposals/$pendingId?incident=$detailId',
+        overrides: [
+          connectionStatusProvider.overrideWith(() => _FixedStatus(status)),
+        ],
+      );
+      await scrollTo(tester, find.byKey(const ValueKey('approve')));
+      expect(button(tester, 'approve').onPressed, isNull);
+      expect(button(tester, 'reject').onPressed, isNotNull);
+    });
+  }
 
   testWidgets('a decided proposal shows its status; both buttons off', (
     tester,

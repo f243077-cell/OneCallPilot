@@ -6,8 +6,9 @@
 // reason (MOB-010) and stays enabled whenever the proposal is pending.
 //
 // Approve is enabled only for a pending, unexpired proposal shown in its latest
-// version (the incident is refetched on every newer event). The connection
-// part of the stale-state gate (MOB-015) arrives with tasks A2.8 and A3.4.
+// version (the incident is refetched on every newer event) while the socket is
+// `connectedSynced` (MOB-015; the StaleBanner itself is task A3.4). Reject
+// stays enabled whenever the proposal is pending.
 
 import 'dart:async';
 
@@ -16,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/errors/api_error.dart';
+import '../../../data/api/ws_client.dart';
 import '../../../data/models/enums.dart';
 import '../../../data/models/evidence.dart';
 import '../../../data/models/incident.dart';
@@ -195,7 +197,9 @@ class _ActionReviewBodyState extends ConsumerState<ActionReviewBody> {
     final theme = Theme.of(context);
     final pending = proposal.status == ProposalStatus.pending;
     final expired = !proposal.expiresAt.isAfter(ref.watch(serverNowProvider)());
-    final canApprove = pending && !expired && !approval.busy;
+    final synced =
+        ref.watch(connectionStatusProvider) == ConnectionStatus.connectedSynced;
+    final canApprove = pending && !expired && synced && !approval.busy;
     final canReject = pending && !approval.busy;
     final evidence = {for (final e in incident.evidence) e.ref: e};
     final dryRun = proposal.dryRunResult;
