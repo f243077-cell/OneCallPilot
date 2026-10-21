@@ -27,6 +27,7 @@ class Msg:
     content: str
     tool_call_id: str | None = None
     tool_calls: tuple[ToolCall, ...] = ()
+    raw: Any = None  # the provider's own content for an assistant turn, replayed unchanged
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,7 @@ class LLMTurn:
     done: bool = False
     text: str = ""
     usage: Usage = field(default_factory=Usage)
+    raw: Any = None  # the provider's own content, for Msg.raw
 
 
 class LLMUnavailableError(Exception):
@@ -66,16 +68,21 @@ class LLMUnavailableError(Exception):
 class InvalidStructuredOutputError(Exception):
     """The reply did not validate; ``error`` is the message for the repair turn."""
 
-    def __init__(self, error: str, usage: Usage | None = None) -> None:
+    def __init__(
+        self, error: str, usage: Usage | None = None, raw: Any = None, text: str = ""
+    ) -> None:
         super().__init__(error)
         self.error = error
         self.usage = usage or Usage()
+        self.raw = raw  # the invalid reply as the provider returned it
+        self.text = text
 
 
 @dataclass(frozen=True)
 class Structured[T]:
     value: T
     usage: Usage
+    raw: Any = None  # the provider's own content, for Msg.raw
 
 
 class LLMProvider(Protocol):

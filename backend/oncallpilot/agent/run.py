@@ -165,7 +165,9 @@ class Investigation:
                 started,
             )
             allowed = turn.tool_calls[: self.state.gather_calls_left]
-            self.messages.append(Msg("assistant", turn.text, tool_calls=tuple(allowed)))
+            self.messages.append(
+                Msg("assistant", turn.text, tool_calls=tuple(allowed), raw=turn.raw)
+            )
             for call in allowed:
                 outcome = await self.effects.run_tool(call.name, call.arguments, "gather")
                 if outcome.evidence is not None:
@@ -181,7 +183,6 @@ class Investigation:
         valid = [h.model_copy(update={"rank": i}) for i, h in enumerate(valid, start=1)]
         self._apply(HypothesesChecked(valid=len(valid)))
         await self.effects.store_hypotheses(valid)
-        self.messages.append(Msg("assistant", reply.model_dump_json()))
         return valid
 
     async def _reflect(self, hypotheses: list[HypothesisOut]) -> None:
@@ -190,14 +191,12 @@ class Investigation:
         self._apply(ToolCalled("disproof"))
         if outcome.evidence is not None:
             self.evidence[outcome.evidence.ref] = outcome.evidence
-        self.messages.append(Msg("assistant", plan.model_dump_json()))
         self.messages.append(Msg("user", f"Disproof query result:\n{outcome.message}"))
         verdict = await self._structured("reflect", ReflectionOut, self.prompts.reflect())
         kinds: dict[str, str] = {ref: view.kind for ref, view in self.evidence.items()}
         citations = {h.rank: self.citation_check(h, kinds) for h in hypotheses}
         ranked = apply_reflection(hypotheses, verdict, citations)
         await self.effects.store_reflection(ranked)
-        self.messages.append(Msg("assistant", verdict.model_dump_json()))
         self._apply(ReflectionDone(top_confidence(ranked), self.threshold))
 
     async def _propose(self) -> None:
@@ -214,7 +213,11 @@ class Investigation:
     # --- helpers ------------------------------------------------------------
 
     async def _structured(self, call: StructuredCall, schema: type[M], prompt: str) -> M:
-        """One structured call with at most one repair (AI-020)."""
+        """One structured call with at most one repair (AI-020).
+
+        The prompt, any invalid reply with its repair request, and the valid
+        reply stay in the conversation, as the model saw them (``Msg.raw``).
+        """
         messages = [*self.messages, Msg("user", prompt)]
         while True:
             started = self.clock()
@@ -226,6 +229,7 @@ class Investigation:
                 self._apply(StructuredAttempt(call, valid=False))
                 messages = [
                     *messages,
+                    Msg("assistant", exc.text or "(invalid reply)", raw=exc.raw),
                     Msg(
                         "user",
                         "Your reply did not match the required JSON schema. Error:\n"
@@ -236,6 +240,10 @@ class Investigation:
             self.usage.append(reply.usage)
             await self._record(call, messages, reply.value.model_dump_json(), reply.usage, started)
             self._apply(StructuredAttempt(call, valid=True))
+            self.messages = [
+                *messages,
+                Msg("assistant", reply.value.model_dump_json(), raw=reply.raw),
+            ]
             return reply.value
 
     async def _record(
