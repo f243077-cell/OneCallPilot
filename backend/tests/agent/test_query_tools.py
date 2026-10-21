@@ -78,7 +78,8 @@ def test_query_logs_params_are_strict() -> None:
 # --- PromQL (AI-006) ----------------------------------------------------------------
 
 PROMQL_SNAPSHOTS: dict[tuple[str, str], str] = {
-    ("error_rate", "api"): 'sum(rate(http_requests_total{service="api",status=~"5.."}[1m]))'
+    ("error_rate", "api"): '(sum(rate(http_requests_total{service="api",status=~"5.."}[1m]))'
+    " or vector(0))"
     ' / sum(rate(http_requests_total{service="api"}[1m]))',
     ("p95_latency", "api"): "histogram_quantile(0.95, sum by (le) "
     '(rate(http_request_duration_seconds_bucket{service="api"}[1m])))',
@@ -99,7 +100,7 @@ PROMQL_SNAPSHOTS: dict[tuple[str, str], str] = {
     (
         "job_failure_rate",
         "worker",
-    ): 'sum(rate(worker_jobs_total{service="worker",result="error"}[1m]))'
+    ): '(sum(rate(worker_jobs_total{service="worker",result="error"}[1m])) or vector(0))'
     ' / sum(rate(worker_jobs_total{service="worker"}[1m]))',
     ("job_latency_p95", "worker"): "histogram_quantile(0.95, sum by (le) "
     '(rate(worker_job_duration_seconds_bucket{service="worker"}[1m])))',
@@ -301,3 +302,15 @@ def test_every_template_has_a_unit_and_a_snapshot() -> None:
     names: list[MetricTemplate] = list(TEMPLATES)
     assert set(names) == set(METRIC_UNITS)
     assert {name for name, _ in PROMQL_SNAPSHOTS} == set(names)
+
+
+def test_failure_shares_read_zero_when_there_is_traffic_and_no_failure() -> None:
+    """Prometheus returns no series for `sum(rate(...5xx...))` when nothing
+    failed, so a plain ratio is empty exactly when the service is healthy: the
+    detector then never learns a healthy baseline (found on the first real
+    start). `or vector(0)` makes it 0; no traffic at all still reads as no
+    data, because the denominator is empty."""
+    for template, service in (("error_rate", "api"), ("job_failure_rate", "worker")):
+        numerator, _, denominator = render(template, service).partition(" / ")
+        assert numerator.startswith("(sum(rate(") and numerator.endswith(" or vector(0))")
+        assert "vector(0)" not in denominator

@@ -12,8 +12,12 @@ from oncallpilot_contracts.enums import MetricTemplate
 
 MetricService = Literal["api", "worker"]
 
+# A failure share: the numerator has no series while nothing fails, so it
+# falls back to 0 (`or vector(0)`); with no traffic the denominator is empty
+# and the share stays "no data". Without the fallback a healthy service reads
+# as no data and the detector never learns a healthy baseline.
 _HTTP_5XX_SHARE = (
-    'sum(rate(http_requests_total{{service="{s}",status=~"5.."}}[1m]))'
+    '(sum(rate(http_requests_total{{service="{s}",status=~"5.."}}[1m])) or vector(0))'
     ' / sum(rate(http_requests_total{{service="{s}"}}[1m]))'
 )
 
@@ -48,7 +52,7 @@ TEMPLATES: dict[MetricTemplate, tuple[str, tuple[MetricService, ...]]] = {
         ("api",),
     ),
     "job_failure_rate": (
-        'sum(rate(worker_jobs_total{{service="{s}",result="error"}}[1m]))'
+        '(sum(rate(worker_jobs_total{{service="{s}",result="error"}}[1m])) or vector(0))'
         ' / sum(rate(worker_jobs_total{{service="{s}"}}[1m]))',
         ("worker",),
     ),
