@@ -3,13 +3,18 @@
 //
 //   OCP_LIVE_WS_URL    ws://127.0.0.1:8000/ws/incidents
 //   OCP_LIVE_TOKEN     a JWT the backend accepts (a test user's, never a real one)
+//   OCP_LIVE_API_URL   http://127.0.0.1:8000 (the REST test)
 //   OCP_LIVE_SEED      a shell command that seeds one fixture timeline under
 //                      fresh IDs (`ocp seed-incident … --new-ids`) and prints
-//                      its JSON summary ({"events": N, "last_event_id": …})
+//                      its JSON summary ({"incident_id": …, "events": N,
+//                      "last_event_id": …})
 //
-// It connects (auth → hello → refetch), seeds a timeline and receives every
-// event; then stops, seeds again while disconnected, and reconnects: the
-// `resume` must deliver exactly the missed events, in order, and end synced.
+// The socket test connects (auth → hello → refetch), seeds a timeline and
+// receives every event; then stops, seeds again while disconnected, and
+// reconnects: the `resume` must deliver exactly the missed events, in order,
+// and end synced. The REST test (A3.1) reads the seeded incident through the
+// live repository and checks the server's answers to the approval calls on a
+// proposal that is already decided.
 
 @Tags(['live'])
 library;
@@ -19,7 +24,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oncallpilot/core/errors/api_error.dart';
+import 'package:oncallpilot/data/api/rest_client.dart';
 import 'package:oncallpilot/data/api/ws_client.dart';
+import 'package:oncallpilot/data/models/approval.dart';
+import 'package:oncallpilot/data/models/enums.dart';
+import 'package:oncallpilot/data/repositories/live_incident_repository.dart';
+import 'package:oncallpilot/shared/uuid.dart';
 import 'package:oncallpilot/data/models/ws_event.dart';
 
 class _Token implements TokenSource {
@@ -101,5 +112,74 @@ void main() {
         ? 'OCP_LIVE_WS_URL is not set (needs a running backend-api)'
         : false,
     timeout: const Timeout(Duration(minutes: 2)),
+  );
+
+  final api = _env['OCP_LIVE_API_URL'];
+  test(
+    'REST: feed, detail and the approval calls through the live repository',
+    () async {
+      final tokens = _Token(_env['OCP_LIVE_TOKEN']!);
+      final socket = WsClient(
+        url: Uri.parse(url ?? 'ws://unused'),
+        connect: connectWebSocket,
+        tokens: tokens,
+        refetch: () async {},
+      );
+      addTearDown(socket.dispose);
+      final repo = LiveIncidentRepository(RestClient(api!, tokens), socket);
+      final seeded = await _seed();
+      final id = seeded['incident_id'] as String;
+
+      final feed = await repo.listIncidents();
+      expect(feed.map((i) => i.id), contains(id));
+      final detail = await repo.getIncident(id);
+      expect(detail.status, IncidentStatus.resolved);
+      expect(detail.evidence, isNotEmpty);
+      final proposal = detail.proposals.first;
+
+      Matcher code(ApiErrorCode c) =>
+          throwsA(isA<ApiError>().having((e) => e.code, 'code', c));
+      await expectLater(
+        repo.challenge(proposal.id, proposalFingerprint: proposal.fingerprint),
+        code(ApiErrorCode.proposalNotPending),
+      );
+      await expectLater(
+        repo.reject(
+          proposal.id,
+          reason: 'live check',
+          idempotencyKey: uuidV4(),
+        ),
+        code(ApiErrorCode.proposalNotPending),
+      );
+      await expectLater(
+        repo.approve(
+          proposal.id,
+          ApproveRequest(
+            challengeId: '00000000-0000-4000-8000-000000000000',
+            nonce: 'ab' * 32,
+            proposalFingerprint: proposal.fingerprint,
+            authMethod: AuthMethod.biometric,
+            deviceId: null,
+          ),
+          idempotencyKey: uuidV4(),
+        ),
+        code(ApiErrorCode.challengeInvalid),
+      );
+      await expectLater(
+        repo.getIncident('00000000-0000-4000-8000-000000000000'),
+        code(ApiErrorCode.notFound),
+      );
+      await expectLater(
+        LiveIncidentRepository(
+          RestClient(api, _Token('not-a-jwt')),
+          socket,
+        ).listIncidents(),
+        code(ApiErrorCode.unauthorized),
+      );
+    },
+    skip: api == null
+        ? 'OCP_LIVE_API_URL is not set (needs a running backend-api)'
+        : false,
+    timeout: const Timeout(Duration(minutes: 1)),
   );
 }

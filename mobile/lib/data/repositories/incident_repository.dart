@@ -1,6 +1,6 @@
 // The app's only door to incident data (architecture §10.1). Screens and
 // providers use this interface; `MockIncidentRepository` (fixtures, MOB-017)
-// and `LiveIncidentRepository` (REST + WebSocket, task A3.1) implement it.
+// and `LiveIncidentRepository` (REST + WebSocket) implement it.
 // Every failure is an ApiError carrying a C2 error code.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,8 +44,6 @@ abstract interface class IncidentRepository {
 
 /// Set in `main.dart` for the build's DATA_SOURCE.
 final incidentRepositoryProvider = Provider<IncidentRepository>(
-  (ref) => throw UnimplementedError(
-    'The live incident repository arrives in task A3.1; '
-    'run with --dart-define=DATA_SOURCE=mock',
-  ),
+  (ref) =>
+      throw UnimplementedError('incidentRepositoryProvider is set in main'),
 );

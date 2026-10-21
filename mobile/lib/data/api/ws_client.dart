@@ -136,6 +136,7 @@ class WsClient {
     _running = true;
     _closedAt = _clock();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) => _check());
+    unawaited(_refreshes?.cancel()); // from a run that ended by signing out
     _refreshes = _tokens.refreshed.listen(_reauth);
     unawaited(_open());
   }
@@ -356,7 +357,7 @@ class WsClient {
   }
 }
 
-/// The live socket, set up with the live repository (task A3.1); null in mock
+/// The live socket, set up in `main.dart` with the live repository; null in mock
 /// mode, where there is no socket to lose.
 final wsClientProvider = Provider<WsClient?>((ref) => null);
 

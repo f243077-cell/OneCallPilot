@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,13 +8,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/env.dart';
+import 'data/api/rest_client.dart';
+import 'data/api/ws_client.dart';
 import 'data/auth/auth_repository.dart';
 import 'data/auth/key_value_store.dart';
 import 'data/auth/secure_session_storage.dart';
+import 'data/auth/supabase_token_source.dart';
 import 'data/repositories/fixture_timelines.dart';
 import 'data/repositories/incident_repository.dart';
+import 'data/repositories/live_incident_repository.dart';
 import 'data/repositories/mock_incident_repository.dart';
 import 'features/auth/application/auth_session.dart';
+import 'features/incident_detail/application/incident_detail_provider.dart';
+import 'features/incident_feed/application/incident_list_provider.dart';
+import 'shared/server_clock.dart';
 
 // Firebase init joins with push in task A3.2 (architecture §10.1).
 Future<void> main() async {
@@ -62,9 +71,43 @@ Future<List<Override>> _dataLayer(Env env) async {
       detectSessionInUri: false,
     ),
   );
-  return overrides..add(
-    authRepositoryProvider.overrideWithValue(
-      SupabaseAuthRepository(Supabase.instance.client.auth),
+  final auth = Supabase.instance.client.auth;
+  final tokens = SupabaseTokenSource(auth);
+  final rest = RestClient(env.apiBaseUrl, tokens);
+  return overrides..addAll([
+    authRepositoryProvider.overrideWithValue(SupabaseAuthRepository(auth)),
+    wsClientProvider.overrideWith((ref) => _liveSocket(ref, env, tokens)),
+    incidentRepositoryProvider.overrideWith(
+      (ref) => LiveIncidentRepository(rest, ref.watch(wsClientProvider)!),
     ),
+  ]);
+}
+
+/// The socket of a live build (A3.1): connected while signed in; a first
+/// connect or `resync_required` refetches the feed and every open incident;
+/// `hello` sets the server clock; a refused session refresh signs out.
+WsClient _liveSocket(Ref ref, Env env, TokenSource tokens) {
+  final session = ref.watch(authStateProvider);
+  final client = WsClient(
+    url: Uri.parse(env.wsUrl),
+    connect: connectWebSocket,
+    tokens: tokens,
+    refetch: () async {
+      ref
+        ..invalidate(incidentListProvider)
+        ..invalidate(incidentDetailProvider);
+      await ref.read(incidentListProvider.future);
+    },
+    onHello: (serverTime) =>
+        ref.read(serverClockOffsetProvider.notifier).sync(serverTime),
+    onSignedOut: () => unawaited(ref.read(authRepositoryProvider).signOut()),
   );
+  void follow() => session.signedIn ? client.start() : unawaited(client.stop());
+  session.addListener(follow);
+  follow();
+  ref.onDispose(() {
+    session.removeListener(follow);
+    unawaited(client.dispose());
+  });
+  return client;
 }
