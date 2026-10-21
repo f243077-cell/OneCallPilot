@@ -25,7 +25,7 @@ It is tested on **Chaos Shop**, a deliberately breakable microservice testbed wi
 | **Tanzeel** | A — acting and display | `mobile/`, `chaos-shop/`, `runner/`, `infrastructure/compose/{testbed,runner}.yml` |
 | Both | Shared | `contracts/`, `runbooks/`, `compose.yaml`, `.env.example`, `tools/ocp/`, `.github/`, `docs/`, `tests/{security,e2e}/` |
 
-At the start of a session, determine which developer you are working for (ask, or read `git config user.name` and the branch prefix). Edit only that developer's folders unless they explicitly ask otherwise; changes in shared folders follow §8.
+**Since 2026-10-21 Tanzeel is the only developer** (Usman has left). Sessions work for Tanzeel and may edit every folder; the table above only says which stream a folder belongs to. Branch and push rules are in §11.
 
 ---
 
@@ -199,7 +199,7 @@ Use the exact names in `docs/architecture.md`. If a name you need is not there, 
 - Never edit a migration that has been merged. Fix forward with a new migration.
 - Every migration is applied in CI to a fresh `pgvector/pgvector` container before tests (`migrations.yml`).
 - Any change to columns, enums, or constraints that appear in contracts requires a contract PR first (§8.4).
-- Usman applies migrations to `ocp-dev`. `ocp-bench` is migrated only during the freeze procedure.
+- Tanzeel applies migrations to `ocp-dev`. `ocp-bench` is migrated only during the freeze procedure.
 
 ### 4.8 Docker
 - Pinned image tags only; never `latest`. Python images from `python:3.12-slim`.
@@ -325,13 +325,9 @@ Rules:
 ## 8. Git and collaboration rules
 
 ### 8.1 Branches
-- `main` is protected: a PR is required and all required checks must be green. **No reviewer approval is required**: the author merges their own PR once CI passes. Cross-reads named elsewhere (runbooks, contract drafts) are quality checks the other developer does when they can; they never block a merge.
-- Short-lived branches (≤ 3 days), rebased on `main`:
-  - `feat/b-<topic>` (Usman), `feat/a-<topic>` (Tanzeel)
-  - `fix/<topic>`, `chore/<topic>`, `docs/<topic>`, `test/<topic>`
-  - `contract/<topic>` — contract changes only
-  - `bench/<topic>` — benchmark harness
-- Tags: `contracts-vX.Y.Z`, `bench-freeze`, `v1.0`.
+- **Since 2026-10-21 there is one developer (Tanzeel; Usman has left the project).** All work is committed and pushed **directly to `main`**; there are no feature branches and no pull requests. The single-developer rules are in §11 and take precedence over the PR rules elsewhere in this file (§8.3 and §8.4 apply to commit contents, not to PRs).
+- Before every push to `main`, run the checks of every package the change touches (§11.2). Never push red: `main` must stay green.
+- Tags: `contracts-vX.Y.Z`, `bench-freeze`, `v1.0`. Tags are created only when Tanzeel asks.
 
 ### 8.2 Commits
 Conventional Commits with a scope from: `api`, `worker`, `detector`, `agent`, `approvals`, `push`, `db`, `obs`, `runner`, `chaos`, `mobile`, `contracts`, `bench`, `ci`, `docs`, `infra`.
@@ -357,7 +353,7 @@ Claude must never edit `contracts/` inside an implementation PR. If implementati
 - Stay inside the owner's folders (§1). Shared files (`compose.yaml`, `.env.example`, workflows) get small, isolated edits.
 - Compose is split per owner (`infrastructure/compose/*.yml`); add services to your own file, not to `compose.yaml`.
 - Generated files (JSON Schemas, Dart `*.g.dart`) are regenerated, never hand-edited; resolve conflicts by regenerating.
-- Pull and rebase on `main` daily.
+- Pull `main` before starting work (`git pull --ff-only origin main`).
 
 ---
 
@@ -433,29 +429,32 @@ When reporting back: what changed, which requirement IDs are satisfied, which te
 
 ---
 
-## 11. Usman's working rules
+## 11. Working rules (single developer)
 
-These rules apply to every session run for **Usman** (Stream B); determine the developer as §1 says. Sessions for Tanzeel skip this section. For Usman's work they take precedence over §8.1 until Usman says otherwise.
+From 2026-10-21, **Tanzeel** is the only developer and owns every folder, including Stream B (`backend/`, `supabase/`, `infrastructure/observability/`, `infrastructure/redis/`, `benchmark/`, `tests/`). The ownership table in §1 still describes which stream a folder belongs to; it no longer limits who may edit it. Claude Code sessions (also cloud sessions that run while the laptop is off) work for Tanzeel. These rules replace the earlier Usman-only rules and take precedence over §8.1–§8.4 where they differ.
 
 ### 11.1 Branch
-- Day-to-day work is committed to the `usman` branch and pushed with `git push origin usman` (`https://github.com/f243077-cell/OneCallPilot`).
-- **Pull-request branches** (approved by Usman on 2026-10-10): to bring work into `main`, Usman's short-lived branches from §8.1 may also be pushed: `contract/*`, `feat/b-*`, `fix/*`, `chore/*`, `docs/*`, `test/*`, `bench/*`. Create one only when Usman asks for that PR.
-- **Never** push, force-push, or merge directly into `main` or `tanzeel`, never push `feat/a-*` (Tanzeel's), and never push tags. Work reaches `main` only through a PR with green CI. A local `.git/hooks/pre-push` hook (not committed) refuses every other target; never bypass it with `--no-verify`.
-- A pull request into `main`, or a merge of one, happens only when Usman explicitly asks for it, and for Phase 0 only after Tanzeel has said go.
+- Commit and push **directly to `main`** with `git push origin main`. No feature branches, no PRs, no `usman` or `tanzeel` branches.
+- Never force-push `main` and never rewrite its history (no rebase, amend, or reset of pushed commits).
+- Never bypass hooks with `--no-verify`. Tags are pushed only when Tanzeel asks.
 
-### 11.2 Staying in sync with Tanzeel
-- Tanzeel works on `tanzeel`. Bring his work in with `git fetch origin`, then `git merge origin/tanzeel` into `usman`.
-- Never rebase `usman`: it is published, and rewriting it breaks the copy on GitHub.
-- Fetch and merge before editing a shared file (§1), so Tanzeel's latest edits are never overwritten.
+### 11.2 Test before every push
+Run the checks for every package the change touches, the same steps as its workflow in `.github/workflows/`:
+- `contracts/python`: `uv sync --locked`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy oncallpilot_contracts tests`, `uv run pytest -q`, then `uv run python -m oncallpilot_contracts.schema_export` and `git diff --exit-code -- ../schemas`.
+- `backend`, `runner`, `chaos-shop`, `chaos-shop/cli`, `tools/ocp`: `uv sync --locked`, `ruff check`, `ruff format --check`, `mypy`, `pytest -q`.
+- Every lockfile: `uv lock --check` in each Python package.
+- Migrations: apply them to a fresh `pgvector/pgvector` container and run `tests/db/`.
+After pushing, check that CI on `main` is green; if it is red, fixing it is the next task.
 
 ### 11.3 Contract commits
-A contract commit touches only `contracts/` (plus the regenerated schemas and fixtures), so it can later move into its own `contract/*` PR (§8.4).
+A contract commit touches only `contracts/` (plus the regenerated schemas and fixtures) and bumps `contracts/VERSION` as §8.4 says. Implementation commits never change `contracts/`.
 
 ### 11.4 Session files (repository root)
 | File | What it holds | When |
 |---|---|---|
-| `context.md` | The current state: phase and task IDs, what is on `usman`, blockers, machine setup, decisions | Read right after this file; rewrite it at the end of the session so it matches reality |
-| `handoff.md` | The session log: one dated entry per session, newest first, with four parts: **Done** (with commits), **Next** (in order), **Waiting on** (Usman or Tanzeel), and **Message for Tanzeel** (when there is one). Old entries are never edited | Read after `context.md`; add the entry at the end of every session |
-| `learn.md` | Plain-language explanations of what happened and why, written for someone new to the project, plus a glossary | Append a dated entry every session; never rewrite old entries |
+| `context.md` | The current state: phase and task IDs, blockers, machine setup, decisions | Read right after this file; rewrite it at the end of the session so it matches reality |
+| `next.md` | The exact next steps; a new session must be able to resume from this file alone | Rewrite after each finished chunk of work |
+| `handoff.md` | The session log: one dated entry per session (or chunk), newest first, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** (things only he can do by hand: API keys, Supabase, Firebase, secrets, the phone). Old entries are never edited | Add an entry after each finished chunk |
+| `learn.md` | Plain-language explanations of what happened and why, plus a glossary | Append a dated entry every session; never rewrite old entries |
 
-Before a session ends, update all three files, commit them, and push `usman`.
+Usage-limit safety: after each finished chunk of work, update `handoff.md` and `next.md`, commit, and push `main`, so the next session can resume if this one stops.
