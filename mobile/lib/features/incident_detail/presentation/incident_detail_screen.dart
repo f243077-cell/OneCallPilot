@@ -1,7 +1,7 @@
 // `/incidents/:id` (MOB-004, MOB-005, architecture §10.2): ranked hypotheses
 // with confidence bars, categories and `E#` chips that scroll to the matching
-// evidence card; dropped hypotheses hidden until asked for. The live log tail
-// (MOB-006) comes in task A3.5.
+// evidence card; dropped hypotheses hidden until asked for; the live log tail
+// (MOB-006).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +19,7 @@ import '../../../shared/widgets/stale_banner.dart';
 import '../../../shared/widgets/time_since.dart';
 import '../../incident_feed/presentation/incident_feed_screen.dart';
 import '../application/incident_detail_provider.dart';
+import 'live_log_tail.dart';
 
 class IncidentDetailScreen extends ConsumerWidget {
   const IncidentDetailScreen({super.key, required this.incidentId});
@@ -166,6 +167,11 @@ class _IncidentDetailBodyState extends State<IncidentDetailBody> {
                     context.push('/executions/${e.id}?incident=${incident.id}'),
               ),
           ],
+          _Section('Live logs'),
+          LiveLogTail(
+            key: ValueKey('log-tail-${incident.id}'),
+            incidentId: incident.id,
+          ),
           _Section('Hypotheses'),
           if (active.isEmpty) const _Empty('No hypotheses yet'),
           for (final h in active)

@@ -64,8 +64,11 @@ class FakeIncidentRepository implements IncidentRepository {
     return onReject(proposalId, reason, idempotencyKey);
   }
 
-  Future<LogTail> Function(String id, DateTime? since) onLogTail = (_, _) =>
-      throw UnimplementedError();
+  /// Incident Detail polls the tail; by default there are no new lines.
+  Future<LogTail> Function(String id, DateTime? since) onLogTail = (_, since) =>
+      Future.value(
+        LogTail(lines: const [], until: since ?? DateTime.utc(2026)),
+      );
   int logTailCalls = 0;
   Future<List<AuditEntry>> Function(String? incidentId) onAudit = (_) =>
       throw UnimplementedError();
