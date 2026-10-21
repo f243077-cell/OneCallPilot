@@ -53,6 +53,9 @@ class WorkerSettings(BaseSettings):
     max_agent_seconds: float = 90.0
     agent_concurrency: int = 2
     proposal_ttl_seconds: int = 900
+    execution_timeout_seconds: int = 240
+    verify_window_seconds: int = 60
+    verify_timeout_seconds: int = 300
     detector_interval_seconds: float = 5.0
     detector_config_path: Path = Path("config") / "detector.yaml"
     prometheus_url: str = "http://prometheus:9090"

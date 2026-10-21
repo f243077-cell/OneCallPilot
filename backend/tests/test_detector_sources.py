@@ -129,15 +129,30 @@ async def test_restarts_counted_within_the_window_and_recent_crash_flagged() -> 
     src = source(docker, prometheus({}), loki([]))
     first = (await src.collect(AT))["worker"].restarts
     assert first is not None and first.restarts_in_window == 0
+    # A crash loop: restarting, two more restarts.
     worker["RestartCount"] = 3
+    worker["State"].update(Status="restarting", ExitCode=1)
+    looping = (await src.collect(AT + timedelta(seconds=30)))["worker"].restarts
+    assert looping is not None and looping.restarts_in_window == 2 and looping.running == 0
+    # It gave up and exited non-zero just now: flagged.
     worker["State"].update(
         Status="exited",
-        ExitCode=1,
-        FinishedAt=(AT + timedelta(seconds=20)).isoformat().replace("+00:00", "Z"),
+        FinishedAt=(AT + timedelta(seconds=35)).isoformat().replace("+00:00", "Z"),
     )
-    later = (await src.collect(AT + timedelta(seconds=30)))["worker"].restarts
-    assert later is not None and later.restarts_in_window == 2
-    assert later.exited_nonzero and later.running == 0
+    crashed = (await src.collect(AT + timedelta(seconds=40)))["worker"].restarts
+    assert crashed is not None and crashed.exited_nonzero
+
+
+async def test_a_slot_stopped_on_purpose_does_not_count_its_old_restarts() -> None:
+    old = container("cs-worker-220", "worker", restarts=1)
+    docker = Docker({"old": old, "new": container("cs-worker-210", "worker")})
+    src = source(docker, prometheus({}), loki([]))
+    await src.collect(AT)
+    old["RestartCount"] = 4
+    old["State"].update(Status="exited", ExitCode=0)  # stopped by a rollback
+    after = (await src.collect(AT + timedelta(seconds=30)))["worker"].restarts
+    assert after is not None and after.restarts_in_window == 0 and after.running == 1
+    assert not after.exited_nonzero
 
 
 async def test_unavailable_sources_leave_values_out() -> None:

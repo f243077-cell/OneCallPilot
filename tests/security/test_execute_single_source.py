@@ -10,6 +10,16 @@ BACKEND = Path(__file__).resolve().parents[2] / "backend" / "oncallpilot"
 EXECUTE = re.compile(r"""["']type["']\s*:\s*["']execute["']|type\s*=\s*["']execute["']""")
 
 
+# The execute builder, the approve handler and the key that signs execute requests.
+FORBIDDEN_ON_WORKER_SIDE = (
+    "approvals.execute",
+    "approvals.service",
+    "execute_message",
+    "send_execute",
+    "action_signing_key",
+)
+
+
 def test_execute_is_constructed_in_exactly_one_module() -> None:
     builders = sorted(
         str(path.relative_to(BACKEND))
@@ -28,4 +38,5 @@ def test_the_worker_side_never_touches_the_execute_builder_or_key() -> None:
     ]
     for path in worker_side:
         text = path.read_text(encoding="utf-8")
-        assert "approvals" not in text and "action_signing_key" not in text, path
+        for forbidden in FORBIDDEN_ON_WORKER_SIDE:
+            assert forbidden not in text, (path, forbidden)

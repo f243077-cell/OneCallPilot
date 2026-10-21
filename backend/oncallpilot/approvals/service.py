@@ -72,6 +72,15 @@ def _parse[B: BaseModel](model: type[B], raw: bytes) -> B:
         raise ValidationFailedError("invalid request", {"errors": errors}) from exc
 
 
+def _check_pending(status: str, expires_at: datetime, now: datetime) -> None:
+    """``expired`` (swept, or past ``expires_at``) → PROPOSAL_EXPIRED (FR-013); any other
+    decided status → PROPOSAL_NOT_PENDING."""
+    if status == "expired" or (status == "pending" and expires_at <= now):
+        raise ProposalExpiredError()
+    if status != "pending":
+        raise ProposalNotPendingError()
+
+
 @dataclass(frozen=True)
 class Response:
     status: int
@@ -106,10 +115,7 @@ class Approvals:
             raise NotFoundError("proposal not found")
         body = _parse(ChallengeRequest, raw)
         now = self.clock()
-        if p["status"] != "pending":
-            raise ProposalNotPendingError()
-        if p["expires_at"] <= now:
-            raise ProposalExpiredError()
+        _check_pending(p["status"], p["expires_at"], now)
         if body.proposal_fingerprint != p["fingerprint"]:
             raise StaleProposalError()
         try:
@@ -209,10 +215,7 @@ class Approvals:
             ):
                 raise StaleProposalError()
             # Check 4.
-            if p["status"] != "pending":
-                raise ProposalNotPendingError()
-            if p["expires_at"] <= now:
-                raise ProposalExpiredError()
+            _check_pending(p["status"], p["expires_at"], now)
             # Check 5.
             if p["risk_tier"] in BIOMETRIC_TIERS and body.auth_method != "biometric":
                 raise BiometricRequiredError()

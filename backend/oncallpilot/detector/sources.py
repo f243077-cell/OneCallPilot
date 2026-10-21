@@ -5,9 +5,9 @@ One ``Samples`` per monitored service per cycle, read-only:
 - ``error_rate``, ``p95_latency``, ``job_failure_rate``: Prometheus instant
   queries with the same fixed PromQL as ``query_metrics``;
 - ``restarts``: socket-proxy-ro (GET only), containers labelled
-  ``oncallpilot.managed=true``: restarts within the rule's window (from
-  ``RestartCount`` seen over time), a container that exited non-zero within
-  the window, and the number running;
+  ``oncallpilot.managed=true``: restarts of running or restarting containers
+  within the rule's window (from ``RestartCount`` seen over time), a
+  container that exited non-zero within the window, and the number running;
 - ``stack_traces``: Loki, lines containing ``Traceback`` in the last minute,
   by ``exc_type``.
 
@@ -45,6 +45,7 @@ class ContainerView:
     name: str
     service: str
     running: bool
+    active: bool  # running or restarting: not stopped on purpose
     restart_count: int
     exit_code: int | None
     finished_at: datetime | None
@@ -77,6 +78,7 @@ def _view(inspect: dict[str, Any]) -> ContainerView:
         name=str(inspect.get("Name", "")).lstrip("/"),
         service=str(labels.get("oncallpilot.service", "")),
         running=running,
+        active=state.get("Status") in ("running", "restarting"),
         restart_count=int(inspect.get("RestartCount") or 0),
         exit_code=None if running else int(state.get("ExitCode") or 0),
         finished_at=docker_time(state.get("FinishedAt")),
@@ -174,10 +176,10 @@ class LiveSampleSource:
         assert self.history is not None
         mine = [c for c in containers if c.service == service]
         window_start = at - self.history.window
+        # A slot stopped on purpose (an older release after a rollback) no longer counts.
+        restarts = sum(self.history.restarts(c.name, c.restart_count, at) for c in mine if c.active)
         return RestartsSample(
-            restarts_in_window=sum(
-                self.history.restarts(c.name, c.restart_count, at) for c in mine
-            ),
+            restarts_in_window=restarts,
             exited_nonzero=any(
                 not c.running
                 and c.exit_code not in (None, 0)

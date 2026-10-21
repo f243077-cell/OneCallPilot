@@ -1,12 +1,14 @@
 """backend-worker: ``python -m oncallpilot.worker`` (architecture §2.3, §5.2, §6.8).
 
-One process with two loops:
+One process with these loops:
 
 - the agent-job consumer (``ocp:agent:jobs``, group ``agents``), which runs
   one ``Investigation`` per incident with ``DbEffects`` and the
   ``RunnerProposer`` (signed dry runs with ``RUNNER_LINK_KEY`` only);
 - the detector, every ``DETECTOR_INTERVAL_SECONDS``, posting alerts to
-  ``POST /ingest/alert``.
+  ``POST /ingest/alert``;
+- the runner-result consumer, the signal verifier and the sweeper
+  (``worker/loops.py``).
 
 At start-up it ingests ``runbooks/`` (unchanged chunks are skipped). SIGTERM
 stops both loops and waits for running investigations.
@@ -55,6 +57,15 @@ from oncallpilot.runbooks.ingest import ingest_dir
 from oncallpilot.runner_link import RunnerLink
 from oncallpilot.settings import WorkerSettings
 from oncallpilot.worker.agent_jobs import AgentJobConsumer
+from oncallpilot.worker.loops import (
+    SWEEP_EVERY_SECONDS,
+    LatestSamples,
+    RunnerResultConsumer,
+    SignalVerifier,
+    Sweeper,
+    every,
+)
+from oncallpilot.worker.outcomes import Outcomes
 
 log = logging.getLogger("oncallpilot.worker")
 
@@ -122,6 +133,17 @@ async def consume(consumer: AgentJobConsumer, stop: asyncio.Event) -> None:
             log.error("agent job queue unavailable: %s", type(exc).__name__)
             await asyncio.sleep(1.0)
     await consumer.drain()
+
+
+async def consume_results(results: RunnerResultConsumer, stop: asyncio.Event) -> None:
+    await results.ensure_group()
+    await results.poll(0, pending=True)  # entries this worker read but never acknowledged
+    while not stop.is_set():
+        try:
+            await results.poll(POLL_BLOCK_MS)
+        except RedisError as exc:
+            log.error("runner results unavailable: %s", type(exc).__name__)
+            await asyncio.sleep(1.0)
 
 
 async def main() -> None:
@@ -196,12 +218,34 @@ async def main() -> None:
             record = latest_reset(await asyncio.to_thread(read_records, settings.ledger_path))
             return (record.deploy_id, record.deployed_at) if record else None
 
+        latest = LatestSamples()
         detector = DetectorLoop(
             Detector(load_config(config_bytes), utcnow()),
             LiveSampleSource(load_config(config_bytes), prometheus, loki, docker),
             HttpAlertSink(http, settings.ingest_url, settings.ingest_token),
             resets,
+            on_samples=latest.update,
         )
+        outcomes = Outcomes(
+            pool=pool,
+            events=events,
+            redis=redis,
+            proposer=proposer,
+            catalogue_path=settings.catalogue_path,
+            clock=utcnow,
+            proposal_ttl_seconds=settings.proposal_ttl_seconds,
+        )
+        results = RunnerResultConsumer(redis, outcomes, link_key, socket.gethostname())
+        verifier = SignalVerifier(
+            pool,
+            outcomes,
+            load_config(config_bytes),
+            latest,
+            utcnow,
+            window_seconds=settings.verify_window_seconds,
+            timeout_seconds=settings.verify_timeout_seconds,
+        )
+        sweeper = Sweeper(pool, outcomes, utcnow, settings.execution_timeout_seconds)
 
         try:
             async with pool.acquire() as conn:
@@ -215,15 +259,21 @@ async def main() -> None:
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGTERM, signal.SIGINT):
             loop.add_signal_handler(sig, stop.set)
-        detector_task = asyncio.create_task(
-            detector.run(settings.detector_interval_seconds, utcnow)
-        )
+        background = [
+            asyncio.create_task(detector.run(settings.detector_interval_seconds, utcnow)),
+            asyncio.create_task(
+                every(settings.detector_interval_seconds, verifier.cycle, "verifier")
+            ),
+            asyncio.create_task(every(SWEEP_EVERY_SECONDS, sweeper.cycle, "sweeper")),
+        ]
+        results_task = asyncio.create_task(consume_results(results, stop))
         jobs_task = asyncio.create_task(consume(consumer, stop))
         log.info("backend-worker started (provider %s, model %s)", provider.name, provider.model)
         await stop.wait()
         log.info("backend-worker stopping")
-        detector_task.cancel()
-        await asyncio.gather(detector_task, jobs_task, return_exceptions=True)
+        for task in background:
+            task.cancel()
+        await asyncio.gather(*background, results_task, jobs_task, return_exceptions=True)
     await redis.aclose()
     await pool.close()
 

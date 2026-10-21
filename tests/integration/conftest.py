@@ -178,3 +178,7 @@ async def live_api(pool: asyncpg.Pool, redis_client: Redis) -> AsyncIterator[Liv
     """backend-api on the test database and a real Redis (ingest, events, jobs)."""
     async with serve(build_services(pool, SigningKey("it-key"), redis_client, TEST_INGEST)) as c:
         yield LiveApi(client=c, redis=redis_client, pool=pool)
+
+
+# The approval fixture lives with its helpers; importing it here shares it.
+from approval_env import env  # noqa: E402, F401

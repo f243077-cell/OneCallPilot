@@ -72,12 +72,14 @@ class DetectorLoop:
         sink: AlertSink,
         resets: ResetProbe,
         on_recovered: Callable[[str, datetime], Awaitable[None]] | None = None,
+        on_samples: Callable[[datetime, dict[str, Samples]], None] | None = None,
     ) -> None:
         self.detector = detector
         self.source = source
         self.sink = sink
         self.resets = resets
         self.on_recovered = on_recovered
+        self.on_samples = on_samples  # the signal verifier reads the latest samples
         self._last_reset: UUID | None = None
         self._first = True
         self._undelivered: list[AlertIn] = []
@@ -90,6 +92,8 @@ class DetectorLoop:
             log.warning("detector samples failed: %s", type(exc).__name__)
             await self._deliver()
             return Cycle(alerts=[], recovered=[])
+        if self.on_samples is not None:
+            self.on_samples(at, samples)
         result = self.detector.step(at, samples)
         self._undelivered += [self._body(alert) for alert in result.alerts]
         await self._deliver()
