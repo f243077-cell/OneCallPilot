@@ -2,6 +2,32 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 19: first real start of the backend, runbooks
+
+### Done
+- **First real start of the `backend` profile** (next.md item, without Supabase): backend-api and backend-worker from a freshly built image, with `DATABASE_URL` → a migrated database in the test pgvector container (joined to `oncallpilot_default`), `SUPABASE_URL` → a throwaway container serving a local JWKS at `/auth/v1/.well-known/jwks.json`, `LLM_PROVIDER=fake`. Both became healthy; `/incidents`, `/settings`, `/incidents/{id}/resolve` answered with a local token (401 without). `chaos inject 2` → the detector opened "api error rate 13%" right at the end of warm-up → the agent job ran.
+- What the first start found, each fixed test-first:
+  - `1dbda54` the worker logged every outgoing HTTP request at INFO through httpx (~20 lines per 5 s cycle, with query strings) → httpx/httpcore at WARNING.
+  - `a0ed882` `LLM_PROVIDER=fake` crashed every agent job (`AssertionError`, nothing scripted) instead of escalating as documented → an unscripted FakeProvider now raises `LLMUnavailableError` in the worker (tests keep the AssertionError).
+  - The crashed job showed the AI-025 recovery working for real: reclaimed after 300 s, the incident escalated `agent_interrupted` with its evidence kept.
+  - `a6a2a0c` **detector**: the `error_rate` and `job_failure_rate` shares were *empty* (no data) whenever nothing failed, because Prometheus has no series for the 5xx/error numerator then; the detector never learnt a healthy baseline and `query_metrics` showed gaps. The numerator now falls back to `vector(0)` (no traffic still reads as no data). Live check after the fix: with a fresh worker, a full warm-up and then `chaos inject 2`, the incident opened 11 s after injection (new stack-trace type) and `error_rate` joined it 15 s later at 3.9 %.
+  - the runbook folder was empty → next item.
+- **S1.2/S2.2 runbooks** (`e5f2888`): eight generic runbooks (roll back a bad release, restart a service, scale for a surge, cache problems, slow third-party dependencies, crash loops, reading logs safely, when to escalate); a backend test checks chunk limits and that no runbook names a benchmark scenario, testbed release or container (H7). Ingested on the real start: 35 chunks.
+
+### Observations (no change made)
+- `chaos reset` stops and starts containers *before* it writes its `reset` ledger record, so the detector, which starts its warm-up when it sees that record, can fire in between: one run opened an incident "api 0 restarts" (the restarts rule's "no running container" case, during the churn). Fix options: write the reset record first in `chaos reset`, or title the "no running container" case accurately. Not changed yet — tell me which you prefer.
+- A worker started during or right after a fault learns that fault as its baseline (and its exception types as known during warm-up). The benchmark keeps the worker running across runs, so this only matters after a worker restart: then wait a full healthy warm-up (180 s) plus the 60 s baseline before injecting, as `bench run` does.
+
+### Decisions to confirm (Tanzeel)
+- **Review the runbooks** (phases.md §1: the author is not the reviewer). They are generic, but they do describe the textbook remedy for each class of failure (rollback after a bad deploy, restart for leaks and exhausted pools, scale for surges, escalate for third parties and instruction-like logs). If you think any of them leans too close to the benchmark's answers (H7), say which and I will make it more general.
+- `ocp up` still does not start the `backend` profile: it needs a real `DATABASE_URL` and `SUPABASE_URL`. Adding it to `PROFILES` is safe once Supabase exists; until then the recipe above (next.md §1) runs it locally.
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged.
+
 ## 2026-10-21 — Cloud session 1, chunk 18: A3.6 and S3.1 (crash resilience)
 
 ### Done
