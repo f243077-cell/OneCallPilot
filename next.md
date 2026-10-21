@@ -18,12 +18,13 @@
    `cd backend && OCP_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54329/postgres uv run pytest -c pyproject.toml ../tests/db -q` (70 tests); the same for `../tests/integration` (10) and `../tests/security` (22, needs Docker; `docker tag mirror.gcr.io/library/redis:7.4.11-alpine redis:7.4.11-alpine` first). Unit tests: `uv run pytest -q tests`.
 
 ## 2. Next tasks, in order (Phase 1, Stream B — Stream A is already into Phase 2)
-Done so far: B1.1 (migrations), B1.2 (API skeleton), B1.3 part 1 (copilot-redis + ACL).
-1. **B1.3 part 2:** `oncallpilot/events.py` publisher (`XADD ocp:events MAXLEN ~10000`, the C3 envelope from `contracts/python/oncallpilot_contracts/ws.py`), and `/ws/incidents` in `oncallpilot/api/routers/ws.py`: `auth` within 5 s (else close 4408), invalid token → 4401, re-`auth` on refresh, close 4401 on expiry; `hello`; `resume` → replay or `resync_required`; `ping` every 15 s, close after 2 missed pongs. Tests with a fake clock and a real Redis (throwaway container like `tests/security/test_redis_acl.py`, or `fakeredis` if added). API-014…API-017. Read `contracts/ws-protocol.md` first.
-2. **B1.4** `ocp seed-incident <timeline>`: `oncallpilot.db.seed.write_incident_detail` already writes `final`; add a CLI entry (`python -m oncallpilot.db.seed`) that also publishes the timeline's events, and an `ocp seed-incident` command in `tools/ocp` that runs it.
-3. **B1.6** `POST /ingest/alert` (API-003, FR-004…FR-007); **B1.7** detector v1; **B1.5** observability compose; **B1.8** first tools.
-4. Then Phase 2 Stream B (B2.1 …) per `docs/phases.md` §5.
-- **Not yet in compose:** backend-api/worker (they need a real database; adding them before Supabase exists would break `ocp up`), and the runner service in `runner.yml` (copilot-redis now exists; adding it is Stream A follow-up, see the comment in `runner.yml` and `runner/tests/runner_service.yml`).
+Done: B1.1 migrations, B1.2 API skeleton, B1.3 copilot-redis + ACL + `/ws/incidents`, B1.4 `ocp seed-incident`, B1.6 `POST /ingest/alert`, B1.7 detector engine + loop (pure; no real sources yet).
+1. **B1.5 observability compose** in `infrastructure/compose/observability.yml` (profile `obs`): Prometheus (DNS service discovery on `chaos_net`, `honor_labels: true`), Loki, Alloy reading container logs through socket-proxy-ro (`discovery.docker` + `loki.source.docker`, label `oncallpilot.logs=true`), Grafana with a provisioned dashboard; pinned images, healthchecks, ports bound to 127.0.0.1 only (3000, 9090, 3100). Read `contracts/telemetry.md` (C7) for metric names, labels and log fields. `ocp up` (and CI's runner-live, which runs it) must stay green: watch memory and image pulls (Docker Hub rate limits were seen in CI).
+2. **B1.8** `query_logs` and `query_metrics` (AI-005, AI-006): fixed LogQL template and the 12 PromQL templates of §6.3, enum parameters, limits, against a fake HTTP server in tests. The same Prometheus/Loki clients become the detector's `SampleSource` (`oncallpilot/detector/loop.py`).
+3. **Worker entry point** (`oncallpilot/worker/`): runs the detector loop (DETECTOR_INTERVAL_SECONDS) and, later, the agent consumer; auto-resolver for FR-011 from `DetectorLoop.on_recovered`.
+4. backend-api/worker services in `copilot.yml` once Supabase exists (Tanzeel).
+5. Then Phase 2 Stream B (B2.1 agent state machine + FakeProvider …) per `docs/phases.md` §5.
+- **CI note:** the runner workflow takes ~15 min and is cancelled by every new push to `main`. Batch pushes, or wait for it, so it completes at least once per chunk.
 
 ## 3. Notes carried over for Stream B tasks
 - **B1.5:** `honor_labels: true`; name `chaos_net` plainly (`chaos_net: {}`), never `external: true`; loggers are `shop.*`.

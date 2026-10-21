@@ -2,6 +2,26 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 3: WebSocket gateway, seed-incident, ingest, detector
+
+### Done
+- **B1.3 part 2** (`f04bc0c`): `oncallpilot/events.py` (`EventStream`: validated publish to `ocp:events`, read, resume window) and `/ws/incidents` (auth 5 s → 4408, invalid → 4401, refresh, expiry → 4401, hello, resume/resync, ping 15 s, 2 missed pongs → close). API-014…API-017. 21 unit + 13 Redis integration tests, including "disconnect for 10 events, resume, exactly those 10".
+- **B1.4** (`7ccd714`): `python -m oncallpilot.seed`, `backend/Dockerfile`, `backend-seed` (profile `tools`) in `copilot.yml`, `ocp seed-incident <name|path> [--new-ids] [--realtime]`. Checked by hand end to end.
+- **B1.6** (`f352b83`): `POST /ingest/alert` (token first, then body; open with E1 + audit + job + `incident.opened`, or deduplicate; races settled by the partial unique index), severity (FR-006), window (FR-007), `backend/config/detector.yaml`, `detector_config_version` (ADR-20).
+- **B1.7** (`6638e91`): detector engine, loop, ledger reader (see the commit message for the rules).
+- CI: all green on `f04bc0c` except runner, whose 15-minute `runner-live` job kept being cancelled by newer pushes (`concurrency: cancel-in-progress`). On `7ccd714` its `runner` and `runner-proxy` jobs passed and `runner-live` got through `ocp up` (now with copilot-redis); pushes were held until it finished.
+
+### Decisions to confirm (Tanzeel)
+- **FR-003 warm-up:** baselines keep learning normal samples during warm-up instead of relearning from scratch; otherwise FR-003's own acceptance (fault injected right after reset must fire within 60 s after warm-up) cannot pass. Written in `oncallpilot/detector/engine.py`; `docs/architecture.md` §6.8 still says "re-learn".
+- **Contract gap, FR-006 sev1 "no running container":** `AlertIn` cannot say that no container is running (a `Signal` has only value/baseline/z-score), so ingestion cannot pick sev1 for it. Options: (a) a contract change: let the `restarts` signal carry `value = 0` running containers in a documented way, or add an optional field; (b) the detector sends `error_rate = 1.0` alongside. Needs a `contract/*` change (`CLAUDE.md` §8.4); not done.
+- **WebSocket close code for missed pongs:** 1008 (C3 §7 only says "any other").
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged (delete branches `tanzeel`/`usman` in the GitHub UI, `contracts-v0.1.0` tag, Supabase B0.1, Gemini key B0.3, Firebase A0.1), plus the decisions above.
+
 ## 2026-10-21 — Cloud session 1, chunk 2: B1.2 API skeleton, B1.3 copilot-redis
 
 ### Done
