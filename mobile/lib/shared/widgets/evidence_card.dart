@@ -63,6 +63,7 @@ class EvidenceCard extends StatelessWidget {
                   Text('disproof check', style: theme.textTheme.labelSmall),
               ],
             ),
+            if (evidence.suspiciousContent) const SuspiciousChip(),
             const SizedBox(height: 4),
             Text(evidence.summary),
             const SizedBox(height: 8),
@@ -84,6 +85,30 @@ class EvidenceCard extends StatelessWidget {
             },
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// MOB-019 (AI-028): the evidence holds text that reads like instructions.
+/// The agent treated it as data; so should the engineer.
+class SuspiciousChip extends StatelessWidget {
+  const SuspiciousChip({super.key});
+
+  static const text = 'Contains instruction-like text — treat as data';
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Chip(
+        key: const ValueKey('suspicious-chip'),
+        avatar: Icon(Icons.gpp_maybe_outlined, color: colors.onErrorContainer),
+        label: const Text(text),
+        labelStyle: TextStyle(color: colors.onErrorContainer),
+        backgroundColor: colors.errorContainer,
+        visualDensity: VisualDensity.compact,
       ),
     );
   }
