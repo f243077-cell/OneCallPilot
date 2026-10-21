@@ -2,6 +2,23 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 9: operations endpoints (B3.2)
+
+### Done
+- **B3.2** (`cee0177`): `POST /incidents/{id}/resolve` (manual, safe to repeat, `INCIDENT_BUSY` while an execution is queued/running; shares `oncallpilot/resolution.py` with the auto-resolver), `GET /incidents/{id}/log-tail` (redacted, oldest first, ≤ 10 min back, 1 request / 2 s / user, in-process limiter), `GET /audit` (keyset pages), `GET/PUT /settings` (defaults until first save, `VERSION_CONFLICT`, `BENCHMARK_LOCKED`, unknown thresholds refused). 119 integration tests pass.
+- CI on `76877d1`: the runner workflow's `runner-live` and `runner-proxy` jobs failed pulling the socket-proxy images (`toomanyrequests` from the registry) before any test ran; the commit does not touch the runner. Failed jobs re-run once (run 39675271852); pushes held until it finishes.
+
+### Decisions to confirm (Tanzeel)
+- `detector_config_version` changes only when thresholds change (it hashes the detector file plus the threshold overrides). FR-023/ADR-20 say every settings update changes it; a change to `services` or `notify` currently does not. Small follow-up if you want it literal.
+- The running detector in backend-worker reads `detector.yaml` at start and does not yet apply threshold overrides or the monitored-services list from `monitor_settings` live. Incidents are stamped correctly, but detection uses the file until the worker restarts with code that reloads settings (follow-up task in `next.md`).
+- `/log-tail` returns `500 INTERNAL` ("logs are unavailable") when Loki is down; OpenAPI lists no 503.
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged (chunks 7–8).
+
 ## 2026-10-21 — Cloud session 1, chunk 8: auto-resolve and pushes
 
 ### Done
