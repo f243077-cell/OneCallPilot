@@ -2,6 +2,27 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 5: tools, redaction, agent effects, worker consumer, Gemini, citations
+
+### Done
+- **B2.2** (`21e9c9f`): `get_recent_deploys`, `get_service_health` (GET-only to socket-proxy-ro, projected fields only), `search_runbooks` (pgvector), `EmbeddingProvider` + fake, runbook ingestion (stale chunks marked, since `ocp_backend` cannot DELETE).
+- **B2.3** (`b717029`): `agent/redaction.py` (redact, redact_payload, looks_suspicious) and the TEST-008 corpus (46 positive / 24 negative; fake tokens as `<<N>>` placeholders).
+- **B2.4** (`b7a24b3`, `69f67c3`): `DbEffects` (evidence with the next ref under the row lock, redacted, flagged, summarised; hypotheses; reflection; escalation via the FR-009 table; `agent_meta`; one `llm.call` audit row per LLM call), `ToolBox`, and the worker's agent-job consumer (AI-025: single-run claims, own-pending recovery, XAUTOCLAIM 300 s, `agent_interrupted`). CI's 85 % agent coverage floor now counts unit + integration (98 %).
+- **B2.5** (`b3038e6`), **B2.7** (`c0d2bb7`): Gemini adapters over REST (key in header only, retry once, schema conversion), prompts v1 + `manifest.json` (integrity checked at load; CI refuses edits to an existing version).
+- B2.7 detail: `reflection_rules.yaml` + `agent/citations.py` (deterministic citation check; unsupported ×0.5; no valid citation → dropped).
+- CI green on `b7a24b3` (backend, migrations, chaos-shop, contracts, mobile); runner was still running at the time of writing.
+
+### Decisions to confirm (Tanzeel)
+- `LLM_MODEL=gemini-2.5-flash` in `.env.example` is a placeholder: confirm the newest Flash-class model on your key's tier (ADR-13), then B2.13 pins it.
+- The citation table in `backend/oncallpilot/agent/reflection_rules.yaml` is my reading of §5.5 (only `bad_deploy` was specified); review it before the benchmark freeze.
+- Until B2.8 exists, every proposal escalates `dry_run_unavailable` (an explicit stub, `UnavailableProposer`).
+
+### Next
+`next.md` §2: B2.8 (proposal validation + dry run), B2.9 (approvals), worker entry point, B2.10, B2.11, B2.12.
+
+### Waiting on Tanzeel
+Unchanged: delete branches `tanzeel`/`usman`, the `contracts-v0.1.0` tag, Supabase (B0.1), Gemini key (B0.3), Firebase (A0.1); plus the decisions above and in chunks 3–4.
+
 ## 2026-10-21 — Cloud session 1, chunk 4: observability, tools, agent state machine
 
 ### Done
