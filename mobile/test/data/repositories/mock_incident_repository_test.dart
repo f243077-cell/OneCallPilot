@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oncallpilot/core/errors/api_error.dart';
 import 'package:oncallpilot/data/models/approval.dart';
 import 'package:oncallpilot/data/models/enums.dart';
+import 'package:oncallpilot/data/models/ops.dart';
 import 'package:oncallpilot/data/models/ws_event.dart';
 import 'package:oncallpilot/data/repositories/mock_incident_repository.dart';
 
@@ -275,5 +276,91 @@ void main() {
       repo.getIncident('missing'),
       throwsA(apiError(ApiErrorCode.notFound, 404)),
     );
+  });
+
+  group('operations (API-006, API-012, API-013)', () {
+    test('the audit history follows the timeline, newest first', () async {
+      final challenge = await repo.challenge(
+        proposalId,
+        proposalFingerprint: fingerprint,
+      );
+      await repo.approve(proposalId, approval(challenge), idempotencyKey: 'k');
+      await settle();
+      final audit = await repo.listAudit(incidentId: incidentId);
+      expect(audit.map((a) => a.event).toList().reversed, [
+        'incident.opened',
+        'proposal.created',
+        'approval.approved',
+        'execution.finished',
+        'incident.resolved',
+      ]);
+      final approved = audit.firstWhere((a) => a.event == 'approval.approved');
+      expect(approved.actor, MockIncidentRepository.userActor);
+      expect(approved.refId, proposalId);
+      expect(await repo.listAudit(incidentId: 'other'), isEmpty);
+    });
+
+    test('a rejection is audited with its reason', () async {
+      await repo.reject(proposalId, reason: 'not now', idempotencyKey: 'k');
+      final audit = await repo.listAudit();
+      expect(audit.first.event, 'incident.status_changed');
+      expect(audit.firstWhere((a) => a.event == 'approval.rejected').payload, {
+        'reason': 'not now',
+      });
+    });
+
+    test('the log tail returns log lines after since', () async {
+      final tail = await repo.logTail(incidentId, since: DateTime.utc(2000));
+      expect(tail.until, now);
+      final later = await repo.logTail(incidentId, since: tail.until);
+      expect(later.lines, isEmpty);
+      await expectLater(
+        repo.logTail('nope'),
+        throwsA(apiError(ApiErrorCode.notFound, 404)),
+      );
+    });
+
+    test(
+      'settings: update bumps the version; a stale version conflicts',
+      () async {
+        final current = await repo.getSettings();
+        expect(current.version, 1);
+        expect(current.locked, isFalse);
+        MonitorSettingsUpdate update(int version) => MonitorSettingsUpdate(
+          services: [ServiceName.api],
+          thresholds: {'error_rate.z': 5},
+          notify: const NotifySettings(minPushSeverity: Severity.sev1),
+          version: version,
+        );
+        final saved = await repo.updateSettings(update(1));
+        expect(saved.version, 2);
+        expect(saved.services, [ServiceName.api]);
+        expect(saved.thresholds, {'error_rate.z': 5.0});
+        expect(saved.notify.minPushSeverity, Severity.sev1);
+        await expectLater(
+          repo.updateSettings(update(1)),
+          throwsA(apiError(ApiErrorCode.versionConflict, 409)),
+        );
+        expect((await repo.listAudit()).first.event, 'settings.updated');
+      },
+    );
+
+    test('locked settings refuse updates with BENCHMARK_LOCKED', () async {
+      repo.lockSettings('Benchmark in progress');
+      final locked = await repo.getSettings();
+      expect(locked.locked, isTrue);
+      expect(locked.lockReason, 'Benchmark in progress');
+      await expectLater(
+        repo.updateSettings(
+          MonitorSettingsUpdate(
+            services: locked.services,
+            thresholds: locked.thresholds,
+            notify: locked.notify,
+            version: locked.version,
+          ),
+        ),
+        throwsA(apiError(ApiErrorCode.benchmarkLocked, 423)),
+      );
+    });
   });
 }

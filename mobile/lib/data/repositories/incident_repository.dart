@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/approval.dart';
 import '../models/incident.dart';
+import '../models/ops.dart';
 import '../models/ws_event.dart';
 
 abstract interface class IncidentRepository {
@@ -38,6 +39,20 @@ abstract interface class IncidentRepository {
     required String reason,
     required String idempotencyKey,
   });
+
+  /// `GET /incidents/{id}/log-tail` (API-006): lines after [since], or the
+  /// last 60 s; poll again with the answer's `until`.
+  Future<LogTail> logTail(String incidentId, {DateTime? since});
+
+  /// `GET /audit` (API-012), newest first; one incident's when [incidentId]
+  /// is set.
+  Future<List<AuditEntry>> listAudit({String? incidentId});
+
+  /// `GET /settings` (API-013).
+  Future<MonitorSettings> getSettings();
+
+  /// `PUT /settings`; ApiError VERSION_CONFLICT or BENCHMARK_LOCKED.
+  Future<MonitorSettings> updateSettings(MonitorSettingsUpdate update);
 
   void dispose();
 }

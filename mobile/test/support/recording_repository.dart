@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:oncallpilot/core/errors/api_error.dart';
 import 'package:oncallpilot/data/models/approval.dart';
 import 'package:oncallpilot/data/models/incident.dart';
+import 'package:oncallpilot/data/models/ops.dart';
 import 'package:oncallpilot/data/models/ws_event.dart';
 import 'package:oncallpilot/data/repositories/incident_repository.dart';
 import 'package:oncallpilot/data/repositories/mock_incident_repository.dart';
@@ -95,6 +96,21 @@ class RecordingRepository implements IncidentRepository {
       ),
     );
   }
+
+  @override
+  Future<LogTail> logTail(String incidentId, {DateTime? since}) =>
+      server.logTail(incidentId, since: since);
+
+  @override
+  Future<List<AuditEntry>> listAudit({String? incidentId}) =>
+      server.listAudit(incidentId: incidentId);
+
+  @override
+  Future<MonitorSettings> getSettings() => server.getSettings();
+
+  @override
+  Future<MonitorSettings> updateSettings(MonitorSettingsUpdate update) =>
+      server.updateSettings(update);
 
   @override
   void dispose() => server.dispose();

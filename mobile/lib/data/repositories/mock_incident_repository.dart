@@ -13,6 +13,7 @@ import '../../core/errors/api_error.dart';
 import '../models/approval.dart';
 import '../models/enums.dart';
 import '../models/incident.dart';
+import '../models/ops.dart';
 import '../models/ws_event.dart';
 import 'fixture_timelines.dart';
 import 'incident_repository.dart';
@@ -55,7 +56,23 @@ class MockIncidentRepository implements IncidentRepository {
   final _challenges = <String, _Challenge>{};
   final _idempotent = <String, _Stored>{};
   final _forced = <MockOperation, List<ApiError>>{};
+  final _audit = <Map<String, dynamic>>[];
+  Map<String, dynamic> _settings = _defaultSettings();
   bool _disposed = false;
+
+  /// The mock's signed-in user, as the audit log names them.
+  static const userActor = 'user:00000000-0000-4000-8000-000000000001';
+
+  static Map<String, dynamic> _defaultSettings() => {
+    'services': ['api', 'worker', 'redis'],
+    'thresholds': {'error_rate.z': 4.0, 'p95_latency.min_seconds': 0.3},
+    'notify': {'min_push_severity': 'sev2'},
+    'version': 1,
+    'updated_at': DateTime.utc(2026, 10, 1).toIso8601String(),
+    'updated_by': null,
+    'locked': false,
+    'lock_reason': null,
+  };
 
   /// Starts replaying every timeline at once.
   void start() {
@@ -76,6 +93,13 @@ class MockIncidentRepository implements IncidentRepository {
             details: {'retry_after': ?retryAfter},
           ),
         );
+  }
+
+  /// Locks the settings as BENCHMARK_LOCK does (null unlocks).
+  void lockSettings(String? reason) {
+    _settings
+      ..['locked'] = reason != null
+      ..['lock_reason'] = reason;
   }
 
   static int statusFor(ApiErrorCode code) => switch (code) {
@@ -192,7 +216,84 @@ class MockIncidentRepository implements IncidentRepository {
               timeline.finalDetail['window_end'] ?? data['resolved_at'];
     }
     incident['state_version'] = event['state_version'];
+    _record(id, event['event'] as String, data, ts);
     _events.add(WsEvent.fromJson(event));
+  }
+
+  /// The audit rows the server would write for an event (architecture §8).
+  void _record(
+    String incidentId,
+    String event,
+    Map<String, dynamic> data,
+    String ts,
+  ) {
+    void add(
+      String name,
+      String actor,
+      Map<String, dynamic> payload, [
+      String? refType,
+      Object? refId,
+    ]) {
+      _audit.add({
+        'id': _audit.length + 1,
+        'actor': actor,
+        'event': name,
+        'ref_type': refType,
+        'ref_id': refId,
+        'incident_id': incidentId,
+        'payload': payload,
+        'created_at': ts,
+      });
+    }
+
+    switch (event) {
+      case 'incident.opened':
+        add('incident.opened', 'detector', {'title': data['title']});
+      case 'proposal.created':
+        add(
+          'proposal.created',
+          'agent',
+          {
+            'action': data['action'],
+            'params': data['params'],
+            'kind': data['kind'],
+          },
+          'proposal',
+          data['id'],
+        );
+      case 'proposal.updated':
+        final status = data['status'];
+        final ref = data['proposal_id'];
+        switch (status) {
+          case 'approved':
+            add('approval.approved', userActor, {}, 'proposal', ref);
+          case 'rejected':
+            add(
+              'approval.rejected',
+              userActor,
+              {'reason': data['status_reason']},
+              'proposal',
+              ref,
+            );
+          case 'expired':
+            add('proposal.expired', 'system', {}, 'proposal', ref);
+          case 'succeeded' || 'failed':
+            add(
+              'execution.finished',
+              'runner',
+              {'status': status},
+              'proposal',
+              ref,
+            );
+        }
+      case 'incident.resolved':
+        add('incident.resolved', 'system', {'resolution': data['resolution']});
+      case 'incident.updated' when data['status'] == 'escalated':
+        add('incident.status_changed', 'system', {
+          'status': 'escalated',
+          'status_reason': data['status_reason'],
+        });
+    }
   }
 
   // --- reads ------------------------------------------------------------------
@@ -215,6 +316,68 @@ class MockIncidentRepository implements IncidentRepository {
 
   @override
   Stream<WsEvent> events() => _events.stream;
+
+  @override
+  Future<LogTail> logTail(String incidentId, {DateTime? since}) async {
+    final incident = _incidents[incidentId];
+    if (incident == null) {
+      throw _error(ApiErrorCode.notFound, 'No such incident');
+    }
+    final now = _now();
+    final after = since ?? now.subtract(const Duration(seconds: 60));
+    final lines = [
+      for (final e
+          in (incident['evidence'] as List).cast<Map<String, dynamic>>())
+        if (e['kind'] == 'log_query')
+          for (final line
+              in ((e['payload'] as Map)['lines'] as List)
+                  .cast<Map<String, dynamic>>())
+            if (DateTime.parse(line['ts'] as String).isAfter(after)) line,
+    ]..sort((a, b) => (a['ts'] as String).compareTo(b['ts'] as String));
+    return LogTail.fromJson({
+      'lines': lines.take(50).toList(),
+      'until': now.toIso8601String(),
+    });
+  }
+
+  @override
+  Future<List<AuditEntry>> listAudit({String? incidentId}) async => [
+    for (final row in _audit.reversed)
+      if (incidentId == null || row['incident_id'] == incidentId)
+        AuditEntry.fromJson(_copy(row) as Map<String, dynamic>),
+  ];
+
+  @override
+  Future<MonitorSettings> getSettings() async =>
+      MonitorSettings.fromJson(_copy(_settings) as Map<String, dynamic>);
+
+  @override
+  Future<MonitorSettings> updateSettings(MonitorSettingsUpdate update) async {
+    if (_settings['locked'] == true) {
+      throw _error(ApiErrorCode.benchmarkLocked, 'Settings are locked');
+    }
+    if (update.version != _settings['version']) {
+      throw _error(ApiErrorCode.versionConflict, 'Settings changed');
+    }
+    _settings = {
+      ..._settings,
+      ...update.toJson(),
+      'version': update.version + 1,
+      'updated_at': _now().toIso8601String(),
+      'updated_by': userActor.substring(5),
+    };
+    _audit.add({
+      'id': _audit.length + 1,
+      'actor': userActor,
+      'event': 'settings.updated',
+      'ref_type': null,
+      'ref_id': null,
+      'incident_id': null,
+      'payload': {'version': _settings['version']},
+      'created_at': _now().toIso8601String(),
+    });
+    return getSettings();
+  }
 
   // --- approval protocol (C8) ---------------------------------------------------
 

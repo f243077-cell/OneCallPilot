@@ -16,6 +16,7 @@ import 'package:oncallpilot/data/api/rest_client.dart';
 import 'package:oncallpilot/data/api/ws_client.dart';
 import 'package:oncallpilot/data/models/approval.dart';
 import 'package:oncallpilot/data/models/enums.dart';
+import 'package:oncallpilot/data/models/ops.dart';
 import 'package:oncallpilot/data/repositories/live_incident_repository.dart';
 
 import '../../support/contract_fixtures.dart'
@@ -351,5 +352,106 @@ void main() {
 
   test('events come from the socket', () {
     expect(repo.events(), socket.events);
+  });
+
+  test('log tail, audit and settings: paths, queries and bodies', () async {
+    final settings = {
+      'services': ['api', 'worker'],
+      'thresholds': {'error_rate.z': 4},
+      'notify': {'min_push_severity': 'sev2'},
+      'version': 3,
+      'updated_at': '2026-10-14T09:00:00Z',
+      'updated_by': null,
+      'locked': false,
+      'lock_reason': null,
+    };
+    final audit = {
+      'id': 7,
+      'actor': 'user:0b9c0a8e-1d2f-4a3b-9c4d-5e6f7a8b9c0d',
+      'event': 'approval.approved',
+      'ref_type': 'proposal',
+      'ref_id': '8a2d3b5f-1c8e-4d2f-8b64-3e9f5a7b8c02',
+      'incident_id': detail['id'],
+      'payload': {'auth_method': 'biometric'},
+      'created_at': '2026-10-14T09:01:30Z',
+    };
+    adapter.replies
+      ..add(
+        (_) => (
+          200,
+          {
+            'lines': [
+              {
+                'ts': '2026-10-14T09:01:00Z',
+                'level': 'ERROR',
+                'msg': 'checkout failed',
+                'exc_type': 'IndexError',
+              },
+            ],
+            'until': '2026-10-14T09:01:05Z',
+          },
+        ),
+      )
+      ..add(
+        (_) => (
+          200,
+          {
+            'items': [audit],
+            'next_cursor': 'a1',
+          },
+        ),
+      )
+      ..add(
+        (_) => (
+          200,
+          {
+            'items': [audit],
+            'next_cursor': null,
+          },
+        ),
+      )
+      ..add((_) => (200, settings))
+      ..add((_) => (200, {...settings, 'version': 4}));
+
+    final since = DateTime.utc(2026, 10, 14, 9);
+    final tail = await repo.logTail('i-1', since: since);
+    expect(tail.lines.single.msg, 'checkout failed');
+    expect(tail.until, DateTime.utc(2026, 10, 14, 9, 1, 5));
+    final entries = await repo.listAudit(incidentId: 'i-1');
+    expect(entries, hasLength(2));
+    final current = await repo.getSettings();
+    final saved = await repo.updateSettings(
+      MonitorSettingsUpdate(
+        services: current.services,
+        thresholds: {'error_rate.z': 5},
+        notify: current.notify,
+        version: current.version,
+      ),
+    );
+    expect(saved.version, 4);
+
+    final [tailCall, audit1, audit2, getCall, putCall] = adapter.sent;
+    expect(tailCall.path, '/incidents/i-1/log-tail');
+    expect(tailCall.options.queryParameters, {
+      'limit': 50,
+      'since': '2026-10-14T09:00:00.000Z',
+    });
+    expect(audit1.options.queryParameters, {
+      'limit': 100,
+      'incident_id': 'i-1',
+    });
+    expect(audit2.options.queryParameters, {
+      'limit': 100,
+      'incident_id': 'i-1',
+      'cursor': 'a1',
+    });
+    expect(getCall.path, '/settings');
+    expect(putCall.options.method, 'PUT');
+    expect(putCall.body, {
+      'services': ['api', 'worker'],
+      'thresholds': {'error_rate.z': 5.0},
+      'notify': {'min_push_severity': 'sev2'},
+      'version': 3,
+    });
   });
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:oncallpilot/data/auth/key_value_store.dart';
 import 'package:oncallpilot/data/models/approval.dart';
 import 'package:oncallpilot/data/models/incident.dart';
+import 'package:oncallpilot/data/models/ops.dart';
 import 'package:oncallpilot/data/models/ws_event.dart';
 import 'package:oncallpilot/data/repositories/incident_repository.dart';
 
@@ -62,6 +63,33 @@ class FakeIncidentRepository implements IncidentRepository {
     rejects.add((reason, idempotencyKey));
     return onReject(proposalId, reason, idempotencyKey);
   }
+
+  Future<LogTail> Function(String id, DateTime? since) onLogTail = (_, _) =>
+      throw UnimplementedError();
+  int logTailCalls = 0;
+  Future<List<AuditEntry>> Function(String? incidentId) onAudit = (_) =>
+      throw UnimplementedError();
+  Future<MonitorSettings> Function() onSettings = () =>
+      throw UnimplementedError();
+  Future<MonitorSettings> Function(MonitorSettingsUpdate update)
+  onUpdateSettings = (_) => throw UnimplementedError();
+
+  @override
+  Future<LogTail> logTail(String incidentId, {DateTime? since}) {
+    logTailCalls++;
+    return onLogTail(incidentId, since);
+  }
+
+  @override
+  Future<List<AuditEntry>> listAudit({String? incidentId}) =>
+      onAudit(incidentId);
+
+  @override
+  Future<MonitorSettings> getSettings() => onSettings();
+
+  @override
+  Future<MonitorSettings> updateSettings(MonitorSettingsUpdate update) =>
+      onUpdateSettings(update);
 
   @override
   void dispose() {}

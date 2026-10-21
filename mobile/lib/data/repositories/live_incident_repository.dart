@@ -5,6 +5,7 @@ import '../api/rest_client.dart';
 import '../api/ws_client.dart';
 import '../models/approval.dart';
 import '../models/incident.dart';
+import '../models/ops.dart';
 import '../models/ws_event.dart';
 import 'incident_repository.dart';
 
@@ -14,7 +15,7 @@ class LiveIncidentRepository implements IncidentRepository {
   final RestClient _rest;
   final WsClient _socket;
 
-  /// The feed reads at most this many pages of 100 (API-004 pagination).
+  /// The feed and the audit read at most this many pages of 100.
   static const maxPages = 5;
 
   @override
@@ -77,6 +78,41 @@ class LiveIncidentRepository implements IncidentRepository {
       'reason': reason,
     }, idempotencyKey: idempotencyKey),
   );
+
+  @override
+  Future<LogTail> logTail(String incidentId, {DateTime? since}) async =>
+      LogTail.fromJson(
+        await _rest.get(
+          '/incidents/$incidentId/log-tail',
+          query: {'limit': 50, 'since': ?since?.toUtc().toIso8601String()},
+        ),
+      );
+
+  @override
+  Future<List<AuditEntry>> listAudit({String? incidentId}) async {
+    final items = <AuditEntry>[];
+    String? cursor;
+    for (var page = 0; page < maxPages; page++) {
+      final body = AuditPage.fromJson(
+        await _rest.get(
+          '/audit',
+          query: {'limit': 100, 'incident_id': ?incidentId, 'cursor': ?cursor},
+        ),
+      );
+      items.addAll(body.items);
+      cursor = body.nextCursor;
+      if (cursor == null) break;
+    }
+    return items;
+  }
+
+  @override
+  Future<MonitorSettings> getSettings() async =>
+      MonitorSettings.fromJson(await _rest.get('/settings'));
+
+  @override
+  Future<MonitorSettings> updateSettings(MonitorSettingsUpdate update) async =>
+      MonitorSettings.fromJson(await _rest.put('/settings', update.toJson()));
 
   @override
   void dispose() {}

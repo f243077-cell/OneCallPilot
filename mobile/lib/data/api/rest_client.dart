@@ -56,6 +56,15 @@ class RestClient {
     ),
   );
 
+  Future<Map<String, dynamic>> put(String path, Map<String, dynamic> body) =>
+      _send(
+        (headers) => _dio.put<Object?>(
+          path,
+          data: body,
+          options: Options(headers: headers),
+        ),
+      );
+
   Future<Map<String, dynamic>> _send(
     Future<Response<Object?>> Function(Map<String, String> headers) request,
   ) async {
