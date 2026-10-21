@@ -76,8 +76,8 @@ jobs:
           uv run mypy ../tests/integration
           uv run mypy ../tests/security
 
-      - name: Pytest (unit tests)
-        run: uv run pytest -q tests
+      - name: Pytest (unit tests) with the agent coverage floor (>= 85 %, CLAUDE.md 7)
+        run: uv run pytest -q tests --cov=oncallpilot.agent --cov-report=term --cov-fail-under=85
 
       - name: Pytest (integration, Postgres and Redis)
         run: uv run pytest -c pyproject.toml ../tests/integration -q
