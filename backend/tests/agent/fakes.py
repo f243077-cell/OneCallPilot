@@ -55,6 +55,7 @@ class FakeEffects:
     proposals: list[ProposalOut] = field(default_factory=list)
     escalated: list[EscalationReason] = field(default_factory=list)
     meta: list[RunMeta] = field(default_factory=list)
+    llm_calls: list[tuple[str, str, str]] = field(default_factory=list)
 
     async def load_context(self) -> IncidentContext:
         seed = EvidenceView(
@@ -97,6 +98,11 @@ class FakeEffects:
 
     async def finish(self, meta: RunMeta) -> None:
         self.meta.append(meta)
+
+    async def record_llm_call(
+        self, kind: str, prompt: str, response: str, usage: Usage, latency_ms: int
+    ) -> None:
+        self.llm_calls.append((kind, prompt, response))
 
 
 def tool_turn(*names: str, done: bool = False, **arguments: Any) -> LLMTurn:

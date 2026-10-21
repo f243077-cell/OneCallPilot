@@ -12,6 +12,7 @@ off, and the evidence gathered so far stays.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import time
 from collections.abc import Callable
@@ -146,8 +147,24 @@ class Investigation:
     async def _gather(self) -> None:
         specs = read_tool_specs()
         while self.state.can_gather:
+            started = self.clock()
             turn = await self.provider.step_with_tools(self.messages, specs)
             self.usage.append(turn.usage)
+            await self._record(
+                "gather",
+                self.messages,
+                json.dumps(
+                    {
+                        "text": turn.text,
+                        "done": turn.done,
+                        "tool_calls": [
+                            {"name": c.name, "arguments": c.arguments} for c in turn.tool_calls
+                        ],
+                    }
+                ),
+                turn.usage,
+                started,
+            )
             allowed = turn.tool_calls[: self.state.gather_calls_left]
             self.messages.append(Msg("assistant", turn.text, tool_calls=tuple(allowed)))
             for call in allowed:
@@ -200,10 +217,12 @@ class Investigation:
         """One structured call with at most one repair (AI-020)."""
         messages = [*self.messages, Msg("user", prompt)]
         while True:
+            started = self.clock()
             try:
                 reply = await self.provider.structured(messages, schema)
             except InvalidStructuredOutputError as exc:
                 self.usage.append(exc.usage)
+                await self._record(call, messages, f"INVALID: {exc.error}", exc.usage, started)
                 self._apply(StructuredAttempt(call, valid=False))
                 messages = [
                     *messages,
@@ -215,8 +234,16 @@ class Investigation:
                 ]
                 continue
             self.usage.append(reply.usage)
+            await self._record(call, messages, reply.value.model_dump_json(), reply.usage, started)
             self._apply(StructuredAttempt(call, valid=True))
             return reply.value
+
+    async def _record(
+        self, kind: str, messages: list[Msg], response: str, usage: Usage, started: float
+    ) -> None:
+        prompt = "\n\n".join(f"[{m.role}] {m.content}" for m in messages)
+        latency_ms = int((self.clock() - started) * 1000)
+        await self.effects.record_llm_call(kind, prompt, response, usage, latency_ms)
 
     def _apply(self, event: Event) -> None:
         self.state = transition(self.state, event)

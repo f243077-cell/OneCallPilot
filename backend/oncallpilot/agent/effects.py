@@ -8,14 +8,30 @@ a fake; the real implementation stores evidence (redacted, with the next
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
+import json
+import logging
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any, Literal, Protocol
 from uuid import UUID
 
+import asyncpg
 from oncallpilot_contracts.enums import EscalationReason, EvidenceKind
+from oncallpilot_contracts.ws import cut_evidence_payload
+from redis.exceptions import RedisError
 
+from oncallpilot.agent.providers.base import Usage
+from oncallpilot.agent.redaction import looks_suspicious, redact, redact_payload
 from oncallpilot.agent.schemas import HypothesisOut, ProposalOut
+from oncallpilot.agent.summaries import summarise
+from oncallpilot.agent.toolbox import ToolBox, ToolRefusedError
+from oncallpilot.agent.untrusted import wrap
+from oncallpilot.db import agent as db
+from oncallpilot.events import EventStream
+from oncallpilot.transitions import IllegalStatusChangeError, check_transition
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -53,6 +69,7 @@ class ToolOutcome:
 
 @dataclass(frozen=True)
 class RankedHypothesis:
+    original_rank: int  # the rank it was stored with by store_hypotheses
     hypothesis: HypothesisOut
     confidence_initial: float
     confidence: float
@@ -89,3 +106,286 @@ class AgentEffects(Protocol):
     async def escalate(self, reason: EscalationReason) -> None: ...
 
     async def finish(self, meta: RunMeta) -> None: ...
+
+    async def record_llm_call(
+        self, kind: str, prompt: str, response: str, usage: Usage, latency_ms: int
+    ) -> None:
+        """``audit(llm.call)`` with the redacted prompt and response (AI-024)."""
+        ...
+
+
+# --- the real implementation ----------------------------------------------------------
+
+
+class Proposer(Protocol):
+    """Validates a proposal against the catalogue and live targets, asks the runner for a
+    dry run, and stores the pending proposal (architecture §5.6; task B2.8)."""
+
+    async def propose(self, context: IncidentContext, proposal: ProposalOut) -> ProposalResult: ...
+
+
+class UnavailableProposer:
+    """Until B2.8: no dry run can be requested, so every proposal escalates."""
+
+    async def propose(self, context: IncidentContext, proposal: ProposalOut) -> ProposalResult:
+        return "dry_run_unavailable"
+
+
+SOURCES: dict[str, str] = {
+    "detector_signal": "detector",
+    "log_query": "loki",
+    "metric_query": "prometheus",
+    "deploy_list": "deploy_ledger",
+    "service_health": "docker",
+    "runbook_hit": "runbooks",
+}
+LLM_AUDIT_MAX_CHARS = 20_000
+
+
+def _utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
+def render_evidence(ref: str, kind: str, payload: dict[str, Any]) -> str:
+    return wrap(ref, SOURCES.get(kind, "tool"), json.dumps(payload, separators=(",", ":")))
+
+
+@dataclass
+class DbEffects:
+    """``AgentEffects`` on Postgres and ``ocp:events`` for one incident."""
+
+    pool: asyncpg.Pool
+    events: EventStream
+    tools: ToolBox
+    incident_id: UUID
+    provider_name: str
+    model: str
+    proposer: Proposer = field(default_factory=UnavailableProposer)
+    clock: Callable[[], datetime] = _utcnow
+    _context: IncidentContext | None = None
+    _evidence_ids: dict[str, UUID] = field(default_factory=dict)
+    _hypothesis_ids: dict[int, UUID] = field(default_factory=dict)
+
+    @property
+    def context(self) -> IncidentContext:
+        if self._context is None:
+            raise RuntimeError("load_context() first")
+        return self._context
+
+    async def load_context(self) -> IncidentContext:
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "select id, service, title, window_start, window_end from ocp.incidents"
+                " where id = $1",
+                self.incident_id,
+            )
+            if row is None:
+                raise LookupError(f"incident {self.incident_id} not found")
+            rows = await db.evidence_rows(conn, self.incident_id)
+        views = []
+        for r in rows:
+            self._evidence_ids[r["ref"]] = r["id"]
+            views.append(
+                EvidenceView(
+                    r["ref"],
+                    r["kind"],
+                    r["summary"],
+                    render_evidence(r["ref"], r["kind"], r["payload"]),
+                )
+            )
+        self._context = IncidentContext(
+            incident_id=row["id"],
+            service=row["service"],
+            title=row["title"],
+            window_start=row["window_start"],
+            window_end=row["window_end"],
+            evidence=tuple(views),
+        )
+        return self._context
+
+    async def run_tool(
+        self, name: str, arguments: dict[str, Any], purpose: Literal["gather", "disproof"]
+    ) -> ToolOutcome:
+        context = self.context
+        now = self.clock()
+        try:
+            result = await self.tools.run(
+                name, arguments, context.window_start, context.window_end, now
+            )
+        except ToolRefusedError as exc:
+            log.info("tool refused: %s", name, extra={"incident_id": self.incident_id})
+            return ToolOutcome(None, redact(str(exc)))
+        payload = redact_payload(result.payload)
+        params = redact_payload(result.params)
+        summary = redact(summarise(result.kind, params, payload))
+        suspicious = looks_suspicious(payload)
+        async with self.pool.acquire() as conn, conn.transaction():
+            await db.lock_incident(conn, self.incident_id)
+            ref = await db.next_ref(conn, self.incident_id)
+            evidence_id = await db.insert_evidence(
+                conn, self.incident_id, ref, result.kind, purpose, name, params, summary,
+                payload, suspicious, now,
+            )  # fmt: skip
+            version = await db.bump(conn, self.incident_id, now)
+            await db.audit(
+                conn, "agent", "evidence.added", self.incident_id, "evidence", evidence_id,
+                {"ref": ref, "tool": name, "purpose": purpose, "suspicious": suspicious},
+            )  # fmt: skip
+        self._evidence_ids[ref] = evidence_id
+        cut, truncated = cut_evidence_payload(result.kind, payload)
+        await self._publish(
+            "evidence.added",
+            version,
+            now,
+            {
+                "id": str(evidence_id),
+                "ref": ref,
+                "kind": result.kind,
+                "purpose": purpose,
+                "tool_name": name,
+                "summary": summary,
+                "payload": cut,
+                "payload_truncated": truncated,
+                "suspicious_content": suspicious,
+                "created_at": now.isoformat().replace("+00:00", "Z"),
+            },
+        )
+        view = EvidenceView(ref, result.kind, summary, render_evidence(ref, result.kind, payload))
+        return ToolOutcome(view, view.rendered)
+
+    async def store_hypotheses(self, hypotheses: list[HypothesisOut]) -> None:
+        now = self.clock()
+        async with self.pool.acquire() as conn, conn.transaction():
+            await db.lock_incident(conn, self.incident_id)
+            for h in hypotheses:
+                self._hypothesis_ids[h.rank] = await db.insert_hypothesis(
+                    conn, self.incident_id, h.rank, h.summary, h.root_cause_category,
+                    h.confidence, [self._evidence_ids[r] for r in h.evidence_refs], now,
+                )  # fmt: skip
+            version = await db.bump(conn, self.incident_id, now)
+            await db.audit(
+                conn, "agent", "hypothesis.created", self.incident_id, payload={
+                    "hypotheses": [
+                        {"rank": h.rank, "category": h.root_cause_category,
+                         "confidence": h.confidence, "refs": h.evidence_refs}
+                        for h in hypotheses
+                    ]
+                },
+            )  # fmt: skip
+            current = await self._hypotheses(conn)
+        await self._publish("hypothesis.updated", version, now, {"hypotheses": current})
+
+    async def store_reflection(self, ranked: list[RankedHypothesis]) -> None:
+        now = self.clock()
+        async with self.pool.acquire() as conn, conn.transaction():
+            await db.lock_incident(conn, self.incident_id)
+            await db.park_ranks(conn, self.incident_id)
+            for r in ranked:
+                await db.update_hypothesis(
+                    conn, self._hypothesis_ids[r.original_rank], r.hypothesis.rank,
+                    r.confidence, r.dropped, r.reflection_notes, now,
+                )  # fmt: skip
+            version = await db.bump(conn, self.incident_id, now)
+            await db.audit(
+                conn, "agent", "hypothesis.reflected", self.incident_id, payload={
+                    "hypotheses": [
+                        {"rank": r.hypothesis.rank, "from_rank": r.original_rank,
+                         "confidence_initial": r.confidence_initial,
+                         "confidence": r.confidence, "dropped": r.dropped}
+                        for r in ranked
+                    ]
+                },
+            )  # fmt: skip
+            current = await self._hypotheses(conn)
+        await self._publish("hypothesis.updated", version, now, {"hypotheses": current})
+
+    async def propose(self, proposal: ProposalOut) -> ProposalResult:
+        return await self.proposer.propose(self.context, proposal)
+
+    async def escalate(self, reason: EscalationReason) -> None:
+        now = self.clock()
+        async with self.pool.acquire() as conn, conn.transaction():
+            row = await db.lock_incident(conn, self.incident_id)
+            try:
+                check_transition(row["status"], "escalated")
+            except IllegalStatusChangeError:
+                log.warning(
+                    "not escalating: incident is %s", row["status"],
+                    extra={"incident_id": self.incident_id},
+                )  # fmt: skip
+                return
+            severity = await conn.fetchval(
+                "select severity::text from ocp.incidents where id = $1", self.incident_id
+            )
+            await db.set_status(conn, self.incident_id, "escalated", reason, now)
+            version = await db.bump(conn, self.incident_id, now)
+            await db.audit(
+                conn, "agent", "incident.status_changed", self.incident_id, "incident",
+                self.incident_id, {"from": row["status"], "to": "escalated", "reason": reason},
+            )  # fmt: skip
+        await self._publish(
+            "incident.updated",
+            version,
+            now,
+            {"status": "escalated", "status_reason": reason, "severity": severity},
+        )
+        log.info("incident escalated: %s", reason, extra={"incident_id": self.incident_id})
+
+    async def finish(self, meta: RunMeta) -> None:
+        async with self.pool.acquire() as conn:
+            await db.merge_agent_meta(
+                conn,
+                self.incident_id,
+                {
+                    "tool_calls": meta.tool_calls,
+                    "llm_calls": meta.llm_calls,
+                    "input_tokens": meta.input_tokens,
+                    "output_tokens": meta.output_tokens,
+                    "duration_ms": meta.duration_ms,
+                    "terminal_state": meta.terminal_state,
+                },
+            )
+
+    async def record_llm_call(
+        self, kind: str, prompt: str, response: str, usage: Usage, latency_ms: int
+    ) -> None:
+        async with self.pool.acquire() as conn:
+            await db.audit(
+                conn, "agent", "llm.call", self.incident_id, payload={
+                    "kind": kind,
+                    "provider": self.provider_name,
+                    "model": self.model,
+                    "prompt": redact(prompt)[:LLM_AUDIT_MAX_CHARS],
+                    "response": redact(response)[:LLM_AUDIT_MAX_CHARS],
+                    "input_tokens": usage.input_tokens,
+                    "output_tokens": usage.output_tokens,
+                    "latency_ms": latency_ms,
+                },
+            )  # fmt: skip
+
+    async def _hypotheses(self, conn: Any) -> list[dict[str, Any]]:
+        ref_of = {v: k for k, v in self._evidence_ids.items()}
+        return [
+            {
+                "id": str(r["id"]),
+                "rank": r["rank"],
+                "summary": r["summary"],
+                "root_cause_category": r["root_cause_category"],
+                "confidence": float(r["confidence"]),
+                "confidence_initial": float(r["confidence_initial"]),
+                "evidence_refs": [ref_of[i] for i in r["evidence_ids"] if i in ref_of],
+                "status": r["status"],
+                "reflection_notes": r["reflection_notes"],
+            }
+            for r in await db.all_hypotheses(conn, self.incident_id)
+        ]
+
+    async def _publish(self, event: str, version: int, ts: datetime, data: dict[str, Any]) -> None:
+        try:
+            await self.events.publish(event, self.incident_id, version, ts, data)
+        except RedisError as exc:
+            # Committed already; the app still sees it through GET /incidents/{id}.
+            log.error(
+                "publish %s failed: %s", event, type(exc).__name__,
+                extra={"incident_id": self.incident_id},
+            )  # fmt: skip

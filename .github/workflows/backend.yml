@@ -76,11 +76,16 @@ jobs:
           uv run mypy ../tests/integration
           uv run mypy ../tests/security
 
-      - name: Pytest (unit tests) with the agent coverage floor (>= 85 %, CLAUDE.md 7)
-        run: uv run pytest -q tests --cov=oncallpilot.agent --cov-report=term --cov-fail-under=85
+      - name: Pytest (unit tests)
+        run: uv run pytest -q tests --cov=oncallpilot.agent
 
       - name: Pytest (integration, Postgres and Redis)
-        run: uv run pytest -c pyproject.toml ../tests/integration -q
+        run: uv run pytest -c pyproject.toml ../tests/integration -q --cov=oncallpilot.agent --cov-append
+
+      # The database-backed agent effects are covered by the integration suite,
+      # so the floor applies to unit + integration together.
+      - name: Agent coverage floor (>= 85 %, CLAUDE.md 7)
+        run: uv run coverage report --fail-under=85
 
       # SEC-004 (a throwaway copilot-redis from infrastructure/redis/, published on
       # 127.0.0.1 for the test only) and TEST-008 (the redaction corpus).

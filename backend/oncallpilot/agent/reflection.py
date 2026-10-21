@@ -36,6 +36,7 @@ def apply_reflection(
         dropped = hypothesis.rank == top_rank and reflection.top_verdict == "disproved"
         ranked.append(
             RankedHypothesis(
+                original_rank=hypothesis.rank,
                 hypothesis=hypothesis,
                 confidence_initial=hypothesis.confidence,
                 confidence=round(min(adjusted, cap), 2),
@@ -46,6 +47,7 @@ def apply_reflection(
     kept = [r for r in ranked if not r.dropped]  # rank order: the next one moves up
     kept = [
         RankedHypothesis(
+            original_rank=r.original_rank,
             hypothesis=r.hypothesis.model_copy(update={"rank": i}),
             confidence_initial=r.confidence_initial,
             confidence=r.confidence,

@@ -42,6 +42,15 @@ async def test_happy_path_proposes() -> None:
     assert meta.terminal_state == "PROPOSED"
     assert (meta.tool_calls, meta.llm_calls) == (3, 6)  # 2 gather turns + 4 structured
     assert meta.input_tokens > 0
+    # AI-024: one llm.call record per LLM call.
+    assert [k for k, _, _ in effects.llm_calls] == [
+        "gather",
+        "gather",
+        "hypothesize",
+        "disproof_plan",
+        "reflect",
+        "propose",
+    ]
 
 
 async def test_endless_tool_requests_stop_after_six_gather_calls() -> None:
