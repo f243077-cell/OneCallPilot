@@ -12,13 +12,15 @@ import httpx
 import pytest
 from oncallpilot_contracts.api import ErrorEnvelope, Healthz, IncidentPage
 from oncallpilot_contracts.domain import IncidentSummary
+from pydantic import SecretStr
 from redis.exceptions import ConnectionError as RedisConnectionError
 
-from oncallpilot.api.app import Services, create_app
+from oncallpilot.api.app import IngestConfig, Services, create_app
 from oncallpilot.api.auth import JwksCache, TokenVerifier
 from oncallpilot.db.incidents import PageCursor
 from tests.keys import ISSUER, FakeJwks, SigningKey
 
+TEST_INGEST = IngestConfig(SecretStr("test-ingest-token"), True, b"")
 KEY = SigningKey("k1")
 
 
@@ -89,6 +91,8 @@ class Env:
             verifier=TokenVerifier(JwksCache(FakeJwks(KEY)), ISSUER),
             incidents=cast(Any, self.incidents),
             events=cast(Any, None),
+            queues=cast(Any, None),
+            ingest=TEST_INGEST,
         )
 
 

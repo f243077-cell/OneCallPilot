@@ -22,12 +22,15 @@ from typing import Any, cast
 import asyncpg
 import httpx
 import pytest
+from pydantic import SecretStr
 from redis.asyncio import Redis
 
-from oncallpilot.api.app import Services, create_app
+from oncallpilot.api.app import IngestConfig, Services, create_app
 from oncallpilot.api.auth import JwksCache, TokenVerifier
 from oncallpilot.db.incidents import IncidentRepository
 from oncallpilot.db.pool import create_pool
+from oncallpilot.events import EventStream
+from oncallpilot.queues import Queues
 from tests.keys import ISSUER, FakeJwks, SigningKey
 
 MIGRATIONS = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
@@ -120,18 +123,27 @@ class Api:
         return {"Authorization": f"Bearer {self.key.token()}"}
 
 
-@pytest.fixture
-async def api(pool: asyncpg.Pool) -> AsyncIterator[Api]:
-    key = SigningKey("it-key")
-    redis = FakeRedis()
-    services = Services(
+INGEST_TOKEN = "test-ingest-token"
+TEST_INGEST = IngestConfig(SecretStr(INGEST_TOKEN), True, b"detector: test\n")
+
+
+def build_services(
+    pool: asyncpg.Pool, key: SigningKey, redis: Redis | FakeRedis, ingest: IngestConfig
+) -> Services:
+    real = redis if isinstance(redis, Redis) else None
+    return Services(
         pool=pool,
         redis=redis,
         verifier=TokenVerifier(JwksCache(FakeJwks(key)), ISSUER),
         incidents=IncidentRepository(pool),
-        events=cast(Any, None),
+        events=EventStream(real) if real else cast(Any, None),
+        queues=Queues(real) if real else cast(Any, None),
+        ingest=ingest,
     )
 
+
+@asynccontextmanager
+async def serve(services: Services) -> AsyncIterator[httpx.AsyncClient]:
     @asynccontextmanager
     async def factory() -> AsyncIterator[Services]:
         yield services
@@ -142,4 +154,27 @@ async def api(pool: asyncpg.Pool) -> AsyncIterator[Api]:
         app.router.lifespan_context(app),
         httpx.AsyncClient(transport=transport, base_url="http://test") as client,
     ):
+        yield client
+
+
+@pytest.fixture
+async def api(pool: asyncpg.Pool) -> AsyncIterator[Api]:
+    """backend-api on the test database with a fake Redis (REST reads)."""
+    key = SigningKey("it-key")
+    redis = FakeRedis()
+    async with serve(build_services(pool, key, redis, TEST_INGEST)) as client:
         yield Api(client=client, key=key, redis=redis)
+
+
+@dataclass
+class LiveApi:
+    client: httpx.AsyncClient
+    redis: Redis
+    pool: asyncpg.Pool
+
+
+@pytest.fixture
+async def live_api(pool: asyncpg.Pool, redis_client: Redis) -> AsyncIterator[LiveApi]:
+    """backend-api on the test database and a real Redis (ingest, events, jobs)."""
+    async with serve(build_services(pool, SigningKey("it-key"), redis_client, TEST_INGEST)) as c:
+        yield LiveApi(client=c, redis=redis_client, pool=pool)

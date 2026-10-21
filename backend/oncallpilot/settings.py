@@ -6,6 +6,8 @@ so they never appear in a repr or a log line.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -18,6 +20,9 @@ class ApiSettings(BaseSettings):
     database_url: SecretStr
     redis_url: SecretStr
     supabase_url: str
+    ingest_token: SecretStr
+    agent_enabled: bool = True
+    detector_config_path: Path = Path("config") / "detector.yaml"
 
     @property
     def jwt_issuer(self) -> str:

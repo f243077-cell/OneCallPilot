@@ -15,11 +15,11 @@ from typing import Any, cast
 import pytest
 from fastapi.testclient import TestClient
 from oncallpilot_contracts.ws import WsServerMessage
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 from redis.asyncio import Redis
 from starlette.testclient import WebSocketTestSession
 
-from oncallpilot.api.app import Services, create_app
+from oncallpilot.api.app import IngestConfig, Services, create_app
 from oncallpilot.api.auth import JwksCache, TokenVerifier
 from oncallpilot.api.routers.ws import WsTimings
 from oncallpilot.events import EVENTS_STREAM, EventStream
@@ -117,6 +117,7 @@ async def test_read_after_blocks_until_a_new_event(redis_client: Redis) -> None:
 
 # --- the gateway end to end ----------------------------------------------------
 
+TEST_INGEST = IngestConfig(SecretStr("test-ingest-token"), True, b"")
 KEY = SigningKey("it-ws")
 
 
@@ -136,6 +137,8 @@ def gateway() -> Iterator[TestClient]:
                 verifier=TokenVerifier(JwksCache(FakeJwks(KEY)), ISSUER),
                 incidents=cast(Any, None),
                 events=EventStream(redis),
+                queues=cast(Any, None),
+                ingest=TEST_INGEST,
                 ws_timings=WsTimings(read_block_ms=50),
             )
         finally:

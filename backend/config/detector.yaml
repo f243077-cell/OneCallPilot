@@ -1,0 +1,37 @@
+# Detector rules (architecture §6.8; FR-001…FR-003, FR-011). Owner: Stream B.
+#
+# The SHA-256 of this file plus the overrides in monitor_settings.thresholds is
+# the detector_config_version stamped on every incident (ADR-20). Frozen at the
+# bench-freeze tag (CLAUDE.md §2.13): after it, never edit this file.
+#
+# Override keys in monitor_settings use dotted paths into `signals`, for
+# example `error_rate.z` or `p95_latency.min_seconds`.
+
+ewma_alpha: 0.1
+warmup_seconds: 180          # no triggers after a `kind=reset` ledger record (FR-003)
+recovery_minutes: 3          # every triggering signal normal this long → recovered (FR-011)
+
+signals:
+  error_rate:                # api: 5xx share over 1 min
+    services: [api]
+    z: 4
+    consecutive: 3
+    min_value: 0.02          # 2 % absolute floor
+  p95_latency:               # api: histogram_quantile(0.95, …[1m]), seconds
+    services: [api]
+    z: 4
+    consecutive: 3
+    min_factor: 2.0          # ≥ 2× baseline
+    min_seconds: 0.3         # ≥ 300 ms
+  job_failure_rate:          # worker: worker_jobs_total{result="error"} share
+    services: [worker]
+    z: 4
+    consecutive: 3
+    min_value: 0.05
+  restarts:                  # socket-proxy-ro RestartCount, state, exit code
+    services: [api, worker, payments, redis, postgres, lb]
+    min_restarts: 2
+    window_seconds: 300
+  stack_traces:              # Loki count_over_time(… |= "Traceback" [1m])
+    services: [api, worker]
+    min_per_minute: 5

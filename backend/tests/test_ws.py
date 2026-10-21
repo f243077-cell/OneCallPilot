@@ -13,15 +13,17 @@ from typing import Any, cast
 import pytest
 from fastapi.testclient import TestClient
 from oncallpilot_contracts.ws import WsServerMessage
+from pydantic import SecretStr
 from starlette.testclient import WebSocketTestSession
 from starlette.websockets import WebSocketDisconnect
 
-from oncallpilot.api.app import Services, create_app
+from oncallpilot.api.app import IngestConfig, Services, create_app
 from oncallpilot.api.auth import JwksCache, TokenVerifier
 from oncallpilot.api.routers.ws import WsTimings
 from oncallpilot.events import parse_id
 from tests.keys import ISSUER, FakeJwks, SigningKey
 
+TEST_INGEST = IngestConfig(SecretStr("test-ingest-token"), True, b"")
 KEY = SigningKey("k1")
 TIMINGS = WsTimings(auth_timeout=0.3, ping_interval=0.25, max_missed_pongs=2, read_block_ms=20)
 INCIDENT = uuid.uuid4()
@@ -93,6 +95,8 @@ def client(stream: MemoryStream) -> Iterator[TestClient]:
         verifier=TokenVerifier(JwksCache(FakeJwks(KEY)), ISSUER, leeway_seconds=0),
         incidents=cast(Any, None),
         events=cast(Any, stream),
+        queues=cast(Any, None),
+        ingest=TEST_INGEST,
         ws_timings=TIMINGS,
     )
 

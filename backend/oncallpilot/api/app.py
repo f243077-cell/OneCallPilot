@@ -10,22 +10,26 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Protocol
 
 import asyncpg
 import httpx
 from fastapi import FastAPI
+from pydantic import SecretStr
 from redis.asyncio import Redis
 
 from oncallpilot.api.auth import JwksCache, TokenVerifier, http_jwks_fetcher
 from oncallpilot.api.errors import install_error_handlers
-from oncallpilot.api.routers import health, incidents, ws
+from oncallpilot.api.routers import health, incidents, ingest, ws
 from oncallpilot.api.routers.ws import WsTimings
 from oncallpilot.db.incidents import IncidentRepository
 from oncallpilot.db.pool import create_pool
+from oncallpilot.detector.config import read_config
 from oncallpilot.events import EventStream
 from oncallpilot.jsonlog import configure_logging
+from oncallpilot.queues import Queues
 from oncallpilot.settings import ApiSettings
 
 REDIS_TIMEOUT_SECONDS = 2.0
@@ -35,6 +39,19 @@ class Pinger(Protocol):
     def ping(self) -> Awaitable[bool]: ...
 
 
+def utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
+@dataclass(frozen=True)
+class IngestConfig:
+    """What ``POST /ingest/alert`` needs besides the database (API-003, ADR-20)."""
+
+    token: SecretStr
+    agent_enabled: bool
+    detector_config: bytes
+
+
 @dataclass(frozen=True)
 class Services:
     pool: asyncpg.Pool
@@ -42,7 +59,10 @@ class Services:
     verifier: TokenVerifier
     incidents: IncidentRepository
     events: EventStream
+    queues: Queues
+    ingest: IngestConfig
     ws_timings: WsTimings = WsTimings()
+    clock: Callable[[], datetime] = field(default=utcnow)
 
 
 ServicesFactory = Callable[[], AbstractAsyncContextManager[Services]]
@@ -59,6 +79,7 @@ def create_app(services: ServicesFactory) -> FastAPI:
     install_error_handlers(app)
     app.include_router(health.router)
     app.include_router(incidents.router)
+    app.include_router(ingest.router)
     app.include_router(ws.router)
     return app
 
@@ -85,6 +106,12 @@ def production_services(settings: ApiSettings) -> ServicesFactory:
                     verifier=verifier,
                     incidents=IncidentRepository(pool),
                     events=EventStream(redis),
+                    queues=Queues(redis),
+                    ingest=IngestConfig(
+                        token=settings.ingest_token,
+                        agent_enabled=settings.agent_enabled,
+                        detector_config=read_config(settings.detector_config_path),
+                    ),
                 )
             finally:
                 await redis.aclose()

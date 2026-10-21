@@ -28,6 +28,8 @@ ENV PATH=/opt/venv/bin:$PATH \
 COPY --from=build /opt/venv /opt/venv
 RUN useradd --system --uid 10002 --no-create-home --shell /usr/sbin/nologin backend
 WORKDIR /app
+# The detector rules; their hash is detector_config_version (relative to /app).
+COPY config/ config/
 USER backend
 EXPOSE 8000
 CMD ["uvicorn", "--factory", "oncallpilot.api.app:create_production_app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
