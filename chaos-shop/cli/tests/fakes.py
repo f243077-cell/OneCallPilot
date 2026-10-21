@@ -20,6 +20,8 @@ class FakeDocker:
                 health="healthy" if running else "",
             )
         self.actions: list[tuple[str, str]] = []
+        # Container actions and helper operations, in the order they happened.
+        self.timeline: list[str] = []
         self.plans: list[list[dict[str, Any]]] = []
         self.ledger = ""
         self.responses: dict[str, Any] = {}
@@ -39,16 +41,19 @@ class FakeDocker:
     def start(self, names: Any) -> None:
         for name in names:
             self.actions.append(("start", name))
+            self.timeline.append(f"start {name}")
             self._set(name, "running", "healthy")
 
     def stop(self, names: Any) -> None:
         for name in names:
             self.actions.append(("stop", name))
+            self.timeline.append(f"stop {name}")
             self._set(name, "exited", "")
 
     def restart(self, names: Any) -> None:
         for name in names:
             self.actions.append(("restart", name))
+            self.timeline.append(f"restart {name}")
             self._set(name, "running", "healthy")
 
     def wait_healthy(self, names: Any, timeout: float) -> float:
@@ -60,6 +65,7 @@ class FakeDocker:
     def run_helper(self, plan: list[dict[str, Any]], token: str) -> list[Any]:
         assert token == "t" * 32
         self.plans.append(plan)
+        self.timeline += [f"helper {step['op']}" for step in plan]
         results: list[Any] = []
         for step in plan:
             if step["op"] == "ledger_read":

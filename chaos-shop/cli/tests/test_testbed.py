@@ -78,6 +78,19 @@ def test_reset_restores_the_baseline_and_reseeds_the_ledger(
     assert ("http://cs-loadgen:8003/internal/coupon-stream", "{'enabled': False}") in switched_off
 
 
+def test_reset_writes_the_reset_records_before_touching_containers(
+    testbed: Testbed, docker: FakeDocker
+) -> None:
+    """backend-worker's detector starts its warm-up when it sees the reset
+    records; written last, the restarts in between raised a false incident
+    (found on the first real start of the backend)."""
+    docker.start(["cs-api-150-1"])
+    docker.timeline.clear()
+    testbed.reset()
+    first_container = next(i for i, t in enumerate(docker.timeline) if not t.startswith("helper"))
+    assert docker.timeline.index("helper ledger_replace") < first_container
+
+
 def test_reset_creates_missing_slots(testbed: Testbed, docker: FakeDocker) -> None:
     del docker.containers["cs-api-150-5"]
     testbed.reset()

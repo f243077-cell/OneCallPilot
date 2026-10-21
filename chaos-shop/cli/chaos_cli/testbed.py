@@ -254,6 +254,10 @@ class Testbed:
                 f"baseline containers missing: {', '.join(missing)}; "
                 "run `docker compose --profile testbed up -d --wait` first"
             )
+        # The reset records go first: backend-worker's detector starts its warm-up
+        # when it sees them, so the stops and restarts below never raise an alert.
+        records = ledger.seeded_ledger(self.releases)
+        self.helper([{"op": "ledger_replace", "lines": [ledger.to_line(r) for r in records]}])
         if not all(s.exists for s in self.docker.states((*API_SLOTS, *WORKER_SLOTS)).values()):
             self.docker.compose_create_slots()
         # Slots that are not part of the baseline stop gracefully.
@@ -265,7 +269,6 @@ class Testbed:
         support = [n for n in BASELINE_RUNNING if n not in BASELINE_SLOTS]
         self.docker.start([n for n in support if not self.docker.state(n).running])
         self.docker.wait_healthy(BASELINE_RUNNING, timeout=HEALTH_TIMEOUT)
-        records = ledger.seeded_ledger(self.releases)
         self.helper(
             [
                 # Belt and braces after a hard kill: switch everything off explicitly.
@@ -292,7 +295,6 @@ class Testbed:
                     "json": {"enabled": False},
                     "auth": True,
                 },
-                {"op": "ledger_replace", "lines": [ledger.to_line(r) for r in records]},
             ]
         )
         return {"seconds": round(time.monotonic() - started, 1), "ledger_records": len(records)}
