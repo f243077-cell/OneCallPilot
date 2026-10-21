@@ -164,10 +164,11 @@ volumes:
   alloy_data:
   grafana_data:
 
+# chaos_net (used by prometheus) is declared in testbed.yml only: a second
+# declaration "conflicts with imported resource" on Compose v2, and
+# `external: true` stops Compose from creating it (docs/checks/week-1.md).
 networks:
   obs_net: {}
-  # Declared plainly, never `external: true` (testbed.yml defines it too).
-  chaos_net: {}
   ro_proxy_net:
     # Internal: no internet egress. Members: socket-proxy-ro, alloy, and later
     # backend-worker (architecture §3).
