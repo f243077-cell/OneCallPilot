@@ -109,6 +109,30 @@ class CooldownActiveError(_RetryLaterError):
     message = "an action on this service finished moments ago"
 
 
+class IncidentBusyError(ApiError):
+    status_code = 409
+    code = "INCIDENT_BUSY"
+    message = "an execution is queued or running"
+
+
+class VersionConflictError(ApiError):
+    status_code = 409
+    code = "VERSION_CONFLICT"
+    message = "the settings changed; reload them"
+
+
+class BenchmarkLockedError(ApiError):
+    status_code = 423
+    code = "BENCHMARK_LOCKED"
+    message = "settings are locked while the benchmark runs"
+
+
+class LogsUnavailableError(ApiError):
+    status_code = 500
+    code = "INTERNAL"
+    message = "logs are unavailable right now"
+
+
 class ChecksUnavailableError(ApiError):
     """A safety check could not be evaluated (Redis down): refuse (CLAUDE.md §4.2)."""
 

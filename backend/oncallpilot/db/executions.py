@@ -129,3 +129,13 @@ async def pending_of(conn: DbConn, incident_id: UUID) -> UUID | None:
         "select id from ocp.proposals where incident_id = $1 and status = 'pending'", incident_id
     )
     return found
+
+
+async def execution_in_progress(conn: DbConn, incident_id: UUID) -> bool:
+    found: bool = await conn.fetchval(
+        "select exists (select 1 from ocp.executions e join ocp.proposals p"
+        " on p.id = e.proposal_id where p.incident_id = $1"
+        " and e.status in ('queued', 'running'))",
+        incident_id,
+    )
+    return found

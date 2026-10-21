@@ -21,9 +21,20 @@ from oncallpilot_contracts.signing import key_from_hex
 from pydantic import SecretStr
 from redis.asyncio import Redis
 
+from oncallpilot.agent.tools.clients import LokiClient
 from oncallpilot.api.auth import JwksCache, TokenVerifier, http_jwks_fetcher
 from oncallpilot.api.errors import install_error_handlers
-from oncallpilot.api.routers import devices, health, incidents, ingest, proposals, ws
+from oncallpilot.api.ratelimit import PerUserInterval
+from oncallpilot.api.routers import (
+    audit,
+    devices,
+    health,
+    incidents,
+    ingest,
+    proposals,
+    settings,
+    ws,
+)
 from oncallpilot.api.routers.ws import WsTimings
 from oncallpilot.approvals.service import Approvals
 from oncallpilot.db.incidents import IncidentRepository
@@ -53,6 +64,7 @@ class IngestConfig:
     token: SecretStr
     agent_enabled: bool
     detector_config: bytes
+    benchmark_lock: bool = False
 
 
 @dataclass(frozen=True)
@@ -67,6 +79,8 @@ class Services:
     ws_timings: WsTimings = WsTimings()
     clock: Callable[[], datetime] = field(default=utcnow)
     approvals: Approvals | None = None  # needs a real Redis; None in tests that do not approve
+    loki: LokiClient | None = None  # /log-tail
+    log_tail_limiter: PerUserInterval = field(default_factory=PerUserInterval)
 
 
 ServicesFactory = Callable[[], AbstractAsyncContextManager[Services]]
@@ -86,6 +100,8 @@ def create_app(services: ServicesFactory) -> FastAPI:
     app.include_router(ingest.router)
     app.include_router(proposals.router)
     app.include_router(devices.router)
+    app.include_router(audit.router)
+    app.include_router(settings.router)
     app.include_router(ws.router)
     return app
 
@@ -128,8 +144,10 @@ def production_services(settings: ApiSettings) -> ServicesFactory:
                         token=settings.ingest_token,
                         agent_enabled=settings.agent_enabled,
                         detector_config=read_config(settings.detector_config_path),
+                        benchmark_lock=settings.benchmark_lock,
                     ),
                     approvals=approvals,
+                    loki=LokiClient(http, settings.loki_url),
                 )
             finally:
                 await redis.aclose()

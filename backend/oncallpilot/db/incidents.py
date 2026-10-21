@@ -102,6 +102,18 @@ class IncidentRepository:
     def __init__(self, pool: asyncpg.Pool) -> None:
         self._pool = pool
 
+    async def service_of(self, incident_id: UUID) -> str | None:
+        service: str | None = await self._pool.fetchval(
+            "select service from ocp.incidents where id = $1", incident_id
+        )
+        return service
+
+    async def get_summary(self, incident_id: UUID) -> IncidentSummary | None:
+        row = await self._pool.fetchrow(
+            _SUMMARY_SELECT.format(detail_columns="") + " where i.id = $1", incident_id
+        )
+        return None if row is None else IncidentSummary(**_summary_fields(row))
+
     async def list_page(
         self,
         *,

@@ -57,6 +57,7 @@ from oncallpilot.proposal_store import (
     store_proposal,
     text_from,
 )
+from oncallpilot.resolution import resolve_incident
 from oncallpilot.transitions import IllegalStatusChangeError, check_transition
 
 log = logging.getLogger(__name__)
@@ -343,38 +344,10 @@ class Outcomes:
 
     async def auto_resolve(self, incident_id: UUID) -> bool:
         """Signals recovered with no execution in progress → ``resolved`` (auto_recovered)."""
-        now = self.clock()
-        async with self.pool.acquire() as conn, conn.transaction():
-            row = await incident_db.lock_incident(conn, incident_id)
-            if row["status"] not in ("investigating", "awaiting_approval", "escalated",
-                                     "action_failed"):  # fmt: skip
-                return False
-            events: list[tuple[str, int, dict[str, Any]]] = []
-            pending = await db.pending_of(conn, incident_id)
-            if pending is not None:
-                await approvals_db.set_proposal_status(
-                    conn, pending, "expired", "incident resolved", now
-                )
-                version = await incident_db.bump(conn, incident_id, now)
-                await incident_db.audit(
-                    conn, "system", "proposal.expired", incident_id, "proposal", pending,
-                    {"reason": "incident resolved"},
-                )  # fmt: skip
-                data = _proposal_data(pending, "expired") | {"status_reason": "incident resolved"}
-                events.append(("proposal.updated", version, data))
-            await db.resolve(conn, incident_id, "auto_recovered", now)
-            version = await incident_db.bump(conn, incident_id, now)
-            await incident_db.audit(
-                conn, "detector", "incident.resolved", incident_id, "incident", incident_id,
-                {"resolution": "auto_recovered", "from": row["status"]},
-            )  # fmt: skip
-            events.append(
-                ("incident.resolved", version,
-                 {"resolution": "auto_recovered", "resolved_at": iso(now)})
-            )  # fmt: skip
-        await self._publish(_Change(incident_id, events), now)
-        log.info("incident auto-resolved", extra={"incident_id": incident_id})
-        return True
+        outcome = await resolve_incident(
+            self.pool, self.events, incident_id, "auto_recovered", "detector", self.clock()
+        )
+        return outcome == "resolved"
 
     # --- sweeper (FR-013, FR-024) ---------------------------------------------------
 

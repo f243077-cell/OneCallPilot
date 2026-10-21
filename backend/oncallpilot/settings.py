@@ -26,6 +26,8 @@ class ApiSettings(BaseSettings):
     fcm_credentials_path: Path | None = None  # mounted service-account file (FR-018)
     agent_enabled: bool = True
     detector_config_path: Path = Path("config") / "detector.yaml"
+    benchmark_lock: bool = False  # true after bench-freeze: settings are read-only (ADR-20)
+    loki_url: str = "http://loki:3100"  # /log-tail
 
     @property
     def jwt_issuer(self) -> str:
