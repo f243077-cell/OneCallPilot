@@ -135,7 +135,11 @@ def script(
     hypothesis_set: dict[str, Any] | None = None, verdict: dict[str, Any] | None = None
 ) -> dict[str, list[Any]]:
     return {
-        "HypothesisSetOut": [hypothesis_set or hypotheses((0.9, ["E1", "E2"]), (0.6, ["E3"]))],
+        # E2 = log_query, E3 = deploy_list. bad_deploy requires a deploy_list or
+        # metric_query citation, so hypothesis 2 is unsupported (x 0.5).
+        "HypothesisSetOut": [
+            hypothesis_set or hypotheses((0.9, ["E1", "E3"]), (0.6, ["E2"]), category="bad_deploy")
+        ],
         "DisproofPlanOut": [DISPROOF],
         "ReflectionOut": [verdict or reflection(0.85, 0.55)],
         "ProposalOut": [proposal(refs=["E2", "E3"])],
@@ -184,7 +188,7 @@ async def test_full_investigation_on_the_database(
     assert logs["suspicious_content"] is True
     assert evidence[2]["suspicious_content"] is False
 
-    # Hypotheses and reflection persisted: kept one re-ranked, the 0.55 one below threshold.
+    # Hypotheses and reflection persisted; the unsupported one capped at 0.6 x 0.5.
     rows = await pool.fetch(
         "select rank, status, confidence, confidence_initial from ocp.hypotheses"
         " where incident_id = $1 order by status, rank",
@@ -195,7 +199,7 @@ async def test_full_investigation_on_the_database(
         for r in rows
     ] == [
         (1, "active", 0.85, 0.9),
-        (2, "active", 0.55, 0.6),
+        (2, "active", 0.3, 0.6),
     ]
 
     # FR-019: one event per change, state_version rising, all valid C3 messages; no secret.

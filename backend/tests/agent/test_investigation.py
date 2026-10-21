@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from oncallpilot.agent.citations import CitationCheck
 from oncallpilot.agent.providers.base import LLMTurn, LLMUnavailableError
 from oncallpilot.agent.providers.fake import INVALID_JSON, FakeProvider
 from oncallpilot.agent.run import Investigation
@@ -185,7 +186,7 @@ async def test_unsupported_citations_halve_confidence() -> None:
     script = happy_script()
     effects = FakeEffects()
     inv = investigation(FakeProvider(structured=script), effects)
-    inv.citation_check = lambda h, ev: False
+    inv.citation_check = lambda h, kinds: CitationCheck(h.evidence_refs, supported=False)
     state = await inv.run()
     assert effects.reflection[0].confidence == pytest.approx(0.42)  # min(0.82, 0.85 x 0.5)
     assert state.escalation_reason == "low_confidence"

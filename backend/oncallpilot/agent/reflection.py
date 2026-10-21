@@ -1,12 +1,14 @@
 """Code rules of reflection, which always override the model (architecture §5.5; AI-016).
 
 - a hypothesis whose citations are not supported → confidence capped at × 0.5;
+- a hypothesis left without a valid citation → dropped;
 - the top hypothesis disproved → dropped, and the next one moves to the top;
 - final confidence = min(model-adjusted value, rule cap).
 """
 
 from __future__ import annotations
 
+from oncallpilot.agent.citations import CitationCheck
 from oncallpilot.agent.effects import RankedHypothesis
 from oncallpilot.agent.schemas import HypothesisOut, ReflectionOut
 
@@ -16,12 +18,13 @@ UNSUPPORTED_FACTOR = 0.5
 def apply_reflection(
     hypotheses: list[HypothesisOut],
     reflection: ReflectionOut,
-    citations_ok: dict[int, bool],
+    citations: dict[int, CitationCheck],
 ) -> list[RankedHypothesis]:
     """Ranked hypotheses after the rules; dropped ones come last, kept ones re-ranked 1…n.
 
-    ``citations_ok`` is the deterministic citation check per rank (code); the
-    model's own ``citations_supported`` can only lower confidence further.
+    ``citations`` is the deterministic check per rank (code); incompatible
+    citations are removed from the hypothesis. The model's own
+    ``citations_supported`` can only lower confidence further.
     """
     items = {item.rank: item for item in reflection.items}
     top_rank = min(h.rank for h in hypotheses)
@@ -29,15 +32,16 @@ def apply_reflection(
     for hypothesis in sorted(hypotheses, key=lambda h: h.rank):
         item = items.get(hypothesis.rank)
         adjusted = item.adjusted_confidence if item else hypothesis.confidence
-        supported = citations_ok.get(hypothesis.rank, True) and (
-            item.citations_supported if item else True
-        )
+        check = citations.get(hypothesis.rank, CitationCheck(hypothesis.evidence_refs, True))
+        supported = check.supported and (item.citations_supported if item else True)
         cap = hypothesis.confidence * (1.0 if supported else UNSUPPORTED_FACTOR)
-        dropped = hypothesis.rank == top_rank and reflection.top_verdict == "disproved"
+        disproved = hypothesis.rank == top_rank and reflection.top_verdict == "disproved"
+        dropped = disproved or not check.valid_refs
+        refs = check.valid_refs or hypothesis.evidence_refs
         ranked.append(
             RankedHypothesis(
                 original_rank=hypothesis.rank,
-                hypothesis=hypothesis,
+                hypothesis=hypothesis.model_copy(update={"evidence_refs": refs}),
                 confidence_initial=hypothesis.confidence,
                 confidence=round(min(adjusted, cap), 2),
                 dropped=dropped,

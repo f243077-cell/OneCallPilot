@@ -19,6 +19,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Literal, Protocol
 
+from oncallpilot.agent.citations import CitationCheck, check_citations
 from oncallpilot.agent.effects import AgentEffects, EvidenceView, IncidentContext, RunMeta
 from oncallpilot.agent.providers.base import (
     InvalidStructuredOutputError,
@@ -81,9 +82,7 @@ class Investigation:
     prompts: Prompts
     max_seconds: float = MAX_AGENT_SECONDS
     threshold: float = CONFIDENCE_THRESHOLD
-    citation_check: Callable[[HypothesisOut, dict[str, EvidenceView]], bool] = (
-        lambda hypothesis, evidence: True
-    )
+    citation_check: Callable[[HypothesisOut, dict[str, str]], CitationCheck] = check_citations
     clock: Callable[[], float] = time.monotonic
     state: AgentState = field(default_factory=AgentState)
     messages: list[Msg] = field(default_factory=list)
@@ -194,7 +193,8 @@ class Investigation:
         self.messages.append(Msg("assistant", plan.model_dump_json()))
         self.messages.append(Msg("user", f"Disproof query result:\n{outcome.message}"))
         verdict = await self._structured("reflect", ReflectionOut, self.prompts.reflect())
-        citations = {h.rank: self.citation_check(h, self.evidence) for h in hypotheses}
+        kinds: dict[str, str] = {ref: view.kind for ref, view in self.evidence.items()}
+        citations = {h.rank: self.citation_check(h, kinds) for h in hypotheses}
         ranked = apply_reflection(hypotheses, verdict, citations)
         await self.effects.store_reflection(ranked)
         self.messages.append(Msg("assistant", verdict.model_dump_json()))

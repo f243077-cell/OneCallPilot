@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Literal
 
+from oncallpilot_contracts.domain import TOOL_EVIDENCE_KIND
 from oncallpilot_contracts.enums import EscalationReason
 
 from oncallpilot.agent.effects import (
@@ -80,7 +81,8 @@ class FakeEffects:
             return ToolOutcome(None, "invalid parameters")
         ref = f"E{len(self.evidence) + 1}"
         self.evidence.append(ref)
-        view = EvidenceView(ref, "log_query", f"{name} result", wrap(ref, "loki", "lines"))
+        kind = TOOL_EVIDENCE_KIND[name]  # type: ignore[index]
+        view = EvidenceView(ref, kind, f"{name} result", wrap(ref, "tool", "lines"))
         return ToolOutcome(view, view.rendered)
 
     async def store_hypotheses(self, hypotheses: list[HypothesisOut]) -> None:
@@ -112,13 +114,15 @@ def tool_turn(*names: str, done: bool = False, **arguments: Any) -> LLMTurn:
     return LLMTurn(tool_calls=calls, done=done, usage=Usage(50, 10))
 
 
-def hypotheses(*specs: tuple[float, list[str]]) -> dict[str, Any]:
+def hypotheses(*specs: tuple[float, list[str]], category: str = "unknown") -> dict[str, Any]:
+    """Hypotheses citing the given refs. The default category ``unknown`` needs no
+    particular evidence kind, so the citation rules do not interfere."""
     return {
         "hypotheses": [
             {
                 "rank": i,
                 "summary": f"hypothesis number {i} about the deploy",
-                "root_cause_category": "bad_deploy",
+                "root_cause_category": category,
                 "confidence": confidence,
                 "evidence_refs": refs,
             }

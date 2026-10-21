@@ -1,0 +1,54 @@
+# Deterministic citation check of reflection (architecture §5.5 step 1; AI-014).
+#
+# For each root-cause category:
+#   compatible: evidence kinds a citation may have for this claim. A citation of
+#               another kind is dropped. detector_signal (the symptom) and
+#               runbook_hit (background) are compatible with every category.
+#   requires:   at least one citation must have one of these kinds, or the
+#               hypothesis counts as unsupported (confidence x 0.5).
+# A hypothesis left without any valid citation is dropped.
+#
+# Agent behaviour: frozen at the bench-freeze tag (CLAUDE.md §2.13).
+
+always_compatible: [detector_signal, runbook_hit]
+
+categories:
+  bad_deploy:
+    compatible: [deploy_list, metric_query, log_query, service_health]
+    requires: [deploy_list, metric_query]
+  config_error:
+    compatible: [deploy_list, log_query, service_health, metric_query]
+    requires: [deploy_list, log_query]
+  memory_leak:
+    compatible: [metric_query, service_health, log_query, deploy_list]
+    requires: [metric_query, service_health]
+  resource_saturation:
+    compatible: [metric_query, service_health, log_query, deploy_list]
+    requires: [metric_query, service_health]
+  traffic_surge:
+    compatible: [metric_query, log_query, service_health]
+    requires: [metric_query]
+  dependency_unavailable:
+    compatible: [log_query, service_health, metric_query]
+    requires: [log_query, service_health]
+  dependency_slow:
+    compatible: [metric_query, log_query, service_health]
+    requires: [metric_query]
+  db_connection_exhaustion:
+    compatible: [metric_query, log_query, service_health]
+    requires: [metric_query, log_query]
+  cache_failure:
+    compatible: [metric_query, log_query, service_health, deploy_list]
+    requires: [metric_query, log_query]
+  application_bug:
+    compatible: [log_query, deploy_list, metric_query, service_health]
+    requires: [log_query]
+  network_issue:
+    compatible: [log_query, metric_query, service_health]
+    requires: [log_query, metric_query, service_health]
+  disk_pressure:
+    compatible: [service_health, log_query, metric_query]
+    requires: [service_health, log_query]
+  unknown:
+    compatible: [log_query, metric_query, deploy_list, service_health]
+    requires: []
