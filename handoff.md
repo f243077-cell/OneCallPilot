@@ -2,6 +2,23 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 16: WebSocket client (A2.8) and a gateway fix
+
+### Done
+- **Bug fix, backend-api** (`747cab3`): uvicorn had no WebSocket library (`websockets`/`wsproto`), so the real server refused every `/ws/incidents` upgrade ("No supported WebSocket library detected"). The gateway tests use Starlette's TestClient and never saw it. Added `websockets` 15.0.1 (**new dependency**) and `backend/tests/test_server.py`, which fails without it. Found by running the app's client against a real uvicorn server.
+- **A2.8** (`3411517`): `mobile/lib/data/api/ws_client.dart` — `WsClient` per C3 (auth on connect, hello → clock offset, refetch on a first connect or resume from the last event ID, pong, resync_required, backoff 1–30 s ±20 %, 4401 → refresh or sign out, re-auth on token refresh) and `connectionStatusProvider` (`connectedSynced` only after hello and once caught up; `stale` after 30 s silent; `offline` after 3 s closed; mock mode is always synced). Approve now also needs `connectedSynced`. 20 unit tests on a fake socket and clock. `test/live/ws_gateway_live_test.dart` (skipped unless `OCP_LIVE_WS_URL` is set) **passed against a local uvicorn backend-api** with seeded timelines: live events in order, then a resume after a disconnect delivered exactly the missed events. **New dependencies:** `web_socket_channel` 3.0.3; `fake_async` (dev).
+- CI: the backend job on `9efb355` died pulling the socket-proxy image (`toomanyrequests`, before any test); re-ran once.
+
+### Decisions to confirm (Tanzeel)
+- `stale` (socket open, 30 s silent) and `offline` (closed over 3 s) are two statuses; both disable Approve and will show the banner (A3.4). After 45 s without any message the client closes the socket itself and reconnects.
+- The client is not yet created anywhere: the live repository (A3.1) will build it with the Supabase session as its `TokenSource`.
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged.
+
 ## 2026-10-21 — Cloud session 1, chunk 15: Stream A Phase 2 (A2.6, A2.7, A2.9)
 
 ### Done

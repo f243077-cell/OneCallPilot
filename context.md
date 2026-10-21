@@ -1,7 +1,7 @@
 # Context — current state
 
 > Rewritten at the end of every session (or chunk) so it matches reality (`CLAUDE.md` §11.4). Read it right after `CLAUDE.md`, then the newest `handoff.md` entry, then **`next.md`**.
-> **Last updated:** 2026-10-21, cloud session 1 (chunk 15).
+> **Last updated:** 2026-10-21, cloud session 1 (chunk 16).
 
 ## Who and where
 - **Tanzeel** is the only developer since 2026-10-21 (Usman has left). Sessions work for him and may edit every folder.
@@ -14,7 +14,7 @@
 | `tanzeel`, `usman` | Fully merged into `main`; to be deleted by hand (the cloud session's delete got HTTP 403). |
 
 ## Phase
-- **Stream A (testbed, runner, app):** Phase 2, A2.1–A2.7 and A2.9 done (A2.1–A2.5: `docs/checks/week-3.md`, `gate-g2.md`; A2.6–A2.9 from 2026-10-21); A2.8 (WebSocket client) next.
+- **Stream A (testbed, runner, app):** Phase 2, Phase 2 done, A2.1–A2.9 (A2.1–A2.5: `docs/checks/week-3.md`, `gate-g2.md`; A2.6–A2.9 from 2026-10-21); Phase 3 (A3.1 live repository) next.
 - **Stream B (backend, agent, DB, observability, benchmark):** Phase 1 done (B1.1–B1.8); Phase 2 B2.1–B2.5 and B2.7–B2.11 done, plus FR-011 auto-resolve and the worker entry point (`python -m oncallpilot.worker`). B2.6 (recorded fixtures) needs the live testbed; B3.2 endpoints, B2.12 (regression suite, synthetic fixtures) B3.8 (Claude adapter) and B3.6–B3.7 (benchmark harness, `benchmark/`) B3.5 (copilot metrics), the backend Compose services and the README (S3.2 draft, SEC-018) done too; B2.6 recordings and the recorded-model replay need the live testbed and the Gemini key. See `next.md`.
 - Phase 0 leftovers: the `contracts-v0.1.0` tag (on Tanzeel's say-so); S0.7 (c) embeddings and (d) Supabase JWKS need the Gemini key and Supabase (Tanzeel, by hand).
 
