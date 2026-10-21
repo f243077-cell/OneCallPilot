@@ -152,7 +152,7 @@ def reflection(*adjusted: float, verdict: str = "survived") -> dict[str, Any]:
 def proposal(action: str = "rollback_deploy", refs: list[str] | None = None) -> dict[str, Any]:
     return {
         "action": action,
-        "params": {"service": "api", "to_release": "1.4.0"} if action != "none" else {},
+        "params": {"service": "api", "target_release": "1.4.0"} if action != "none" else {},
         "expected_effect": "errors back to baseline",
         "rationale": "the errors began with the 1.5.0 deploy",
         "evidence_refs": refs or ["E1"],

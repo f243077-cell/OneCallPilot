@@ -12,7 +12,7 @@ import json
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, Protocol
 from uuid import UUID
 
@@ -21,6 +21,7 @@ from oncallpilot_contracts.enums import EscalationReason, EvidenceKind
 from oncallpilot_contracts.ws import cut_evidence_payload
 from redis.exceptions import RedisError
 
+from oncallpilot.agent.proposer import PreparedProposal, Refusal, proposal_fingerprint
 from oncallpilot.agent.providers.base import Usage
 from oncallpilot.agent.redaction import looks_suspicious, redact, redact_payload
 from oncallpilot.agent.schemas import HypothesisOut, ProposalOut
@@ -28,8 +29,10 @@ from oncallpilot.agent.summaries import summarise
 from oncallpilot.agent.toolbox import ToolBox, ToolRefusedError
 from oncallpilot.agent.untrusted import wrap
 from oncallpilot.db import agent as db
+from oncallpilot.db import proposals as proposals_db
 from oncallpilot.escalation import escalate_incident
 from oncallpilot.events import EventStream
+from oncallpilot.transitions import IllegalStatusChangeError, check_transition
 
 log = logging.getLogger(__name__)
 
@@ -118,17 +121,17 @@ class AgentEffects(Protocol):
 
 
 class Proposer(Protocol):
-    """Validates a proposal against the catalogue and live targets, asks the runner for a
-    dry run, and stores the pending proposal (architecture §5.6; task B2.8)."""
+    """Validates a proposal against the catalogue and live targets and asks the runner
+    for a dry run (architecture §5.6 steps 4–5; ``agent/proposer.py``)."""
 
-    async def propose(self, context: IncidentContext, proposal: ProposalOut) -> ProposalResult: ...
+    async def prepare(self, proposal: ProposalOut) -> PreparedProposal | Refusal: ...
 
 
 class UnavailableProposer:
-    """Until B2.8: no dry run can be requested, so every proposal escalates."""
+    """No runner link configured: every proposal escalates ``dry_run_unavailable``."""
 
-    async def propose(self, context: IncidentContext, proposal: ProposalOut) -> ProposalResult:
-        return "dry_run_unavailable"
+    async def prepare(self, proposal: ProposalOut) -> PreparedProposal | Refusal:
+        return Refusal("dry_run_unavailable", ("no runner link is configured",))
 
 
 SOURCES: dict[str, str] = {
@@ -140,10 +143,15 @@ SOURCES: dict[str, str] = {
     "runbook_hit": "runbooks",
 }
 LLM_AUDIT_MAX_CHARS = 20_000
+PROPOSAL_TTL_SECONDS = 900
 
 
 def _utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+def _iso(at: datetime) -> str:
+    return at.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def render_evidence(ref: str, kind: str, payload: dict[str, Any]) -> str:
@@ -161,6 +169,7 @@ class DbEffects:
     provider_name: str
     model: str
     proposer: Proposer = field(default_factory=UnavailableProposer)
+    proposal_ttl_seconds: int = PROPOSAL_TTL_SECONDS
     clock: Callable[[], datetime] = _utcnow
     _context: IncidentContext | None = None
     _evidence_ids: dict[str, UUID] = field(default_factory=dict)
@@ -300,7 +309,115 @@ class DbEffects:
         await self._publish("hypothesis.updated", version, now, {"hypotheses": current})
 
     async def propose(self, proposal: ProposalOut) -> ProposalResult:
-        return await self.proposer.propose(self.context, proposal)
+        prepared = await self.proposer.prepare(proposal)
+        if isinstance(prepared, Refusal):
+            if prepared.outcome == "invalid":
+                await self._audit_rejected(proposal, prepared.problems)
+            log.warning(
+                "proposal not stored: %s", prepared.outcome, extra={"incident_id": self.incident_id}
+            )
+            return prepared.outcome
+        return await self._store_proposal(proposal, prepared)
+
+    async def _audit_rejected(self, proposal: ProposalOut, problems: tuple[str, ...]) -> None:
+        """``audit(proposal.rejected_by_validator)``; the model's values are redacted."""
+        async with self.pool.acquire() as conn:
+            await db.audit(
+                conn, "agent", "proposal.rejected_by_validator", self.incident_id,
+                "incident", self.incident_id, {
+                    "action": proposal.action,
+                    "params": redact_payload(proposal.params),
+                    "problems": [redact(p) for p in problems],
+                },
+            )  # fmt: skip
+
+    async def _store_proposal(self, proposal: ProposalOut, p: PreparedProposal) -> ProposalResult:
+        """§5.6 step 6: the pending proposal, ``awaiting_approval``, then the events."""
+        now = self.clock()
+        expires_at = now + timedelta(seconds=self.proposal_ttl_seconds)
+        fingerprint = proposal_fingerprint(
+            p.proposal_id, p.action, p.params, p.risk_tier, p.dry_run.state_fingerprint,
+            p.dry_run_at,
+        )  # fmt: skip
+        dry_run = p.dry_run.model_dump(mode="json")
+        async with self.pool.acquire() as conn, conn.transaction():
+            row = await db.lock_incident(conn, self.incident_id)
+            try:
+                check_transition(row["status"], "awaiting_approval")
+            except IllegalStatusChangeError:
+                log.warning(
+                    "proposal not stored: incident is %s", row["status"],
+                    extra={"incident_id": self.incident_id},
+                )  # fmt: skip
+                return "dry_run_unavailable"
+            severity = await conn.fetchval(
+                "select severity::text from ocp.incidents where id = $1", self.incident_id
+            )
+            await proposals_db.insert_pending(
+                conn,
+                proposal_id=p.proposal_id,
+                incident_id=self.incident_id,
+                hypothesis_id=await proposals_db.top_hypothesis_id(conn, self.incident_id),
+                action=p.action,
+                params=p.params,
+                risk_tier=p.risk_tier,
+                approval_requirement=p.approval_requirement,
+                expected_effect=proposal.expected_effect,
+                rationale=proposal.rationale,
+                evidence_ids=[self._evidence_ids[r] for r in proposal.evidence_refs],
+                rollback_step=p.rollback_step,
+                dry_run_result=dry_run,
+                dry_run_at=p.dry_run_at,
+                fingerprint=fingerprint,
+                expires_at=expires_at,
+                catalogue_version=p.catalogue_version,
+                now=now,
+            )
+            created_version = await db.bump(conn, self.incident_id, now)
+            await db.set_status(conn, self.incident_id, "awaiting_approval", None, now)
+            updated_version = await db.bump(conn, self.incident_id, now)
+            await db.audit(
+                conn, "agent", "proposal.created", self.incident_id, "proposal", p.proposal_id,
+                {"action": p.action, "params": p.params, "risk_tier": p.risk_tier,
+                 "approval_requirement": p.approval_requirement, "fingerprint": fingerprint,
+                 "catalogue_version": p.catalogue_version, "refs": proposal.evidence_refs},
+            )  # fmt: skip
+            await db.audit(
+                conn, "agent", "incident.status_changed", self.incident_id, "incident",
+                self.incident_id, {"from": row["status"], "to": "awaiting_approval"},
+            )  # fmt: skip
+        await self._publish(
+            "proposal.created", created_version, now, {
+                "id": str(p.proposal_id),
+                "incident_id": str(self.incident_id),
+                "kind": "primary",
+                "parent_proposal_id": None,
+                "action": p.action,
+                "params": p.params,
+                "risk_tier": p.risk_tier,
+                "approval_requirement": p.approval_requirement,
+                "expected_effect": proposal.expected_effect,
+                "rationale": proposal.rationale,
+                "evidence_refs": proposal.evidence_refs,
+                "rollback_step": p.rollback_step,
+                "dry_run_result": dry_run,
+                "dry_run_at": _iso(p.dry_run_at),
+                "fingerprint": fingerprint,
+                "status": "pending",
+                "status_reason": None,
+                "expires_at": _iso(expires_at),
+                "created_at": _iso(now),
+            },
+        )  # fmt: skip
+        await self._publish(
+            "incident.updated", updated_version, now,
+            {"status": "awaiting_approval", "status_reason": None, "severity": severity},
+        )  # fmt: skip
+        log.info(
+            "proposal stored: %s", p.action,
+            extra={"incident_id": self.incident_id, "proposal_id": p.proposal_id},
+        )  # fmt: skip
+        return "proposed"
 
     async def escalate(self, reason: EscalationReason) -> None:
         await escalate_incident(self.pool, self.events, self.incident_id, reason, self.clock())
