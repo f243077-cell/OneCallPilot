@@ -22,7 +22,13 @@ from oncallpilot.db.incidents import IncidentRepository
 from oncallpilot.detector.config import load_config, read_config
 from oncallpilot.detector.engine import Samples
 from oncallpilot.events import EventStream
-from oncallpilot.worker.loops import LatestSamples, RunnerResultConsumer, SignalVerifier, Sweeper
+from oncallpilot.worker.loops import (
+    AutoResolver,
+    LatestSamples,
+    RunnerResultConsumer,
+    SignalVerifier,
+    Sweeper,
+)
 from oncallpilot.worker.outcomes import Outcomes
 from tests.runner_replies import ACTION_KEY, LINK_KEY, dry_run, execution_reply
 from tests.test_detector_config import CONFIG
@@ -82,6 +88,15 @@ class Worker:
             lambda: env.clock[0],
         )  # fmt: skip
         self.sweeper = Sweeper(env.pool, self.outcomes, lambda: env.clock[0])
+        self.resolver = AutoResolver(
+            env.pool, self.outcomes, load_config(read_config(CONFIG)), self.latest,
+            lambda: env.clock[0],
+        )  # fmt: skip
+
+    async def resolve_cycle(self, error_rate: float, advance: int = 0) -> None:
+        self.env.clock[0] += timedelta(seconds=advance)
+        self.latest.update(self.env.clock[0], {"api": Samples(error_rate=error_rate)})
+        await self.resolver.cycle()
 
     async def deliver(self, reply: dict[str, Any]) -> None:
         await self.results.ensure_group()
@@ -382,3 +397,32 @@ async def test_sweeper_expires_pending_proposals(env: Env, worker: Worker) -> No
     again = await env.challenge()
     assert (again.status_code, again.json()["error"]["code"]) == (409, "PROPOSAL_EXPIRED")
     await detail_validates(env)
+
+
+async def test_auto_resolve_after_three_normal_minutes(env: Env, worker: Worker) -> None:
+    # FR-011: awaiting approval, the operator fixed it by hand; the proposal is closed.
+    await worker.resolve_cycle(0.001)
+    await worker.resolve_cycle(0.001, advance=120)
+    await worker.resolve_cycle(0.3, advance=30)  # a relapse restarts the count
+    await worker.resolve_cycle(0.001, advance=10)
+    await worker.resolve_cycle(0.001, advance=170)
+    assert (await state(env))["incident"]["status"] == "awaiting_approval"
+    await worker.resolve_cycle(0.001, advance=10)
+    s = await state(env)
+    assert (s["incident"]["status"], s["incident"]["resolution"]) == ("resolved", "auto_recovered")
+    assert s["proposals"][0]["status"] == "expired"
+    await detail_validates(env)
+
+
+async def test_no_auto_resolve_while_executing(env: Env, worker: Worker) -> None:
+    await approve(env)
+    await worker.resolve_cycle(0.001)
+    await worker.resolve_cycle(0.001, advance=200)
+    assert (await state(env))["incident"]["status"] == "executing"
+
+
+async def test_no_auto_resolve_without_fresh_samples(env: Env, worker: Worker) -> None:
+    await worker.resolve_cycle(0.001)
+    env.clock[0] += timedelta(seconds=200)
+    await worker.resolver.cycle()  # samples are 200 s old: not normal
+    assert (await state(env))["incident"]["status"] == "awaiting_approval"

@@ -7,7 +7,8 @@ One process with these loops:
   ``RunnerProposer`` (signed dry runs with ``RUNNER_LINK_KEY`` only);
 - the detector, every ``DETECTOR_INTERVAL_SECONDS``, posting alerts to
   ``POST /ingest/alert``;
-- the runner-result consumer, the signal verifier and the sweeper
+- the runner-result consumer, the signal verifier, the auto-resolver and the
+  sweeper
   (``worker/loops.py``).
 
 At start-up it ingests ``runbooks/`` (unchanged chunks are skipped). SIGTERM
@@ -59,6 +60,7 @@ from oncallpilot.settings import WorkerSettings
 from oncallpilot.worker.agent_jobs import AgentJobConsumer
 from oncallpilot.worker.loops import (
     SWEEP_EVERY_SECONDS,
+    AutoResolver,
     LatestSamples,
     RunnerResultConsumer,
     SignalVerifier,
@@ -246,6 +248,7 @@ async def main() -> None:
             timeout_seconds=settings.verify_timeout_seconds,
         )
         sweeper = Sweeper(pool, outcomes, utcnow, settings.execution_timeout_seconds)
+        resolver = AutoResolver(pool, outcomes, load_config(config_bytes), latest, utcnow)
 
         try:
             async with pool.acquire() as conn:
@@ -265,6 +268,9 @@ async def main() -> None:
                 every(settings.detector_interval_seconds, verifier.cycle, "verifier")
             ),
             asyncio.create_task(every(SWEEP_EVERY_SECONDS, sweeper.cycle, "sweeper")),
+            asyncio.create_task(
+                every(settings.detector_interval_seconds, resolver.cycle, "auto-resolver")
+            ),
         ]
         results_task = asyncio.create_task(consume_results(results, stop))
         jobs_task = asyncio.create_task(consume(consumer, stop))

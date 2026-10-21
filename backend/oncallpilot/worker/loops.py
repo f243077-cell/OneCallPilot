@@ -9,6 +9,10 @@
   state, so a restart strands nothing): the triggering signals must stay
   normal for ``VERIFY_WINDOW_SECONDS`` within ``VERIFY_TIMEOUT_SECONDS`` of
   the execution's end. Progress is kept in ``executions.output.verify``.
+- ``AutoResolver`` (FR-011): an open incident with no execution in progress
+  whose triggering signals stay normal for ``recovery_minutes`` is resolved
+  (``auto_recovered``). "Normal since" is kept in memory: a worker restart
+  starts the count again, which only delays the resolution.
 - ``Sweeper``: every 10 s, expire pending proposals and end executions with
   no final result after ``EXECUTION_TIMEOUT_SECONDS``.
 """
@@ -175,6 +179,38 @@ class SignalVerifier:
                 "signals": sorted(signals),
             }
             await self.outcomes.verified(execution_id, verdict, passed)
+
+
+@dataclass
+class AutoResolver:
+    pool: asyncpg.Pool
+    outcomes: Outcomes
+    config: DetectorConfig
+    latest: LatestSamples
+    clock: Callable[[], datetime]
+    _normal_since: dict[Any, datetime] = field(default_factory=dict)
+
+    async def cycle(self) -> None:
+        now = self.clock()
+        hold = timedelta(minutes=self.config.recovery_minutes)
+        async with self.pool.acquire() as conn:
+            rows = await db.auto_resolvable(conn)
+        seen = set()
+        for row in rows:
+            seen.add(row["id"])
+            sample = self.latest.get(row["service"], now)
+            normal = all(
+                signal_normal(self.config, name, sample, baseline)
+                for name, baseline in triggering_signals(row["trigger"]).items()
+            )
+            if not normal:
+                self._normal_since.pop(row["id"], None)
+                continue
+            since = self._normal_since.setdefault(row["id"], now)
+            if now - since >= hold and await self.outcomes.auto_resolve(row["id"]):
+                self._normal_since.pop(row["id"], None)
+        for gone in set(self._normal_since) - seen:
+            del self._normal_since[gone]
 
 
 @dataclass

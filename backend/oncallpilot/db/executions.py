@@ -111,3 +111,21 @@ async def resolve(conn: DbConn, incident_id: UUID, resolution: str, now: datetim
         resolution,
         now,
     )
+
+
+async def auto_resolvable(conn: DbConn) -> list[Any]:
+    """Open incidents with no execution in progress (FR-011)."""
+    return list(
+        await conn.fetch(
+            "select id, service, trigger from ocp.incidents"
+            " where status in ('investigating', 'awaiting_approval', 'escalated', 'action_failed')"
+            " order by opened_at"
+        )
+    )
+
+
+async def pending_of(conn: DbConn, incident_id: UUID) -> UUID | None:
+    found: UUID | None = await conn.fetchval(
+        "select id from ocp.proposals where incident_id = $1 and status = 'pending'", incident_id
+    )
+    return found
