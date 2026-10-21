@@ -13,11 +13,13 @@
 - The per-incident duration gauge carries `incident_id` as a label (a few dozen incidents per benchmark; fine at this scale, not for production).
 - backend-api exposes no `/metrics` of its own (it is the only service on 0.0.0.0, so a metrics endpoint there would be on the LAN).
 
+- **Compose** (`05361e3`): `backend-api` and `backend-worker` in `copilot.yml` under the opt-in profile `backend` (not in `ocp up` yet: both need `DATABASE_URL`); `deploy_ledger` volume declared there (`oncallpilot_deploy_ledger`). New `tests/security/test_compose_policy.py` renders every profile: worker never gets `ACTION_SIGNING_KEY`, only backend-api on 0.0.0.0, only the proxies mount the Docker socket. Validated with Compose v2.38 and v5 config rendering only; **not started for real yet** (no Supabase here).
+
 ### Next
 `next.md` §2.
 
 ### Waiting on Tanzeel
-Unchanged (chunks 7–12).
+Unchanged (chunks 7–12). First real start of the `backend` profile: `docker compose --profile backend up -d` with a real `.env` (Supabase `DATABASE_URL`), then check `/healthz`, the worker's logs, and that the worker (uid 10002) can read the ledger files (uid 10001).
 
 ## 2026-10-21 — Cloud session 1, chunk 12: benchmark harness
 
