@@ -79,6 +79,11 @@ jobs:
             exit 1
           fi
 
+      # SEC-018: the README keeps its "Known limitations" section (architecture §7.12).
+      - name: README lists known limitations
+        working-directory: .
+        run: grep -q '^## Known limitations' README.md
+
       - name: Install uv
         run: pipx install uv==0.12.7
 
