@@ -2,6 +2,26 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 15: Stream A Phase 2 (A2.6, A2.7, A2.9)
+
+### Done
+- **A2.6 / TEST-004** (`115845a`): `runner/tests/security/test_forbidden_actions.py` (42 tests). Unknown, disabled, non-allowlisted, free-form, expired, replayed and rate-limited (plus cooldown) requests, signed and unsigned (no, empty, zero or wrong-key signature), as executes and dry runs, go through the real consumer, checks, dry runner and executor; each ends with a signed refusal (a replay with no second answer) and the fake Docker records no write call; the cache endpoint and the ledger stay untouched. Mutation-checked (removing the target or expiry check fails it).
+- **A2.7** (`3024361`): Action Review at `/proposals/:id?incident=<id>` (MOB-007) and `approvalControllerProvider` (MOB-008…MOB-010): challenge → `local_auth` with `biometricOnly: true` (blocked with an explanation when nothing is enrolled; never a tap fallback) or a confirm dialog for tap → approve, one `Idempotency-Key` per attempt reused on a network retry; C8 messages per error code; stale/expired/decided refetch the incident. Reject needs 3–500 characters. `serverClockOffsetProvider` (zero until A2.8 syncs it from `hello`). **New dependency: `local_auth` 3.0.2.** New `NetworkError` type for failures without a server answer.
+- **A2.9** (`90959ad`): Execution Status at `/executions/:id?incident=<id>` (MOB-011): steps, structural and signal checks (typed `HealthAfter` DTOs), verdict, "Review rollback", and the runner_refused/runner_timeout case. Incident Detail lists executions.
+- Mobile: 128 tests, `flutter analyze` clean (Flutter 3.44.2 installed in the container at `/opt/flutter-sdk`). Runner: 367 tests, 96 % coverage.
+
+### Decisions to confirm (Tanzeel)
+- Routes carry the incident: `/proposals/:id?incident=<id>` and `/executions/:id?incident=<id>` (the API has no `GET /proposals/{id}`). Without `?incident=` the screens search the feed.
+- Approval picks the stricter requirement: biometric unless the proposal and the challenge both say `tap` and the tier is `low`; an unknown requirement counts as biometric.
+- `device_id` is sent as null until push registration (A3.2) stores one.
+- A2.6 counts a cooldown refusal under "rate-limited" too.
+
+### Next
+`next.md` §2: A2.8 (WebSocket client), then Phase 3 Stream A in mock mode.
+
+### Waiting on Tanzeel
+Unchanged. MOB-009's acceptance is a device test (with and without an enrolled fingerprint) on the real phone.
+
 ## 2026-10-21 — Cloud session 1, chunk 14: README
 
 ### Done
