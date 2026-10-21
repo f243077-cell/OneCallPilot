@@ -1,11 +1,13 @@
-# CI skeleton (phases.md S0.3, TEST-012). Placeholder job that always passes;
-# the owner replaces the step with real checks in the task that adds code.
+# Database migrations (DB-001, DB-013, TEST-016). Checks that migration files
+# are forward-only (an existing file is never modified, renamed or deleted),
+# applies every file of supabase/migrations/ in order to a fresh
+# pgvector/pgvector container with psql, then runs the tests/db suite (which
+# applies them again to its own fresh database) with the backend's locked
+# environment.
 #
 # Path filtering (TEST-012): this workflow covers supabase/migrations/, tests/db/.
 # The trigger is deliberately NOT path-filtered, because a required check
-# that never reports blocks merges. When real steps arrive, filter inside
-# the job (skip expensive steps when no covered path changed) and keep the
-# job name stable, since branch protection requires it by name.
+# that never reports blocks merges. Keep the job name stable.
 name: migrations
 
 on:
@@ -25,7 +27,77 @@ jobs:
   migrations:
     name: migrations
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
+    services:
+      postgres:
+        # Postgres major = the Supabase projects' major (architecture §8.3).
+        image: pgvector/pgvector:0.8.1-pg17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      OCP_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
     steps:
-      - name: Placeholder
-        run: echo "migrations - no checks yet (CI skeleton, S0.3)"
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # DB-013: a migration that is already on main is never edited. Compare
+      # with the base of the PR, or with the previous head of main on a push.
+      - name: Migrations are forward-only
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            echo "No base commit to compare with; skipping."
+            exit 0
+          fi
+          changed="$(git diff --name-status --no-renames "$BASE_SHA" HEAD -- supabase/migrations | grep -v '^A' || true)"
+          if [ -n "$changed" ]; then
+            echo "::error title=migration edited::Migrations are forward-only; add a new file instead:"
+            echo "$changed"
+            exit 1
+          fi
+          bad="$(git diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- supabase/migrations \
+            | grep -v -E '^supabase/migrations/[0-9]{14}_[a-z0-9_]+\.sql$' || true)"
+          if [ -n "$bad" ]; then
+            echo "::error title=migration name::Name migrations <14-digit timestamp>_<short_name>.sql:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Apply every migration to a fresh database (psql)
+        run: |
+          createdb ocp_apply
+          for f in $(ls supabase/migrations/*.sql | sort); do
+            echo "applying $f"
+            psql -v ON_ERROR_STOP=1 -q -d ocp_apply -f "$f"
+          done
+
+      - name: Install uv
+        run: pipx install uv==0.12.7
+
+      - name: Install dependencies (locked, backend environment)
+        working-directory: backend
+        run: uv sync --locked
+
+      - name: Ruff and mypy (tests/db)
+        working-directory: backend
+        run: |
+          uv run ruff check ../tests/db
+          uv run ruff format --check ../tests/db
+          uv run mypy ../tests/db
+
+      - name: Database constraint tests (TEST-016)
+        working-directory: backend
+        run: uv run pytest -c pyproject.toml ../tests/db -q
