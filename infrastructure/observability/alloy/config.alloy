@@ -1,0 +1,72 @@
+// Grafana Alloy: Chaos Shop container logs to Loki (architecture §2.8, §2.11; C7 §3; TB-012).
+// Owner: Stream B.
+//
+// Containers are found and read ONLY through socket-proxy-ro (GET only); Alloy
+// never mounts the Docker socket. Only containers labelled
+// oncallpilot.logs=true are collected (cs-loadgen has no such label).
+//
+// Loki labels (C7 §3.4): service, release, container, level. `level` is the
+// JSON `level` field when it is one of the five C7 levels, else UNKNOWN (plain
+// text lines from nginx's error log, redis and postgres). Nothing else
+// becomes a label.
+
+discovery.docker "containers" {
+  host             = "tcp://socket-proxy-ro:2375"
+  refresh_interval = "5s"
+
+  filter {
+    name   = "label"
+    values = ["oncallpilot.logs=true"]
+  }
+}
+
+discovery.relabel "containers" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_label_oncallpilot_service"]
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_oncallpilot_release"]
+    target_label  = "release"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/?(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "containers" {
+  host             = "tcp://socket-proxy-ro:2375"
+  targets          = discovery.docker.containers.targets
+  relabel_rules    = discovery.relabel.containers.rules
+  refresh_interval = "5s"
+  forward_to       = [loki.process.levels.receiver]
+}
+
+loki.process "levels" {
+  stage.json {
+    expressions = { level = "level" }
+  }
+
+  stage.template {
+    source   = "level"
+    template = "{{ if or (eq .Value \"DEBUG\") (eq .Value \"INFO\") (eq .Value \"WARNING\") (eq .Value \"ERROR\") (eq .Value \"CRITICAL\") }}{{ .Value }}{{ else }}UNKNOWN{{ end }}"
+  }
+
+  stage.labels {
+    values = { level = "" }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

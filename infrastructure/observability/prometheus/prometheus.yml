@@ -1,0 +1,26 @@
+# Prometheus (architecture §2.8; C7 contracts/telemetry.md §2; TB-012). Owner: Stream B.
+#
+# Only running Chaos Shop slots resolve through the network aliases, so
+# stopped slots are never scraped. honor_labels keeps the containers' own
+# `instance` label (the container name) instead of DNS discovery's
+# <ip>:<port> (C7 §2.2).
+global:
+  scrape_interval: 5s
+  scrape_timeout: 4s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: api
+    honor_labels: true
+    dns_sd_configs:
+      - names: [api-upstream]
+        type: A
+        port: 8000
+        refresh_interval: 5s
+  - job_name: worker
+    honor_labels: true
+    dns_sd_configs:
+      - names: [worker-upstream]
+        type: A
+        port: 8001
+        refresh_interval: 5s

@@ -32,6 +32,8 @@ The original specification leaves some engineering details open. Each gap is res
 | ADR-18 | **Tooling additions.** Python: `uv` (with lockfiles), `ruff`, `mypy`, `httpx`, `asyncpg`, `redis`, `firebase-admin`, `PyJWT[crypto]`, `docker` (SDK), `matplotlib` (charts). Flutter: `dio`, `json_serializable`, `supabase_flutter` (auth only), `firebase_core`, `mocktail` (tests). | Libraries that implement the spec's stack; none replaces a spec technology. | Confirmed |
 | ADR-19 | **Fault persistence rules.** Every fault keeps the service broken until its expected action is applied or `chaos reset` runs. It must not heal itself within 15 minutes. Mechanics are in §11.3. | Otherwise time-to-recovery measures Docker's restart policy, not the copilot. | Confirmed (validated at Gate G1) |
 | ADR-20 | **Settings are editable only while `BENCHMARK_LOCK=false`.** Every change bumps `detector_config_version`, which is stamped on each incident. | Keeps the spec's Settings screen without letting thresholds drift during the benchmark. | Confirmed |
+| ADR-21 | **socket-proxy-ro also sets `ALLOW_LOGS=1`** (`docs/adr/ADR-21-ro-proxy-allow-logs.md`). | S0.7 (a): the proxy refuses `GET /containers/{id}/logs` without it, so Alloy could not read logs. Still GET-only; `archive`, `export`, `top`, `changes` stay refused. | Accepted 2026-10-21 |
+| ADR-22 | **Detector warm-up keeps learning normal samples** instead of relearning from scratch (`docs/adr/ADR-22-detector-warm-up-keeps-learning.md`). | Relearning from scratch makes FR-003's own acceptance impossible: a fault injected right after a reset would become the baseline. | Accepted 2026-10-21 |
 
 ---
 
@@ -232,10 +234,10 @@ A small store backend that exists to be broken. Full detail in §11.
 ### 2.11 Docker socket proxies (`socket-proxy-ro`: Usman · `socket-proxy-rw`: Tanzeel)
 | Instance | Config | Clients | Network |
 |---|---|---|---|
-| `socket-proxy-ro` | `CONTAINERS=1`, `NETWORKS=1`, `EVENTS=1`, `PING=1`, `VERSION=1`, `POST=0` | Alloy, backend-worker | `ro_proxy_net` (internal) |
+| `socket-proxy-ro` | `CONTAINERS=1`, `NETWORKS=1`, `EVENTS=1`, `PING=1`, `VERSION=1`, `ALLOW_LOGS=1` (ADR-21), `POST=0` | Alloy, backend-worker | `ro_proxy_net` (internal) |
 | `socket-proxy-rw` | `CONTAINERS=1`, `ALLOW_START=1`, `ALLOW_STOP=1`, `ALLOW_RESTARTS=1`, `POST=0` | runner only | `rw_proxy_net` (internal) |
 
-> **Why `NETWORKS=1` on the read-only proxy:** Alloy's `discovery.docker` builds on Prometheus's Docker discovery, which reads network metadata on every refresh in addition to listing containers. `NETWORKS` is still GET-only because `POST=0`, so nothing can be created or changed. If S0.7 shows that Alloy works without it, remove it and update `SEC-014`.
+> **Why `NETWORKS=1` on the read-only proxy:** Alloy's `discovery.docker` builds on Prometheus's Docker discovery, which reads network metadata on every refresh in addition to listing containers. `NETWORKS` is still GET-only because `POST=0`, so nothing can be created or changed. S0.7 (a) confirmed that Alloy calls `GET /networks` on every refresh, so it stays (`docs/checks/proxy.md`).
 >
 > **Why the runner pins the Docker API version:** the Python Docker SDK normally asks `GET /version` when it connects. `socket-proxy-rw` deliberately blocks that, so the runner must create its client with an explicit `version=` (the value comes from `docker version` on the host, recorded in `docs/checks/proxy.md`). Do **not** enable `VERSION` or `PING` on `socket-proxy-rw` to work around it (`CLAUDE.md` §6.5).
 
@@ -623,7 +625,7 @@ class LLMProvider(Protocol):
 | `stack_traces` | Loki `count_over_time({service=~"api\|worker"} \|= "Traceback" [1m])` | ≥ 5 per minute **and** the exception type was not seen during the warm-up |
 
 - **EWMA:** α = 0.1; mean and variance are frozen while a signal is anomalous.
-- **Warm-up:** no triggers for 180 s after `chaos reset`. The detector notices a reset when a new `kind=reset` record appears in the deploy ledger.
+- **Warm-up:** no triggers for 180 s after `chaos reset`. The detector notices a reset when a new `kind=reset` record appears in the deploy ledger. Baselines keep learning from non-breaching samples during warm-up; breaching samples stay frozen out (ADR-22).
 - **Severity:**
   - `sev1`: a service has no running container, or error rate ≥ 25 %;
   - `sev2`: error rate ≥ 5 %, p95 ≥ 3× baseline, or restarts;

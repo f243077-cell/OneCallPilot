@@ -1,14 +1,15 @@
-# Owner: Usman. Observability stack (architecture §2.8, §2.11, §3; TB-012, SEC-014).
-# Phase 0 (S0.7) adds socket-proxy-ro only; task B1.5 adds Prometheus, Loki,
-# Alloy and Grafana.
+# Owner: Stream B (Tanzeel). Observability stack (architecture §2.8, §2.11, §3; TB-012, SEC-014).
+# socket-proxy-ro (S0.7); Prometheus, Loki, Alloy and Grafana (B1.5). Configs in
+# infrastructure/observability/. Ports are bound to 127.0.0.1 only (§3).
 #
 # SAFETY (CLAUDE.md §4.8, §6; SEC-014, TEST-015): socket-proxy-ro is GET-only.
-# It allows CONTAINERS, NETWORKS, EVENTS, PING and VERSION with POST=0 and no
-# ALLOW_* option. The image also enables the Podman twins LIBPOD_PING and
+# It allows CONTAINERS, NETWORKS, EVENTS, PING and VERSION with POST=0, plus
+# ALLOW_LOGS (GET /containers/{id}/logs) for Alloy (ADR-21); no other ALLOW_*
+# option. The image also enables the Podman twins LIBPOD_PING and
 # LIBPOD_VERSION by default (docs/checks/proxy.md), so they are switched off
-# explicitly below. NETWORKS stays until S0.7 shows whether Alloy's container
-# discovery works without it (architecture §2.11). Only this proxy and
-# socket-proxy-rw may mount the Docker socket.
+# explicitly below. S0.7 (a) showed that Alloy's discovery calls GET /networks
+# on every refresh, so NETWORKS stays. Only this proxy and socket-proxy-rw may
+# mount the Docker socket.
 
 services:
   socket-proxy-ro:
@@ -21,6 +22,8 @@ services:
       PING: "1"
       VERSION: "1"
       POST: "0"
+      # GET /containers/{id}/logs, which loki.source.docker reads (ADR-21, S0.7 a).
+      ALLOW_LOGS: "1"
       LIBPOD_PING: "0"
       LIBPOD_VERSION: "0"
       LOG_LEVEL: ${SOCKET_PROXY_RO_LOG_LEVEL:-info}
@@ -38,8 +41,134 @@ services:
       retries: 5
       start_period: 10s
 
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: [obs]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    # chaos_net: scrape the slots through api-upstream / worker-upstream.
+    networks: [obs_net, chaos_net]
+    ports:
+      - "127.0.0.1:9090:9090"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+
+  loki:
+    image: grafana/loki:3.5.3
+    profiles: [obs]
+    command: ["-config.file=/etc/loki/loki.yml"]
+    volumes:
+      - ../observability/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    networks: [obs_net]
+    ports:
+      - "127.0.0.1:3100:3100"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 384m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3100/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+
+  # Reads container logs ONLY through socket-proxy-ro; never mounts the socket.
+  alloy:
+    image: grafana/alloy:v1.10.1
+    profiles: [obs]
+    command:
+      - run
+      - --server.http.listen-addr=127.0.0.1:12345
+      - --storage.path=/var/lib/alloy/data
+      - --disable-reporting
+      - /etc/alloy/config.alloy
+    user: "473:473"
+    volumes:
+      - ../observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy_data:/var/lib/alloy/data
+    networks: [obs_net, ro_proxy_net]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    restart: unless-stopped
+    depends_on:
+      socket-proxy-ro: {condition: service_healthy}
+      loki: {condition: service_healthy}
+    healthcheck:
+      # The image has no wget or curl; bash's /dev/tcp asks /-/ready.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/12345 && printf 'GET /-/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q ' 200 ' <&3"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+
+  # View-only for the manual-baseline operator at the host: anonymous Viewer,
+  # no login form, dashboards and data sources provisioned from git.
+  grafana:
+    image: grafana/grafana:12.1.1
+    profiles: [obs]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_AUTH_BASIC_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/chaos-shop.json
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    networks: [obs_net]
+    ports:
+      - "127.0.0.1:3000:3000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    restart: unless-stopped
+    depends_on:
+      prometheus: {condition: service_healthy}
+      loki: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  prometheus_data:
+  loki_data:
+  alloy_data:
+  grafana_data:
+
 networks:
+  obs_net: {}
+  # Declared plainly, never `external: true` (testbed.yml defines it too).
+  chaos_net: {}
   ro_proxy_net:
-    # Internal: no internet egress. Members: socket-proxy-ro, and later alloy
-    # and backend-worker (architecture §3).
+    # Internal: no internet egress. Members: socket-proxy-ro, alloy, and later
+    # backend-worker (architecture §3).
     internal: true

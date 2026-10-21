@@ -91,6 +91,20 @@ jobs:
         working-directory: .
         run: docker build --build-context contracts=contracts -t oncallpilot/backend:ci backend
 
+      # TEST-015 (ro half), SEC-014: only reads through socket-proxy-ro (ADR-21).
+      - name: socket-proxy-ro security test
+        working-directory: .
+        run: |
+          cp .env.example .env
+          bash tests/security/run_ro_proxy_test.sh
+
+      - name: Observability stack starts healthy (B1.5)
+        working-directory: .
+        run: |
+          docker compose --profile obs up -d --wait --wait-timeout 180
+          docker compose --profile obs ps
+          docker compose --profile obs down -v
+
       - name: copilot-redis starts healthy through Compose (dummy values)
         working-directory: .
         run: |

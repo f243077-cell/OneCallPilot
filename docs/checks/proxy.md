@@ -81,12 +81,30 @@ The WebSocket attach endpoint (`GET /containers/{id}/attach/ws`) is reachable th
 
 ### Not covered here
 
-- Through the **ro** proxy: any POST → 403 (second half of TEST-015, SEC-014). Added to `test_proxy.py` once `socket-proxy-ro` exists in `observability.yml` (Usman).
+- Through the **ro** proxy: see §(a) below (`tests/security/check_ro_proxy.py`, 2026-10-21).
 - TEST-015 is a **Gate G2** criterion (`phases.md`, G2 item 3): `docs/checks/gate-g2.md`.
 
 ## (a) socket-proxy-ro and Alloy — Usman
 
-_To be filled in by Usman: Alloy `discovery.docker` + `loki.source.docker` through the ro proxy, the endpoints it calls (decides `NETWORKS=1`), and POST → 403._
+**Run:** 2026-10-21, cloud session for Tanzeel (Usman has left the project). Docker Engine 29.9.1, **API 1.56**; Compose from the repository with `.env.example` values. Images: `lscr.io/linuxserver/socket-proxy:3.4.6-r0-ls101`, `grafana/alloy:v1.10.1`, `grafana/loki:3.5.3`, `prom/prometheus:v3.5.0`, `grafana/grafana:12.1.1`.
+
+> The cloud container has no IPv6, and haproxy in the proxy image binds `[::]:2375` by default, so the proxy only started there with a local, uncommitted override setting the image's `DISABLE_IPV6=1`. Laptops and GitHub runners have IPv6; the committed compose file is unchanged on this point.
+
+**Alloy through socket-proxy-ro** (the committed `infrastructure/observability/alloy/config.alloy`), with a throwaway `busybox` container labelled `oncallpilot.logs=true`, `oncallpilot.service=api`, `oncallpilot.release=1.4.0`, printing a JSON `ERROR` line, a plain-text line and a JSON line with an unknown level, plus an unlabelled container:
+
+| Step | Result |
+|---|---|
+| Endpoints Alloy calls (proxy log) | `GET /v1.49/containers/json?filters={"label":{"oncallpilot.logs=true":true}}`, `GET /v1.49/networks` (every refresh), `GET /v1.49/containers/{id}/json`, `GET /v1.49/containers/{id}/logs?follow=…` |
+| With the settings of architecture §2.11 | Discovery works, but **`/containers/{id}/logs` → 403**: the image denies `logs`, `archive`, `export`, `top` and `changes` unless their `ALLOW_*` is set. No line reached Loki. |
+| With `ALLOW_LOGS=1` added (ADR-21) | Lines reach Loki within ~10 s. Labels are exactly `service`, `release`, `container`, `level` (C7 §3.4) after turning off Loki 3's automatic `service_name` and `detected_level` (`discover_service_name: []`, `discover_log_levels: false`). `level` = `ERROR` for the JSON line, `UNKNOWN` for the plain-text line and for the unknown level. The unlabelled container is not collected. |
+| `NETWORKS=1` | **Needed**: Alloy's discovery calls `GET /networks` on every refresh. Stays. |
+
+**TEST-015, ro half** (`tests/security/run_ro_proxy_test.sh` → `check_ro_proxy.py`, from a throwaway container on `ro_proxy_net`): **52/52 passed**.
+- 200: `/_ping`, `/version`, `containers/json`, `containers/{id}/json`, `containers/{id}/logs`, `/networks`, `/events`.
+- 403: every container write (`create`, `start`, `stop`, `restart`, `kill`, `pause`, `update`, `rename`, `exec`, `attach`, `prune`, `DELETE`, `PUT archive`), the other container sub-resources (`archive`, `export`, `top`, `changes`), images, build, volumes, network create and delete, `info`, `exec`, secrets, configs, services, `system/df`, `auth`, `commit`, plugins, swarm, nodes, tasks, distribution, and the `libpod` twins.
+- Path tricks (`/containers/../images/json`, `%2e%2e`): Docker answers 301 to `/images/json`; following it gets 403 from the proxy.
+
+CI runs the same script in `backend.yml`.
 
 ## (b) nginx upstream `resolve` — Tanzeel — 2026-10-09 — **passed**
 

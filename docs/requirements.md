@@ -35,7 +35,7 @@ Each signal MUST use EWMA (α = 0.1) with z-score triggers, absolute floors, and
 
 #### FR-003 — Warm-up after reset
 `backend-worker` · U · **Must** · Depends: TB-009
-The detector MUST NOT open incidents for 180 s after a `kind=reset` record appears in the deploy ledger, and MUST re-learn baselines during that window.
+The detector MUST NOT open incidents for 180 s after a `kind=reset` record appears in the deploy ledger, and MUST keep learning baselines from normal (non-breaching) samples during that window (ADR-22).
 **Accept:** `chaos reset` followed by immediate fault injection opens no incident before t = 180 s, and opens one within 60 s after warm-up ends.
 
 #### FR-004 — Alert ingestion creates an incident
@@ -730,7 +730,7 @@ Only `backend-api:8000` is bound to `0.0.0.0`; Grafana, Prometheus, Loki, and `c
 
 #### SEC-014 — socket-proxy-ro is read-only
 U · **Must** · Depends: ADR-05
-`CONTAINERS=1, NETWORKS=1, EVENTS=1, PING=1, VERSION=1, POST=0` with no `ALLOW_*`; reachable only on `ro_proxy_net`. (`NETWORKS=1` is there because Alloy's container discovery reads network metadata; it is GET-only.)
+`CONTAINERS=1, NETWORKS=1, EVENTS=1, PING=1, VERSION=1, POST=0`, and of the `ALLOW_*` options only `ALLOW_LOGS=1` (ADR-21: Alloy reads `GET /containers/{id}/logs`); reachable only on `ro_proxy_net`. (`NETWORKS=1` is there because Alloy's container discovery reads network metadata; it is GET-only.)
 **Accept:** `POST /containers/{id}/restart` through the ro proxy → 403. Alloy discovers and ships logs for the labelled containers through the proxy with no 403 in the proxy log.
 
 #### SEC-015 — Secret storage
