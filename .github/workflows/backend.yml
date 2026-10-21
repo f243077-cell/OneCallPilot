@@ -57,6 +57,27 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # CLAUDE.md 5.8: a prompt that exists on main is never edited; a change needs
+      # a new prompts/v{N}/ folder (and manifest entry). manifest.json itself is
+      # checked against the files by tests/agent/test_prompts.py.
+      - name: Prompt versions are immutable
+        working-directory: .
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            echo "No base commit to compare with; skipping."
+            exit 0
+          fi
+          changed="$(git diff --name-status --no-renames "$BASE_SHA" HEAD -- 'backend/oncallpilot/agent/prompts/v*/' | grep -v '^A' || true)"
+          if [ -n "$changed" ]; then
+            echo "::error title=prompt edited::Prompt versions are immutable; add a new version folder:"
+            echo "$changed"
+            exit 1
+          fi
 
       - name: Install uv
         run: pipx install uv==0.12.7
