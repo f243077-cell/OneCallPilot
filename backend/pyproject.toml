@@ -23,6 +23,7 @@ dev = [
     "asyncpg-stubs>=0.30",
     "jsonschema>=4.23",
     "types-jsonschema",
+    "pytest-timeout>=2.4.0",
 ]
 
 [tool.uv.sources]
@@ -40,6 +41,9 @@ module-name = "oncallpilot"
 pythonpath = ["."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+# A hung WebSocket test fails instead of blocking CI.
+timeout = 60
+timeout_method = "thread"
 markers = [
     "db: needs a Postgres with pgvector (OCP_TEST_DATABASE_URL); tests/db and tests/integration",
 ]

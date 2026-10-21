@@ -17,6 +17,7 @@ import logging
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -104,6 +105,7 @@ class JwksCache:
 @dataclass(frozen=True)
 class AuthUser:
     user_id: UUID
+    expires_at: datetime
 
 
 class TokenVerifier:
@@ -138,8 +140,11 @@ class TokenVerifier:
                 leeway=self._leeway,
                 options={"require": ["exp", "aud", "iss", "sub"]},
             )
-            return AuthUser(user_id=UUID(str(claims["sub"])))
-        except (jwt.PyJWTError, ValueError) as exc:
+            return AuthUser(
+                user_id=UUID(str(claims["sub"])),
+                expires_at=datetime.fromtimestamp(int(claims["exp"]), UTC),
+            )
+        except (jwt.PyJWTError, ValueError, TypeError) as exc:
             raise UnauthorizedError() from exc
 
 

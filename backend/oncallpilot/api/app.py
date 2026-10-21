@@ -20,9 +20,11 @@ from redis.asyncio import Redis
 
 from oncallpilot.api.auth import JwksCache, TokenVerifier, http_jwks_fetcher
 from oncallpilot.api.errors import install_error_handlers
-from oncallpilot.api.routers import health, incidents
+from oncallpilot.api.routers import health, incidents, ws
+from oncallpilot.api.routers.ws import WsTimings
 from oncallpilot.db.incidents import IncidentRepository
 from oncallpilot.db.pool import create_pool
+from oncallpilot.events import EventStream
 from oncallpilot.jsonlog import configure_logging
 from oncallpilot.settings import ApiSettings
 
@@ -39,6 +41,8 @@ class Services:
     redis: Pinger
     verifier: TokenVerifier
     incidents: IncidentRepository
+    events: EventStream
+    ws_timings: WsTimings = WsTimings()
 
 
 ServicesFactory = Callable[[], AbstractAsyncContextManager[Services]]
@@ -55,6 +59,7 @@ def create_app(services: ServicesFactory) -> FastAPI:
     install_error_handlers(app)
     app.include_router(health.router)
     app.include_router(incidents.router)
+    app.include_router(ws.router)
     return app
 
 
@@ -64,6 +69,8 @@ def production_services(settings: ApiSettings) -> ServicesFactory:
         pool = await create_pool(settings.database_url.get_secret_value())
         redis: Redis = Redis.from_url(
             settings.redis_url.get_secret_value(),
+            decode_responses=True,
+            # Above the WebSocket gateway's XREAD block (1 s).
             socket_timeout=REDIS_TIMEOUT_SECONDS,
             socket_connect_timeout=REDIS_TIMEOUT_SECONDS,
         )
@@ -73,7 +80,11 @@ def production_services(settings: ApiSettings) -> ServicesFactory:
             )
             try:
                 yield Services(
-                    pool=pool, redis=redis, verifier=verifier, incidents=IncidentRepository(pool)
+                    pool=pool,
+                    redis=redis,
+                    verifier=verifier,
+                    incidents=IncidentRepository(pool),
+                    events=EventStream(redis),
                 )
             finally:
                 await redis.aclose()

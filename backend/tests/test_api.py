@@ -88,6 +88,7 @@ class Env:
             redis=self.redis,
             verifier=TokenVerifier(JwksCache(FakeJwks(KEY)), ISSUER),
             incidents=cast(Any, self.incidents),
+            events=cast(Any, None),
         )
 
 
