@@ -2,6 +2,25 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 11: Claude adapter
+
+### Done
+- **History fix** (`cd4ed11`): the investigation keeps each structured call's prompt, any invalid reply with its repair request, and the valid reply in the conversation, exactly as sent; `Msg`/`LLMTurn`/`Structured` carry the provider's raw content. Before, the prompt was dropped and only a re-serialised reply was kept.
+- **B3.8 Claude adapter** (`6da32a1`): `agent/providers/anthropic.py` on the official `anthropic` SDK (**new dependency, anthropic 2.0.0**, pulls `httpx2`). `LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY` (+ `LLM_MODEL=claude-opus-5-5`); embeddings stay on Gemini (ADR-14). 7 adapter tests against a mocked API; AI-021 import-lint test.
+- CI: the runner re-run of `76877d1` got past the registry rate limit (`runner`, `runner-proxy` green; `runner-live` running at the time of writing).
+
+### Decisions to confirm (Tanzeel)
+- **No "temperature 0" on Claude:** current Claude models always think and reject sampling parameters, so the Claude adapter cannot be deterministic the way architecture §6.2/§6.7 assumes; it sets `effort: low` to fit the 90 s budget. If the benchmark falls back to Claude (ADR-13), record this in the results.
+- **No constrained decoding for structured replies on Claude:** the API's schema mode cannot express the free-form `params` objects of `ProposalOut`/`DisproofPlanOut` (they would always come back `{}`), so the schema goes in the prompt and replies are validated with Pydantic (one repair, as for Gemini).
+- **No server-side model fallback on refusals:** Anthropic recommends enabling it for these models, but a silent switch to another model would break ADR-13's "exactly one fixed model" rule for the benchmark. A refusal counts as an invalid structured reply (→ repair → `llm_output_invalid`). Turn it on later only if you accept that trade-off.
+- Default model for the Claude path: `claude-opus-5-5` (ADR-13 pins the exact ID only if the fallback is used).
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged (chunks 7–10), plus an `ANTHROPIC_API_KEY` only if the Claude fallback is ever needed.
+
 ## 2026-10-21 — Cloud session 1, chunk 10: detector follows settings, regression suite
 
 ### Done
