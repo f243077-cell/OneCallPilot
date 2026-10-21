@@ -15,7 +15,8 @@
 - **S1.2/S2.2 runbooks** (`e5f2888`): eight generic runbooks (roll back a bad release, restart a service, scale for a surge, cache problems, slow third-party dependencies, crash loops, reading logs safely, when to escalate); a backend test checks chunk limits and that no runbook names a benchmark scenario, testbed release or container (H7). Ingested on the real start: 35 chunks.
 
 ### Observations (no change made)
-- `chaos reset` stops and starts containers *before* it writes its `reset` ledger record, so the detector, which starts its warm-up when it sees that record, can fire in between: one run opened an incident "api 0 restarts" (the restarts rule's "no running container" case, during the churn). Fix options: write the reset record first in `chaos reset`, or title the "no running container" case accurately. Not changed yet — tell me which you prefer.
+- `chaos reset` stopped and started containers *before* writing its `reset` ledger record, so the detector could fire in between (one run opened "api 0 restarts" during the churn). **Fixed** (`d444e80`): the ledger is reseeded first; checked live (reset record at the start, warm-up seen 3 s later, no alert).
+- My runbook commit failed chaos-shop's TB-010 neutrality test (words like "bad", "leak"), so chaos-shop CI was red on `79da5cb`; reworded in `8799827`. Lesson recorded in next.md: run every package's tests that read a shared folder.
 - A worker started during or right after a fault learns that fault as its baseline (and its exception types as known during warm-up). The benchmark keeps the worker running across runs, so this only matters after a worker restart: then wait a full healthy warm-up (180 s) plus the 60 s baseline before injecting, as `bench run` does.
 
 ### Decisions to confirm (Tanzeel)
