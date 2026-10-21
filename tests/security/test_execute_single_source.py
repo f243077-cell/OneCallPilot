@@ -40,3 +40,20 @@ def test_the_worker_side_never_touches_the_execute_builder_or_key() -> None:
         text = path.read_text(encoding="utf-8")
         for forbidden in FORBIDDEN_ON_WORKER_SIDE:
             assert forbidden not in text, (path, forbidden)
+
+
+def test_the_worker_process_never_loads_the_approve_handler() -> None:
+    """SEC-002: importing backend-worker must not load the code that signs execute."""
+    import subprocess
+    import sys
+
+    loaded = subprocess.run(
+        [sys.executable, "-c",
+         "import sys, oncallpilot.worker.__main__;"
+         "print(','.join(m for m in sys.modules if m.startswith('oncallpilot.')))"],
+        capture_output=True, text=True, check=True, timeout=60,
+    ).stdout.strip().split(",")  # fmt: skip
+    assert "oncallpilot.worker.__main__" in loaded
+    for forbidden in ("oncallpilot.approvals.execute", "oncallpilot.approvals.service"):
+        assert forbidden not in loaded
+    assert not [m for m in loaded if m.startswith("oncallpilot.api")]

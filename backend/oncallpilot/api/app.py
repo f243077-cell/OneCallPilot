@@ -23,7 +23,7 @@ from redis.asyncio import Redis
 
 from oncallpilot.api.auth import JwksCache, TokenVerifier, http_jwks_fetcher
 from oncallpilot.api.errors import install_error_handlers
-from oncallpilot.api.routers import health, incidents, ingest, proposals, ws
+from oncallpilot.api.routers import devices, health, incidents, ingest, proposals, ws
 from oncallpilot.api.routers.ws import WsTimings
 from oncallpilot.approvals.service import Approvals
 from oncallpilot.db.incidents import IncidentRepository
@@ -31,6 +31,7 @@ from oncallpilot.db.pool import create_pool
 from oncallpilot.detector.config import read_config
 from oncallpilot.events import EventStream
 from oncallpilot.jsonlog import configure_logging
+from oncallpilot.push.notifier import build_notifier
 from oncallpilot.queues import Queues
 from oncallpilot.settings import ApiSettings
 
@@ -84,6 +85,7 @@ def create_app(services: ServicesFactory) -> FastAPI:
     app.include_router(incidents.router)
     app.include_router(ingest.router)
     app.include_router(proposals.router)
+    app.include_router(devices.router)
     app.include_router(ws.router)
     return app
 
@@ -103,7 +105,10 @@ def production_services(settings: ApiSettings) -> ServicesFactory:
             verifier = TokenVerifier(
                 JwksCache(http_jwks_fetcher(http, settings.jwks_url)), settings.jwt_issuer
             )
-            events = EventStream(redis)
+            notifier = build_notifier(pool, http, settings.fcm_credentials_path)
+            events = EventStream(
+                redis, on_published=notifier.on_event if notifier is not None else None
+            )
             approvals = Approvals(
                 pool=pool,
                 redis=redis,

@@ -171,13 +171,20 @@ class LiveApi:
     client: httpx.AsyncClient
     redis: Redis
     pool: asyncpg.Pool
+    key: SigningKey | None = None
+
+    def auth(self, user: str | None = None) -> dict[str, str]:
+        assert self.key is not None
+        claims = {"sub": user} if user else {}
+        return {"Authorization": f"Bearer {self.key.token(**claims)}"}
 
 
 @pytest.fixture
 async def live_api(pool: asyncpg.Pool, redis_client: Redis) -> AsyncIterator[LiveApi]:
     """backend-api on the test database and a real Redis (ingest, events, jobs)."""
-    async with serve(build_services(pool, SigningKey("it-key"), redis_client, TEST_INGEST)) as c:
-        yield LiveApi(client=c, redis=redis_client, pool=pool)
+    key = SigningKey("it-key")
+    async with serve(build_services(pool, key, redis_client, TEST_INGEST)) as c:
+        yield LiveApi(client=c, redis=redis_client, pool=pool, key=key)
 
 
 # The approval fixture lives with its helpers; importing it here shares it.

@@ -54,6 +54,7 @@ from oncallpilot.detector.sources import LiveSampleSource
 from oncallpilot.events import EventStream
 from oncallpilot.jsonlog import configure_logging
 from oncallpilot.ledger import latest_reset, read_records
+from oncallpilot.push.notifier import build_notifier
 from oncallpilot.runbooks.ingest import ingest_dir
 from oncallpilot.runner_link import RunnerLink
 from oncallpilot.settings import WorkerSettings
@@ -168,7 +169,10 @@ async def main() -> None:
         httpx.AsyncClient(base_url=docker_base_url(settings.docker_host)) as docker,
     ):
         provider, embedder = build_providers(settings, http)
-        events = EventStream(redis)
+        notifier = build_notifier(pool, http, settings.fcm_credentials_path)
+        events = EventStream(
+            redis, on_published=notifier.on_event if notifier is not None else None
+        )
         prometheus = PrometheusClient(http, settings.prometheus_url)
         loki = LokiClient(http, settings.loki_url)
         toolbox = ToolBox(
@@ -280,6 +284,8 @@ async def main() -> None:
         for task in background:
             task.cancel()
         await asyncio.gather(*background, results_task, jobs_task, return_exceptions=True)
+        if notifier is not None:
+            await notifier.drain()
     await redis.aclose()
     await pool.close()
 

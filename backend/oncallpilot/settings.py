@@ -23,6 +23,7 @@ class ApiSettings(BaseSettings):
     supabase_url: str
     ingest_token: SecretStr
     action_signing_key: SecretStr  # hex; signs execute requests (SEC-002)
+    fcm_credentials_path: Path | None = None  # mounted service-account file (FR-018)
     agent_enabled: bool = True
     detector_config_path: Path = Path("config") / "detector.yaml"
 
@@ -65,3 +66,4 @@ class WorkerSettings(BaseSettings):
     catalogue_path: Path = Path("catalogue") / "actions.yaml"
     targets_path: Path = Path("catalogue") / "targets.yaml"
     runbooks_dir: Path = Path("runbooks")
+    fcm_credentials_path: Path | None = None  # mounted service-account file (FR-018)

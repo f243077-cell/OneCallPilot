@@ -41,7 +41,7 @@ async def audit(
     conn: DbConn,
     actor: str,
     event: str,
-    incident_id: UUID,
+    incident_id: UUID | None,
     ref_type: str | None = None,
     ref_id: UUID | None = None,
     payload: dict[str, Any] | None = None,

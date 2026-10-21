@@ -13,6 +13,7 @@ must already be cut with ``cut_evidence_payload`` (§4.1).
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -43,10 +44,16 @@ def envelope(event_id: str, fields: dict[str, str]) -> dict[str, Any]:
 
 
 class EventStream:
-    def __init__(self, redis: Redis, maxlen: int = EVENTS_MAXLEN) -> None:
+    def __init__(
+        self,
+        redis: Redis,
+        maxlen: int = EVENTS_MAXLEN,
+        on_published: Callable[[str, UUID, dict[str, Any]], None] | None = None,
+    ) -> None:
         # ``decode_responses=True``: IDs and fields come back as str.
         self._redis = redis
         self._maxlen = maxlen
+        self._on_published = on_published  # the push notifier (FR-018)
 
     async def publish(
         self,
@@ -73,6 +80,8 @@ class EventStream:
             maxlen=self._maxlen,
             approximate=True,
         )
+        if self._on_published is not None:
+            self._on_published(event, incident_id, payload)
         return str(event_id)
 
     async def latest_id(self) -> str | None:
