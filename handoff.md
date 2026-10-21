@@ -2,6 +2,20 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 2: B1.2 API skeleton, B1.3 copilot-redis
+
+### Done
+- **Followed Tanzeel's new `CLAUDE.md` §11.5**: commits are authored as Tanzeel Hussain with no AI attribution lines. Tanzeel rewrote the first four commits of this session on `main`; their new hashes are `c797304` (CLAUDE.md rules), `59f01ba` (backend skeleton), `70bc7dc` (B1.1 migrations), `37d1c79` (session files). The hashes in the entry below are the pre-rewrite ones.
+- **B1.2 backend-api skeleton** (`9721d8a`): settings, JSON logs, JWKS auth (SEC-010), the error envelope (API-001), `/healthz` (API-002), `GET /incidents` with cursor pagination (API-004), `GET /incidents/{id}` (API-005), and `oncallpilot.db.seed` (writes a timeline's final `IncidentDetail`; B1.4 will use it). Tests: `backend/tests` (44) and `tests/integration` (10, real Postgres). `backend.yml` runs them. CI green on `9721d8a` except the runner workflow, still running at the time of writing.
+- **B1.3 part 1, copilot-redis** (`012fb40`): `infrastructure/compose/copilot.yml`, `infrastructure/redis/users.acl` + `start-redis.sh` (passwords taken from `REDIS_URL` / `RUNNER_REDIS_URL`, never in git), and `tests/security/test_redis_acl.py` (SEC-004, 22 tests). The dummy Redis passwords in `.env.example` now differ (the start script refuses equal ones).
+- The runner workflow failed once on `52d8c9a` because a registry answered `toomanyrequests` while pulling socket-proxy images (before any test ran); the failed jobs were re-run once.
+
+### Next
+`next.md` §2: B1.3 part 2 (`ocp:events` publisher and the `/ws/incidents` gateway), then B1.4, B1.6, B1.7, B1.5, B1.8.
+
+### Waiting on Tanzeel
+Unchanged from the entry below (delete the old branches, the contracts tag, Supabase, Gemini key, Firebase).
+
 ## 2026-10-21 — Cloud session 1: single developer, branches, B1.1 migrations
 
 ### Done
