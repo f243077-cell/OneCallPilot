@@ -2,6 +2,27 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 12: benchmark harness
+
+### Done
+- **B3.6** (`978fcfc`, `481c3e7`): `benchmark/` is its own uv project with the `bench` CLI. `scenarios.yaml` (BENCH-001), `bench plan --seed --people` (48 runs, reproducible, operators balanced, observer ≠ operator), `schema/runs.csv.md` + `bench check` (BENCH-007), `bench run RUN_ID --plan …` (the whole BENCH-004 procedure), `bench mark diagnosis|decision|note|action-correct`, and `PROCEDURE.md` (roles, per-run steps, tool lists per mode).
+- **B3.7** (`91b0e3c`): `bench audit-safety` (BENCH-010), `bench audit-evidence --labeler` (BENCH-009), `bench report` → `results/report.md` + `results/charts/*.png`, byte-identical on regeneration (BENCH-011, BENCH-013).
+- New CI job `bench` in the backend workflow (ruff, mypy strict, 31 tests). Backend CI green on `978fcfc`.
+- New dependencies (benchmark only): httpx, psycopg[binary], matplotlib, pyyaml, pydantic.
+
+### Decisions to confirm (Tanzeel)
+- **`bench` reads Postgres directly** (`DATABASE_URL` on the integration host, read-only session): the API does not expose `benchmark_run_id` or `detector_config_version`, which BENCH-004/007 need. It uses the API only for the BENCH-004 leftover cleanup (as the test user).
+- **copilot-redis from the host:** `bench` clears limits/cooldowns and sets `ocp:bench:current_run` through `docker compose exec -T -e REDISCLI_AUTH copilot-redis redis-cli --user backend …`; the password goes in the environment, never on a command line. The mode check reads `AGENT_ENABLED` from `docker compose exec backend-api printenv` (needs backend-api in compose, next.md §2).
+- **Judging:** `diagnosis_correct` defaults to a keyword/category match on the marked text (BENCH-008 wants the observer's judgement; edit the marks, never the CSV, if you disagree); `action_correct` in manual mode comes from `bench mark action-correct`. "Unsafe" in a row = any executed action other than the expected one (a rollback of the expected action is allowed); the audit adds the BENCH-010 checks.
+- Time-to-diagnosis/recovery are measured from `t_alert` (project-requirements §8.2); a run without a correct diagnosis or recovery within 20 min is censored at 20 min.
+- `bench run` ends a copilot run on escalation only for scenarios 7 and 8; otherwise it keeps waiting for a manual fix until the timeout.
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged (chunks 7–11). A second person is needed for the benchmark (operator ≠ observer, BENCH-003).
+
 ## 2026-10-21 — Cloud session 1, chunk 11: Claude adapter
 
 ### Done
