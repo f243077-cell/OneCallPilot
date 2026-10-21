@@ -14,14 +14,17 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
+import asyncpg
 import httpx
 from oncallpilot_contracts.api import AlertIn
-from pydantic import SecretStr
+from pydantic import SecretStr, ValidationError
 
+from oncallpilot.detector.config import load_config
 from oncallpilot.detector.engine import Alert, Cycle, Detector, Samples
 
 log = logging.getLogger(__name__)
@@ -41,6 +44,18 @@ class AlertSink(Protocol):
 
 ResetProbe = Callable[[], Awaitable[tuple[UUID, datetime] | None]]
 """Returns the newest ``kind=reset`` record's id and time, if any."""
+
+
+@dataclass(frozen=True)
+class MonitorSettingsView:
+    """What the detector takes from ``monitor_settings`` (FR-023, ADR-20)."""
+
+    version: int
+    services: frozenset[str] | None  # None: every service in the rules
+    thresholds: dict[str, float]
+
+
+SettingsProbe = Callable[[], Awaitable[MonitorSettingsView | None]]
 
 
 class HttpAlertSink:
@@ -73,6 +88,8 @@ class DetectorLoop:
         resets: ResetProbe,
         on_recovered: Callable[[str, datetime], Awaitable[None]] | None = None,
         on_samples: Callable[[datetime, dict[str, Samples]], None] | None = None,
+        settings: SettingsProbe | None = None,
+        base_config: bytes | None = None,
     ) -> None:
         self.detector = detector
         self.source = source
@@ -83,8 +100,34 @@ class DetectorLoop:
         self._last_reset: UUID | None = None
         self._first = True
         self._undelivered: list[AlertIn] = []
+        self.settings = settings
+        self.base_config = base_config
+        self._settings_version: int | None = None
+        self._services: frozenset[str] | None = None
+
+    async def _refresh_settings(self) -> None:
+        """Apply new thresholds and monitored services; keep the old ones on any error."""
+        if self.settings is None or self.base_config is None:
+            return
+        try:
+            view = await self.settings()
+        except (OSError, asyncpg.PostgresError) as exc:
+            log.warning("monitor settings unreadable: %s", type(exc).__name__)
+            return
+        if view is None or view.version == self._settings_version:
+            return
+        try:
+            self.detector.config = load_config(self.base_config, view.thresholds)
+        except (ValueError, ValidationError) as exc:
+            log.error("monitor settings version %d ignored: %s", view.version, exc)
+            self._settings_version = view.version
+            return
+        self._services = view.services
+        self._settings_version = view.version
+        log.info("detector uses monitor settings version %d", view.version)
 
     async def cycle(self, at: datetime) -> Cycle:
+        await self._refresh_settings()
         await self._check_reset(at)
         try:
             samples = await self.source.collect(at)
@@ -94,6 +137,8 @@ class DetectorLoop:
             return Cycle(alerts=[], recovered=[])
         if self.on_samples is not None:
             self.on_samples(at, samples)
+        if self._services is not None:
+            samples = {k: v for k, v in samples.items() if k in self._services}
         result = self.detector.step(at, samples)
         self._undelivered += [self._body(alert) for alert in result.alerts]
         await self._deliver()

@@ -13,7 +13,7 @@ from pydantic import SecretStr
 
 from oncallpilot.detector.config import load_config, read_config
 from oncallpilot.detector.engine import Detector, Samples
-from oncallpilot.detector.loop import DetectorLoop, HttpAlertSink
+from oncallpilot.detector.loop import DetectorLoop, HttpAlertSink, MonitorSettingsView
 from oncallpilot.ledger import latest_reset, read_records
 from tests.test_detector_config import CONFIG
 
@@ -174,3 +174,51 @@ def test_ledger_reader_skips_a_partial_last_line(tmp_path: Path) -> None:
     assert read_records(tmp_path / "missing.jsonl") == []
     reset = latest_reset(records)
     assert reset is None or reset.kind == "reset"
+
+
+def make_with(settings: object) -> tuple[DetectorLoop, Source, Sink]:
+    loop, source, sink, _ = make()
+    loop.settings = settings  # type: ignore[assignment]
+    loop.base_config = read_config(CONFIG)
+    return loop, source, sink
+
+
+async def test_monitor_settings_change_thresholds_and_services() -> None:
+    views: list[MonitorSettingsView | None] = [None]
+
+    async def settings() -> MonitorSettingsView | None:
+        return views[-1]
+
+    loop, source, sink = make_with(settings)
+    at = await run_for(loop, T0, 2)
+    assert loop.detector.config.signals.error_rate.z == 4
+
+    views.append(MonitorSettingsView(2, frozenset({"worker"}), {"error_rate.z": 6.0}))
+    at = await run_for(loop, at, 60)
+    assert loop.detector.config.signals.error_rate.z == 6.0
+    # api is no longer monitored: a burst of errors there raises nothing.
+    source.error_rate = 0.31
+    at = await run_for(loop, at, 10)
+    assert sink.sent == []
+
+    # Monitored again: the same fault alerts.
+    views.append(MonitorSettingsView(3, None, {}))
+    source.error_rate = 0.004
+    at = await run_for(loop, at, 60)
+    source.error_rate = 0.31
+    at = await run_for(loop, at, 10)
+    assert [a.service for a in sink.sent] == ["api"]
+
+    # An invalid version is ignored; the last good rules stay.
+    views.append(MonitorSettingsView(4, None, {"no_such.rule": 1.0}))
+    await run_for(loop, at, 1)
+    assert loop.detector.config.signals.error_rate.z == 4
+
+
+async def test_unreadable_settings_keep_the_rules() -> None:
+    async def broken() -> MonitorSettingsView | None:
+        raise OSError("database down")
+
+    loop, _, _ = make_with(broken)
+    await run_for(loop, T0, 1)
+    assert loop.detector.config.signals.error_rate.z == 4

@@ -46,10 +46,11 @@ from oncallpilot.agent.toolbox import ToolBox
 from oncallpilot.agent.tools.clients import LokiClient, PrometheusClient
 from oncallpilot.agent.tools.get_service_health import docker_base_url
 from oncallpilot.catalogue import Catalogue
+from oncallpilot.db import settings as settings_db
 from oncallpilot.db.pool import create_pool
 from oncallpilot.detector.config import load_config, read_config
 from oncallpilot.detector.engine import Detector
-from oncallpilot.detector.loop import DetectorLoop, HttpAlertSink
+from oncallpilot.detector.loop import DetectorLoop, HttpAlertSink, MonitorSettingsView
 from oncallpilot.detector.sources import LiveSampleSource
 from oncallpilot.events import EventStream
 from oncallpilot.jsonlog import configure_logging
@@ -224,6 +225,18 @@ async def main() -> None:
             record = latest_reset(await asyncio.to_thread(read_records, settings.ledger_path))
             return (record.deploy_id, record.deployed_at) if record else None
 
+        async def monitor_settings() -> MonitorSettingsView | None:
+            async with pool.acquire() as conn:
+                row = await settings_db.current(conn)
+            if row is None:
+                return None
+            stored = row["settings"]
+            return MonitorSettingsView(
+                version=row["version"],
+                services=frozenset(stored["services"]) if stored.get("services") else None,
+                thresholds={str(k): float(v) for k, v in (stored.get("thresholds") or {}).items()},
+            )
+
         latest = LatestSamples()
         detector = DetectorLoop(
             Detector(load_config(config_bytes), utcnow()),
@@ -231,6 +244,8 @@ async def main() -> None:
             HttpAlertSink(http, settings.ingest_url, settings.ingest_token),
             resets,
             on_samples=latest.update,
+            settings=monitor_settings,
+            base_config=config_bytes,
         )
         outcomes = Outcomes(
             pool=pool,
