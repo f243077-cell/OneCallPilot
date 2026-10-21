@@ -1,8 +1,9 @@
 # Owner: Tanzeel (Stream B). Copilot services (architecture §2.2, §2.3, §2.7, §3, §12.1).
 # B1.3 adds copilot-redis; B1.4 adds backend-seed (profile `tools`, run once by
-# `ocp seed-incident`, never by `ocp up`). backend-api and backend-worker are
-# added once a database exists (they need the Supabase project; `ocp up` must
-# keep working on main without it).
+# `ocp seed-incident`, never by `ocp up`). backend-api and backend-worker are in
+# profile `backend`, which `ocp up` does not start yet: they need the Supabase
+# project (DATABASE_URL). Once it exists, start them with
+# `docker compose --profile backend up -d`, then add the profile to `ocp up`.
 #
 # SAFETY (SEC-004): ACL users only (default is off); the runner user reaches only
 # ocp:runner:*. copilot-redis is never published on the host.
@@ -59,6 +60,90 @@ services:
     mem_limit: 256m
     depends_on:
       copilot-redis: {condition: service_healthy}
+
+  # backend-api (architecture §2.2): the only service published on 0.0.0.0 (SEC-013).
+  # Holds ACTION_SIGNING_KEY to sign execute requests (SEC-002).
+  backend-api:
+    image: oncallpilot/backend:0.1.0
+    profiles: [backend]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      SUPABASE_URL: ${SUPABASE_URL}
+      INGEST_TOKEN: ${INGEST_TOKEN}
+      ACTION_SIGNING_KEY: ${ACTION_SIGNING_KEY}
+      AGENT_ENABLED: ${AGENT_ENABLED:-true}
+      BENCHMARK_LOCK: ${BENCHMARK_LOCK:-false}
+      LOKI_URL: http://loki:3100
+    ports:
+      - "0.0.0.0:8000:8000"
+    # copilot_net: Redis; obs_net: Loki (/log-tail); default: Supabase (JWKS, pooler).
+    networks: [copilot_net, obs_net, default]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 384m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      copilot-redis: {condition: service_healthy}
+
+  # backend-worker (architecture §2.3): agent, detector, result consumer, verifier,
+  # sweeper. Never gets ACTION_SIGNING_KEY (SEC-002); reads Docker only through
+  # socket-proxy-ro and the deploy ledger read-only.
+  backend-worker:
+    image: oncallpilot/backend:0.1.0
+    profiles: [backend]
+    entrypoint: ["python", "-m", "oncallpilot.worker"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      RUNNER_LINK_KEY: ${RUNNER_LINK_KEY}
+      INGEST_TOKEN: ${INGEST_TOKEN}
+      INGEST_URL: http://backend-api:8000/ingest/alert
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      LLM_MODEL: ${LLM_MODEL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      PROMPT_VERSION: ${PROMPT_VERSION:-v1}
+      CONFIDENCE_THRESHOLD: ${CONFIDENCE_THRESHOLD:-0.70}
+      PROMETHEUS_URL: http://prometheus:9090
+      LOKI_URL: http://loki:3100
+      DOCKER_HOST: tcp://socket-proxy-ro:2375
+      LEDGER_PATH: /ledger/deploys.jsonl
+    volumes:
+      - deploy_ledger:/ledger:ro
+    # copilot_net: Redis; obs_net: Prometheus, Loki, and scraping of :9464;
+    # ro_proxy_net: socket-proxy-ro; chaos_net: /healthz probes; default: Supabase, LLM.
+    networks: [copilot_net, obs_net, ro_proxy_net, chaos_net, default]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:9464/metrics', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      copilot-redis: {condition: service_healthy}
+      backend-api: {condition: service_healthy}
+
+# The deploy ledger the chaos CLI writes (ADR-12; named oncallpilot_deploy_ledger,
+# files owned by uid 10001). Declared here because backend-worker is the first
+# Compose service to mount it; do not declare it a second time in another file.
+volumes:
+  deploy_ledger:
+    name: oncallpilot_deploy_ledger
 
 networks:
   copilot_net:
