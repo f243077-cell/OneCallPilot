@@ -98,19 +98,22 @@ jobs:
           uv run mypy ../tests/security
 
       - name: Pytest (unit tests)
-        run: uv run pytest -q tests --cov=oncallpilot.agent
+        run: uv run pytest -q tests --cov=oncallpilot.agent --cov=oncallpilot.approvals
 
       - name: Pytest (integration, Postgres and Redis)
-        run: uv run pytest -c pyproject.toml ../tests/integration -q --cov=oncallpilot.agent --cov-append
+        run: uv run pytest -c pyproject.toml ../tests/integration -q --cov=oncallpilot.agent --cov=oncallpilot.approvals --cov-append
 
       # The database-backed agent effects are covered by the integration suite,
       # so the floor applies to unit + integration together.
       - name: Agent coverage floor (>= 85 %, CLAUDE.md 7)
-        run: uv run coverage report --fail-under=85
+        run: uv run coverage report --include='*/agent/*' --fail-under=85
+
+      - name: Approvals coverage floor (>= 90 %, CLAUDE.md 7)
+        run: uv run coverage report --include='*/approvals/*' --fail-under=90
 
       # SEC-004 (a throwaway copilot-redis from infrastructure/redis/, published on
       # 127.0.0.1 for the test only) and TEST-008 (the redaction corpus).
-      - name: Security tests (SEC-004, TEST-008)
+      - name: Security tests (SEC-001, SEC-004, TEST-008)
         run: uv run pytest -c pyproject.toml ../tests/security -q
 
       - name: Backend image builds

@@ -50,6 +50,81 @@ class ValidationFailedError(ApiError):
     message = "invalid request"
 
 
+class IdempotencyKeyRequiredError(ApiError):
+    status_code = 400
+    code = "IDEMPOTENCY_KEY_REQUIRED"
+    message = "the Idempotency-Key header (a UUID) is required"
+
+
+class IdempotencyConflictError(ApiError):
+    status_code = 422
+    code = "IDEMPOTENCY_CONFLICT"
+    message = "this Idempotency-Key was used with a different request"
+
+
+class ChallengeInvalidError(ApiError):
+    status_code = 409
+    code = "CHALLENGE_INVALID"
+    message = "the challenge is unknown, used, expired, or not yours"
+
+
+class StaleProposalError(ApiError):
+    status_code = 409
+    code = "STALE_PROPOSAL"
+    message = "the proposal changed; review it again"
+
+
+class ProposalNotPendingError(ApiError):
+    status_code = 409
+    code = "PROPOSAL_NOT_PENDING"
+    message = "the proposal was already decided"
+
+
+class ProposalExpiredError(ApiError):
+    status_code = 409
+    code = "PROPOSAL_EXPIRED"
+    message = "the proposal expired"
+
+
+class BiometricRequiredError(ApiError):
+    status_code = 403
+    code = "BIOMETRIC_REQUIRED"
+    message = "this risk tier needs biometric confirmation"
+
+
+class _RetryLaterError(ApiError):
+    status_code = 429
+
+    def __init__(self, retry_after: int) -> None:
+        super().__init__(details={"retry_after": retry_after})
+
+
+class RateLimitedError(_RetryLaterError):
+    code = "RATE_LIMITED"
+    message = "too many actions on this service"
+
+
+class CooldownActiveError(_RetryLaterError):
+    code = "COOLDOWN_ACTIVE"
+    message = "an action on this service finished moments ago"
+
+
+class ChecksUnavailableError(ApiError):
+    """A safety check could not be evaluated (Redis down): refuse (CLAUDE.md §4.2)."""
+
+    status_code = 500
+    code = "INTERNAL"
+    message = "approval checks are unavailable; nothing was approved"
+
+
+def error_body(exc: ApiError) -> dict[str, Any]:
+    """The envelope of ``exc`` as JSON, for responses stored under an Idempotency-Key."""
+    body = ErrorEnvelope(
+        error=ErrorBody(code=exc.code, message=exc.message[:500], details=exc.details)
+    )
+    return body.model_dump(mode="json")
+
+
 def envelope(
     status_code: int, code: ErrorCode, message: str, details: dict[str, Any]
 ) -> JSONResponse:

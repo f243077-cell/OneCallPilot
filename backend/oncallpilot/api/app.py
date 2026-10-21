@@ -17,13 +17,15 @@ from typing import Protocol
 import asyncpg
 import httpx
 from fastapi import FastAPI
+from oncallpilot_contracts.signing import key_from_hex
 from pydantic import SecretStr
 from redis.asyncio import Redis
 
 from oncallpilot.api.auth import JwksCache, TokenVerifier, http_jwks_fetcher
 from oncallpilot.api.errors import install_error_handlers
-from oncallpilot.api.routers import health, incidents, ingest, ws
+from oncallpilot.api.routers import health, incidents, ingest, proposals, ws
 from oncallpilot.api.routers.ws import WsTimings
+from oncallpilot.approvals.service import Approvals
 from oncallpilot.db.incidents import IncidentRepository
 from oncallpilot.db.pool import create_pool
 from oncallpilot.detector.config import read_config
@@ -63,6 +65,7 @@ class Services:
     ingest: IngestConfig
     ws_timings: WsTimings = WsTimings()
     clock: Callable[[], datetime] = field(default=utcnow)
+    approvals: Approvals | None = None  # needs a real Redis; None in tests that do not approve
 
 
 ServicesFactory = Callable[[], AbstractAsyncContextManager[Services]]
@@ -80,6 +83,7 @@ def create_app(services: ServicesFactory) -> FastAPI:
     app.include_router(health.router)
     app.include_router(incidents.router)
     app.include_router(ingest.router)
+    app.include_router(proposals.router)
     app.include_router(ws.router)
     return app
 
@@ -99,19 +103,28 @@ def production_services(settings: ApiSettings) -> ServicesFactory:
             verifier = TokenVerifier(
                 JwksCache(http_jwks_fetcher(http, settings.jwks_url)), settings.jwt_issuer
             )
+            events = EventStream(redis)
+            approvals = Approvals(
+                pool=pool,
+                redis=redis,
+                events=events,
+                action_signing_key=key_from_hex(settings.action_signing_key.get_secret_value()),
+                clock=utcnow,
+            )
             try:
                 yield Services(
                     pool=pool,
                     redis=redis,
                     verifier=verifier,
                     incidents=IncidentRepository(pool),
-                    events=EventStream(redis),
+                    events=events,
                     queues=Queues(redis),
                     ingest=IngestConfig(
                         token=settings.ingest_token,
                         agent_enabled=settings.agent_enabled,
                         detector_config=read_config(settings.detector_config_path),
                     ),
+                    approvals=approvals,
                 )
             finally:
                 await redis.aclose()

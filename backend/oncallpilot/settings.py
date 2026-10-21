@@ -21,6 +21,7 @@ class ApiSettings(BaseSettings):
     redis_url: SecretStr
     supabase_url: str
     ingest_token: SecretStr
+    action_signing_key: SecretStr  # hex; signs execute requests (SEC-002)
     agent_enabled: bool = True
     detector_config_path: Path = Path("config") / "detector.yaml"
 
