@@ -2,6 +2,23 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 13: copilot metrics
+
+### Done
+- **B3.5** (`02cdc39`): `oncallpilot/metrics.py` (prometheus-client, **new dependency**): agent duration (histogram + per-incident gauge), tool calls by outcome, LLM latency, LLM errors, escalations by reason, recorded by `DbEffects`; backend-worker serves them on `WORKER_METRICS_PORT` (9464, never published). Prometheus job `copilot` (DNS discovery of `backend-worker`; empty until the worker is in Compose) — `promtool check config` passes. Grafana dashboard **Copilot internals** (5 panels; loads in Grafana 12.1.1).
+- Totals: 308 unit, 120 integration, 8 regression, 113 security, 31 bench tests passing locally.
+
+### Decisions to confirm (Tanzeel)
+- backend-worker must join `obs_net` when it is added to `copilot.yml`, so Prometheus can scrape it.
+- The per-incident duration gauge carries `incident_id` as a label (a few dozen incidents per benchmark; fine at this scale, not for production).
+- backend-api exposes no `/metrics` of its own (it is the only service on 0.0.0.0, so a metrics endpoint there would be on the LAN).
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged (chunks 7–12).
+
 ## 2026-10-21 — Cloud session 1, chunk 12: benchmark harness
 
 ### Done
