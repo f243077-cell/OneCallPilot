@@ -23,6 +23,8 @@ async def insert_pending(
     proposal_id: UUID,
     incident_id: UUID,
     hypothesis_id: UUID | None,
+    kind: str = "primary",
+    parent_proposal_id: UUID | None = None,
     action: str,
     params: dict[str, Any],
     risk_tier: str,
@@ -39,12 +41,13 @@ async def insert_pending(
     now: datetime,
 ) -> None:
     await conn.execute(
-        "insert into ocp.proposals (id, incident_id, hypothesis_id, kind, action, params,"
-        " risk_tier, approval_requirement, expected_effect, rationale, evidence_ids,"
-        " rollback_step, dry_run_result, dry_run_at, fingerprint, status, expires_at,"
-        " catalogue_version, created_at, updated_at)"
-        " values ($1, $2, $3, 'primary', $4, $5, $6::text::ocp.risk_tier, $7, $8, $9, $10,"
-        " $11, $12, $13, $14, 'pending', $15, $16, $17, $17)",
+        "insert into ocp.proposals (id, incident_id, hypothesis_id, kind, parent_proposal_id,"
+        " action, params, risk_tier, approval_requirement, expected_effect, rationale,"
+        " evidence_ids, rollback_step, dry_run_result, dry_run_at, fingerprint, status,"
+        " expires_at, catalogue_version, created_at, updated_at)"
+        " values ($1, $2, $3, $18::text::ocp.proposal_kind, $19, $4, $5,"
+        " $6::text::ocp.risk_tier, $7, $8, $9, $10, $11, $12, $13, $14, 'pending', $15, $16,"
+        " $17, $17)",
         proposal_id,
         incident_id,
         hypothesis_id,
@@ -62,4 +65,24 @@ async def insert_pending(
         expires_at,
         catalogue_version,
         now,
+        kind,
+        parent_proposal_id,
+    )
+
+
+async def supersede(conn: DbConn, proposal_id: UUID, by: UUID, now: datetime) -> None:
+    await conn.execute(
+        "update ocp.proposals set status = 'superseded', superseded_by = $2, updated_at = $3"
+        " where id = $1",
+        proposal_id,
+        by,
+        now,
+    )
+
+
+async def text_row(conn: DbConn, proposal_id: UUID) -> Any:
+    return await conn.fetchrow(
+        "select expected_effect, rationale, evidence_ids, hypothesis_id from ocp.proposals"
+        " where id = $1",
+        proposal_id,
     )

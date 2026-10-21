@@ -125,12 +125,16 @@ class RunnerProposer:
     new_id: Callable[[], uuid.UUID] = uuid.uuid4
 
     async def prepare(self, proposal: ProposalOut) -> PreparedProposal | Refusal:
+        return await self.prepare_action(proposal.action, proposal.params)
+
+    async def prepare_action(
+        self, action: str, params: dict[str, Any]
+    ) -> PreparedProposal | Refusal:
+        """The same validation and dry run for a rollback or a re-proposal after drift."""
         try:
             catalogue = Catalogue.load(self.catalogue_path)
             targets = Targets.load(self.targets_path)
-            valid, problems = validate(
-                catalogue, targets, self.ledger_path, proposal.action, proposal.params
-            )
+            valid, problems = validate(catalogue, targets, self.ledger_path, action, params)
         except CatalogueError as exc:
             log.error("proposal validation could not run: %s", exc)
             return Refusal("invalid", ("the catalogue or the target allowlist is unreadable",))
