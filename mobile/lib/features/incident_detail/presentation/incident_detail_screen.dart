@@ -31,7 +31,16 @@ class IncidentDetailScreen extends ConsumerWidget {
     final provider = incidentDetailProvider(incidentId);
     final detail = ref.watch(provider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Incident')),
+      appBar: AppBar(
+        title: const Text('Incident'),
+        actions: [
+          IconButton(
+            tooltip: 'History',
+            icon: const Icon(Icons.history),
+            onPressed: () => context.push('/audit?incident=$incidentId'),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           const StaleBanner(),

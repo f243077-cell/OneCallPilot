@@ -28,6 +28,11 @@ class IncidentFeedScreen extends ConsumerWidget {
           title: const Text('Incidents'),
           actions: [
             IconButton(
+              tooltip: 'Audit history',
+              icon: const Icon(Icons.history),
+              onPressed: () => context.push('/audit'),
+            ),
+            IconButton(
               tooltip: 'Settings',
               icon: const Icon(Icons.settings_outlined),
               onPressed: () => context.push('/settings'),

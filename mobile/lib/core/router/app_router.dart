@@ -6,13 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/action_review/presentation/action_review_screen.dart';
+import '../../features/audit_history/presentation/audit_history_screen.dart';
 import '../../features/auth/application/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/execution_status/presentation/execution_status_screen.dart';
 import '../../features/incident_detail/presentation/incident_detail_screen.dart';
 import '../../features/incident_feed/presentation/incident_feed_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
-import '../../shared/widgets/placeholder_screen.dart';
 
 const loginPath = '/login';
 const homePath = '/incidents';
@@ -64,8 +64,8 @@ GoRouter buildRouter(AuthSession session) => GoRouter(
     ),
     GoRoute(
       path: '/audit',
-      builder: (_, _) =>
-          const PlaceholderScreen(title: 'Audit history', task: 'A3.5'),
+      builder: (_, state) =>
+          AuditHistoryScreen(incidentId: state.uri.queryParameters['incident']),
     ),
     GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
   ],
