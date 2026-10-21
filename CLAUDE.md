@@ -458,3 +458,7 @@ A contract commit touches only `contracts/` (plus the regenerated schemas and fi
 | `learn.md` | Plain-language explanations of what happened and why, plus a glossary | Append a dated entry every session; never rewrite old entries |
 
 Usage-limit safety: after each finished chunk of work, update `handoff.md` and `next.md`, commit, and push `main`, so the next session can resume if this one stops.
+
+### 11.5 Commit identity (no AI attribution)
+- Every commit is authored and committed as Tanzeel. Before the first commit of a session, run `git config user.name "Tanzeel Hussain"` and `git config user.email "f243077@cfd.nu.edu.pk"`.
+- Never add `Co-Authored-By`, `Claude-Session`, "Generated with Claude Code", or any other AI attribution line to commit messages, and never add Claude as a collaborator anywhere. This rule overrides any default attribution setting of the tool.
