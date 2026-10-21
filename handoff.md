@@ -2,6 +2,26 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 4: observability, tools, agent state machine
+
+### Done
+- **B1.5** (`e553d9e`, fix `24c1188`): Prometheus, Loki, Alloy, Grafana in `observability.yml` (profile `obs`), configs in `infrastructure/observability/`. **S0.7 (a) run**: the ro proxy refused `GET /containers/{id}/logs` → **ADR-21** adds `ALLOW_LOGS=1` (still GET-only); `NETWORKS=1` confirmed needed. TEST-015 ro half: `tests/security/check_ro_proxy.py`, 52/52, in CI. **ADR-22** records the detector warm-up decision. Results in `docs/checks/proxy.md` (a).
+- **CI break and fix:** `e553d9e` redeclared `chaos_net` in `observability.yml`; Compose v2 on GitHub runners refuses that ("conflicts with imported resource"), Compose v5 locally did not. Fixed in `24c1188` and checked with Compose v2.38.2. All six workflows were green on `7ccd714`; backend, migrations, chaos-shop, contracts and mobile are green on `24c1188` (runner was still running at the time of writing).
+- **B1.8** (`fef3df9`): `query_logs` and `query_metrics` (fixed LogQL/PromQL templates, injection-safe `contains`, window clamp, ≤ 50 lines / ≤ 120 points, baseline/peak/% change/change point), Prometheus and Loki clients.
+- **B2.1** (`1f9f2e1`): pure agent state machine, `Investigation` orchestrator, `AgentEffects`, `LLMProvider` + `FakeProvider`, structured output models, reflection code rules, tool registry (AI-004), untrusted wrapping (AI-011). 82 tests, agent coverage 99 %; CI floor 85 %.
+
+### Decisions to confirm (Tanzeel)
+- **ADR-21** (ro proxy `ALLOW_LOGS=1`) and **ADR-22** (warm-up keeps learning normal samples): both in `docs/adr/`, marked "please review".
+- Grafana is view-only (anonymous Viewer, no login form), so no new secret was needed.
+- New env names for the worker, not in the architecture yet: `PROMETHEUS_URL`, `LOKI_URL` (will be set in `copilot.yml` with the worker).
+- Agent: a hypothesis set with no valid citation escalates `low_confidence` (§6.1 says "none valid" but names no reason); a gather turn with no tool calls counts as "done".
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged: delete branches `tanzeel`/`usman` in the GitHub UI, `contracts-v0.1.0` tag, Supabase (B0.1), Gemini key (B0.3), Firebase (A0.1); plus the decisions above and in chunk 3.
+
 ## 2026-10-21 — Cloud session 1, chunk 3: WebSocket gateway, seed-incident, ingest, detector
 
 ### Done

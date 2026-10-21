@@ -17,14 +17,16 @@
 4. Test database: `docker run -d --name ocp-test-pg -e POSTGRES_PASSWORD=postgres -p 127.0.0.1:54329:5432 mirror.gcr.io/pgvector/pgvector:0.8.1-pg17`, then
    `cd backend && OCP_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54329/postgres uv run pytest -c pyproject.toml ../tests/db -q` (70 tests); the same for `../tests/integration` (10) and `../tests/security` (22, needs Docker; `docker tag mirror.gcr.io/library/redis:7.4.11-alpine redis:7.4.11-alpine` first). Unit tests: `uv run pytest -q tests`.
 
-## 2. Next tasks, in order (Phase 1, Stream B — Stream A is already into Phase 2)
-Done: B1.1 migrations, B1.2 API skeleton, B1.3 copilot-redis + ACL + `/ws/incidents`, B1.4 `ocp seed-incident`, B1.6 `POST /ingest/alert`, B1.7 detector engine + loop (pure; no real sources yet).
-1. **B1.5 observability compose** in `infrastructure/compose/observability.yml` (profile `obs`): Prometheus (DNS service discovery on `chaos_net`, `honor_labels: true`), Loki, Alloy reading container logs through socket-proxy-ro (`discovery.docker` + `loki.source.docker`, label `oncallpilot.logs=true`), Grafana with a provisioned dashboard; pinned images, healthchecks, ports bound to 127.0.0.1 only (3000, 9090, 3100). Read `contracts/telemetry.md` (C7) for metric names, labels and log fields. `ocp up` (and CI's runner-live, which runs it) must stay green: watch memory and image pulls (Docker Hub rate limits were seen in CI).
-2. **B1.8** `query_logs` and `query_metrics` (AI-005, AI-006): fixed LogQL template and the 12 PromQL templates of §6.3, enum parameters, limits, against a fake HTTP server in tests. The same Prometheus/Loki clients become the detector's `SampleSource` (`oncallpilot/detector/loop.py`).
-3. **Worker entry point** (`oncallpilot/worker/`): runs the detector loop (DETECTOR_INTERVAL_SECONDS) and, later, the agent consumer; auto-resolver for FR-011 from `DetectorLoop.on_recovered`.
-4. backend-api/worker services in `copilot.yml` once Supabase exists (Tanzeel).
-5. Then Phase 2 Stream B (B2.1 agent state machine + FakeProvider …) per `docs/phases.md` §5.
-- **CI note:** the runner workflow takes ~15 min and is cancelled by every new push to `main`. Batch pushes, or wait for it, so it completes at least once per chunk.
+## 2. Next tasks, in order
+Done: Phase 1 Stream B (B1.1–B1.8) and B2.1. Stream A is at A2.5 (Tanzeel's earlier work).
+1. **B2.2** the other three tools: `get_recent_deploys` (deploy ledger via `oncallpilot/ledger.py`, ≤ 10, the C1 `DeployListItem` fields only), `get_service_health` (socket-proxy-ro container inspect, projected fields only, never Env/mounts/foreign labels; HTTP `/healthz` probe; AI-008), `search_runbooks` (pgvector cosine, k ≤ 3; AI-009); `EmbeddingProvider` (+ fake; Gemini adapter needs the key) and runbook ingestion (`oncallpilot/runbooks/ingest.py`, ~500-token chunks, `content_hash`). Parameter models already exist in `agent/tools/params.py`.
+2. **B2.3** redaction module + corpus (`agent/redaction.py`, architecture §7.8, SEC-008, TEST-008), suspicious-content flag (§7.7).
+3. **B2.4** the real `AgentEffects` (evidence rows with the next ref, `evidence.added`, hypotheses, `hypothesis.updated`, audit rows, `agent_meta`), the worker's agent-job consumer (§5.2: claim with `FOR UPDATE SKIP LOCKED`, `run_started_at`, `agent_interrupted` on redelivery, XAUTOCLAIM 300 s).
+4. **B2.5** Gemini adapter + prompts v1 + `prompts/manifest.json` and its CI check (needs the key only to run live; build and test with recorded responses).
+5. Then B2.7 (reflection rules file `reflection_rules.yaml`), B2.8, B2.9 (approvals), B2.10, B2.11, B2.12 per `docs/phases.md` §5.
+- **Worker entry point** (`oncallpilot/worker/`) with the detector loop and real sample sources (Prometheus/Loki/socket-proxy-ro) can be built alongside B2.4.
+- **CI notes:** the runner workflow takes ~15 min and is cancelled by every new push to `main`, so batch pushes. Before pushing a compose change, also validate it with Compose v2 (GitHub's runners): `curl -sSL -o /tmp/docker-compose-v2 https://github.com/docker/compose/releases/download/v2.38.2/docker-compose-linux-x86_64 && chmod +x /tmp/docker-compose-v2`, then `/tmp/docker-compose-v2 --env-file .env.example --profile testbed --profile testbed-slots --profile obs --profile copilot --profile runner --profile tools config --quiet`.
+- **Cloud container notes:** socket-proxy images need `DISABLE_IPV6=1` here (no IPv6); use a local override file, never commit it. Pull Docker Hub images through `mirror.gcr.io/...` and re-tag them; `lscr.io` is blocked (403), but `mirror.gcr.io/linuxserver/socket-proxy:3.4.6-r0-ls101` works. Building images needs the proxy CA (see the B1.4 commit and `docs`: a throwaway Dockerfile variant in the scratchpad).
 
 ## 3. Notes carried over for Stream B tasks
 - **B1.5:** `honor_labels: true`; name `chaos_net` plainly (`chaos_net: {}`), never `external: true`; loggers are `shop.*`.
