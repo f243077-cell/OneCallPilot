@@ -1,4 +1,4 @@
-# Backend checks (B1.2, B1.3; TEST-012): lint, format, strict type-check, unit tests
+# Backend checks (B1.2-B1.4; TEST-012): lint, format, strict type-check, unit tests
 # (backend/tests: auth, error envelope, routes with fakes), then the
 # integration suite (tests/integration: backend-api against a real
 # pgvector/pgvector Postgres, a fake Redis and a local JWKS). CI never calls
@@ -86,6 +86,10 @@ jobs:
       # 127.0.0.1 for the test only); the runner user is NOPERM outside its rules.
       - name: Redis ACL (SEC-004)
         run: uv run pytest -c pyproject.toml ../tests/security/test_redis_acl.py -q
+
+      - name: Backend image builds
+        working-directory: .
+        run: docker build --build-context contracts=contracts -t oncallpilot/backend:ci backend
 
       - name: copilot-redis starts healthy through Compose (dummy values)
         working-directory: .

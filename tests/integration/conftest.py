@@ -68,15 +68,23 @@ def template_db() -> Iterator[str]:
 
 
 @pytest.fixture
-async def pool(template_db: str) -> AsyncIterator[asyncpg.Pool]:
+async def database_url(template_db: str) -> AsyncIterator[str]:
+    """DSN of a fresh copy of the migrated template, dropped after the test."""
     name = f"ocp_it_{uuid.uuid4().hex[:12]}"
     await _admin(f'create database "{name}" template "{template_db}"')
-    created = await create_pool(_dsn(os.environ["OCP_TEST_DATABASE_URL"], name))
+    try:
+        yield _dsn(os.environ["OCP_TEST_DATABASE_URL"], name)
+    finally:
+        await _admin(f'drop database if exists "{name}" with (force)')
+
+
+@pytest.fixture
+async def pool(database_url: str) -> AsyncIterator[asyncpg.Pool]:
+    created = await create_pool(database_url)
     try:
         yield created
     finally:
         await created.close()
-        await _admin(f'drop database if exists "{name}" with (force)')
 
 
 class FakeRedis:

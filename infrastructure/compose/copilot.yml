@@ -1,6 +1,7 @@
 # Owner: Tanzeel (Stream B). Copilot services (architecture §2.2, §2.3, §2.7, §3, §12.1).
-# B1.3 adds copilot-redis. backend-api and backend-worker are added once their
-# images and a database exist (they need the Supabase project; `ocp up` must
+# B1.3 adds copilot-redis; B1.4 adds backend-seed (profile `tools`, run once by
+# `ocp seed-incident`, never by `ocp up`). backend-api and backend-worker are
+# added once a database exists (they need the Supabase project; `ocp up` must
 # keep working on main without it).
 #
 # SAFETY (SEC-004): ACL users only (default is off); the runner user reaches only
@@ -33,6 +34,29 @@ services:
       timeout: 3s
       retries: 10
       start_period: 5s
+
+  # One-off: `ocp seed-incident <timeline>` runs `python -m oncallpilot.seed` here
+  # with the timeline folder mounted at /timelines. Not a long-running service,
+  # so it has no healthcheck and no restart policy.
+  backend-seed:
+    image: oncallpilot/backend:0.1.0
+    build:
+      context: ../../backend
+      additional_contexts:
+        contracts: ../../contracts
+    profiles: [tools]
+    entrypoint: ["python", "-m", "oncallpilot.seed"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+    # copilot_net for copilot-redis; default for the Supabase pooler on the internet.
+    networks: [copilot_net, default]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    depends_on:
+      copilot-redis: {condition: service_healthy}
 
 networks:
   copilot_net:
