@@ -7,6 +7,7 @@ import 'package:oncallpilot/core/router/app_router.dart';
 import 'package:oncallpilot/features/auth/presentation/login_screen.dart';
 import 'package:oncallpilot/features/incident_detail/presentation/incident_detail_screen.dart';
 import 'package:oncallpilot/features/incident_feed/presentation/incident_feed_screen.dart';
+import 'package:oncallpilot/features/settings/presentation/settings_screen.dart';
 
 import '../../support/sample_timeline.dart';
 import '../../support/test_app.dart';
@@ -104,6 +105,17 @@ void main() {
 
       await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();
+      // Sign out is the last entry, below the monitor settings.
+      await tester.scrollUntilVisible(
+        find.text('Sign out'),
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(SettingsScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
       expect(find.byType(LoginScreen), findsOneWidget);
