@@ -2,6 +2,25 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 17: Stream A Phase 3 in mock and live code (A3.1, A3.4, A3.5)
+
+### Done
+- **A3.1** (`8b219af`): `RestClient` (dio; token in the `Authorization` header only; timeouts; one refresh-and-retry on 401; envelopes → `ApiError`, no answer → `NetworkError`) and `LiveIncidentRepository` (feed by cursor, details, challenge/approve/reject with the key). `main.dart` wires live builds: `SupabaseTokenSource`, a `WsClient` that runs while signed in, refetches on first connect/resync, syncs the server clock, signs out when a 4401 refresh fails. Live test against a local backend-api passed (feed, detail, and the server's real `PROPOSAL_NOT_PENDING`/`CHALLENGE_INVALID`/`NOT_FOUND`/`UNAUTHORIZED` envelopes). **New dependency: dio 5.11.1.**
+- **A3.4** (`026c6f7`): `StaleBanner` on the feed, Incident Detail and Action Review; Approve disabled while reconnecting/stale/offline, after expiry (server time), or while a newer version of the incident has been announced but not shown; Reject stays enabled.
+- **A3.5**: suspicious-content chip (`530758d`, MOB-019); data layer for log tail, audit and settings in both repositories (`58fd027`); live log tail on Incident Detail, 5 s polling only while visible (`d3e5291`, MOB-006); Audit History at `/audit[?incident=]` (`6d358e4`, MOB-012); Settings with services, thresholds, push severity, versioned save and the read-only locked state (`c3f639b`, MOB-013); router test scrolls to Sign out (`71bcccb`).
+- Mobile: 190 tests, analyze clean. No placeholder screens remain.
+
+### Decisions to confirm (Tanzeel)
+- The server URL is shown **read-only** in debug live builds; editing it at runtime (architecture §10.5) would also need the cleartext network-security config to allow the new host (ADR-16), so it is left for when the phone setup is done.
+- Audit History hides the agent's internal entries (`llm.call`, `evidence.added`, `hypothesis.*`, `challenge.issued`, `device.registered`).
+- Mock mode audits only what the fixtures imply (opened, proposed, approved/rejected, finished, resolved, escalated, settings).
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged. A3.2 (FCM), A3.3 (biometric on the device), A3.7 (scenarios from the phone), A3.8 (storyboard) need Firebase and the phone.
+
 ## 2026-10-21 — Cloud session 1, chunk 16: WebSocket client (A2.8) and a gateway fix
 
 ### Done
