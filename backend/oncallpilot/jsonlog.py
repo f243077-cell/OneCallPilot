@@ -37,3 +37,7 @@ def configure_logging(level: int = logging.INFO) -> None:
     root = logging.getLogger()
     root.handlers[:] = [handler]
     root.setLevel(level)
+    # httpx logs every request (URL and query) at INFO: the detector alone makes
+    # about 20 a cycle. Keep their warnings, not the per-request lines.
+    for name in ("httpx", "httpcore"):
+        logging.getLogger(name).setLevel(max(level, logging.WARNING))
