@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "bench: the OnCallPilot benchmark harness (BENCH-001…013, docs/phases.md B3.6–B3.7)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "httpx>=0.28",
     "oncallpilot-contracts",
+    "psycopg[binary]>=3.2",
     "pydantic>=2.9",
     "pyyaml>=6.0",
 ]
