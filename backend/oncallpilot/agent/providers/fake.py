@@ -6,6 +6,10 @@
   (validated against the schema, so an invalid dict exercises the repair
   path), a ``BaseException`` to raise, or ``INVALID_JSON``.
 - ``delay`` seconds before every call, through an injectable ``sleep``.
+- A structured call with nothing scripted raises ``AssertionError`` (a test
+  that forgot a reply), or ``unscripted`` when given: the worker's development
+  mode passes ``LLMUnavailableError`` so every investigation escalates
+  ``llm_unavailable``.
 """
 
 from __future__ import annotations
@@ -42,8 +46,10 @@ class FakeProvider:
         delay: float = 0.0,
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
         model: str = "fake-1",
+        unscripted: BaseException | None = None,
     ) -> None:
         self.model = model
+        self._unscripted = unscripted
         self._turns = turns
         self._structured = {k: list(v) for k, v in (structured or {}).items()}
         self._delay = delay
@@ -74,6 +80,8 @@ class FakeProvider:
         self.messages.append(list(messages))
         queue = self._structured.get(schema.__name__) or []
         if not queue:
+            if self._unscripted is not None:
+                raise self._unscripted
             raise AssertionError(f"FakeProvider has no scripted {schema.__name__} reply")
         reply = queue.pop(0)
         usage = Usage(100, 20)

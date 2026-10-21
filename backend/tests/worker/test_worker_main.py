@@ -6,8 +6,10 @@ import httpx
 import pytest
 from pydantic import SecretStr
 
+from oncallpilot.agent.providers.base import LLMUnavailableError, Msg
 from oncallpilot.agent.providers.fake import FakeProvider
 from oncallpilot.agent.providers.gemini import GeminiProvider
+from oncallpilot.agent.schemas import HypothesisSetOut
 from oncallpilot.settings import WorkerSettings
 from oncallpilot.worker.__main__ import build_providers, run_meta
 
@@ -27,6 +29,16 @@ async def test_fake_provider_needs_no_key() -> None:
     async with httpx.AsyncClient() as http:
         provider, _ = build_providers(settings(llm_provider="fake"), http)
     assert isinstance(provider, FakeProvider)
+
+
+async def test_the_development_fake_behaves_like_an_unavailable_llm() -> None:
+    """Nothing is scripted in a running worker: every structured call fails as
+    an unavailable LLM, so each investigation escalates `llm_unavailable`
+    instead of crashing the job (found on the first real start)."""
+    async with httpx.AsyncClient() as http:
+        provider, _ = build_providers(settings(llm_provider="fake"), http)
+    with pytest.raises(LLMUnavailableError):
+        await provider.structured([Msg("user", "hypothesize")], HypothesisSetOut)
 
 
 async def test_gemini_needs_its_key() -> None:

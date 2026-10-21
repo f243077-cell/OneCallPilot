@@ -89,8 +89,10 @@ def build_providers(
     settings: WorkerSettings, http: httpx.AsyncClient
 ) -> tuple[LLMProvider, EmbeddingProvider]:
     if settings.llm_provider == "fake":
-        # Development without a key: every investigation escalates (nothing is scripted).
-        return FakeProvider(model="fake-1"), FakeEmbeddingProvider()
+        # Development without a key: nothing is scripted, so every investigation
+        # escalates llm_unavailable after gathering its seed evidence.
+        unavailable = LLMUnavailableError("LLM_PROVIDER=fake: no model is configured")
+        return FakeProvider(model="fake-1", unscripted=unavailable), FakeEmbeddingProvider()
     # Embeddings are always Gemini (ADR-14); Claude has no embedding API.
     embedder: EmbeddingProvider
     if settings.gemini_api_key is not None:
