@@ -196,3 +196,38 @@ async def merge_agent_meta(conn: DbConn, incident_id: UUID, values: dict[str, An
         incident_id,
         values,
     )
+
+
+async def claim_for_investigation(conn: DbConn, incident_id: UUID, meta: dict[str, Any]) -> str:
+    """Claim an incident for one investigation (architecture §5.2; AI-025).
+
+    One short transaction: ``FOR UPDATE SKIP LOCKED``, then ``run_started_at``
+    (plus ``meta``) is written and committed at once, so the row lock is not
+    held during the run. Returns:
+
+    - ``run``: claimed; investigate it;
+    - ``busy``: another worker holds the row right now; leave the job pending;
+    - ``interrupted``: a run had started and the incident is still investigating;
+    - ``done``: a run had started and finished (any other status), or no such incident.
+    """
+    async with conn.transaction():
+        row = await conn.fetchrow(
+            "select status::text as status, agent_meta from ocp.incidents"
+            " where id = $1 for update skip locked",
+            incident_id,
+        )
+        if row is None:
+            exists = await conn.fetchval(
+                "select exists (select 1 from ocp.incidents where id = $1)", incident_id
+            )
+            return "busy" if exists else "done"
+        if (row["agent_meta"] or {}).get("run_started_at"):
+            return "interrupted" if row["status"] == "investigating" else "done"
+        if row["status"] != "investigating":
+            return "done"
+        await conn.execute(
+            "update ocp.incidents set agent_meta = agent_meta || $2 where id = $1",
+            incident_id,
+            meta,
+        )
+        return "run"

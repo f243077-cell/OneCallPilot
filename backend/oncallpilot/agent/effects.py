@@ -28,8 +28,8 @@ from oncallpilot.agent.summaries import summarise
 from oncallpilot.agent.toolbox import ToolBox, ToolRefusedError
 from oncallpilot.agent.untrusted import wrap
 from oncallpilot.db import agent as db
+from oncallpilot.escalation import escalate_incident
 from oncallpilot.events import EventStream
-from oncallpilot.transitions import IllegalStatusChangeError, check_transition
 
 log = logging.getLogger(__name__)
 
@@ -303,33 +303,7 @@ class DbEffects:
         return await self.proposer.propose(self.context, proposal)
 
     async def escalate(self, reason: EscalationReason) -> None:
-        now = self.clock()
-        async with self.pool.acquire() as conn, conn.transaction():
-            row = await db.lock_incident(conn, self.incident_id)
-            try:
-                check_transition(row["status"], "escalated")
-            except IllegalStatusChangeError:
-                log.warning(
-                    "not escalating: incident is %s", row["status"],
-                    extra={"incident_id": self.incident_id},
-                )  # fmt: skip
-                return
-            severity = await conn.fetchval(
-                "select severity::text from ocp.incidents where id = $1", self.incident_id
-            )
-            await db.set_status(conn, self.incident_id, "escalated", reason, now)
-            version = await db.bump(conn, self.incident_id, now)
-            await db.audit(
-                conn, "agent", "incident.status_changed", self.incident_id, "incident",
-                self.incident_id, {"from": row["status"], "to": "escalated", "reason": reason},
-            )  # fmt: skip
-        await self._publish(
-            "incident.updated",
-            version,
-            now,
-            {"status": "escalated", "status_reason": reason, "severity": severity},
-        )
-        log.info("incident escalated: %s", reason, extra={"incident_id": self.incident_id})
+        await escalate_incident(self.pool, self.events, self.incident_id, reason, self.clock())
 
     async def finish(self, meta: RunMeta) -> None:
         async with self.pool.acquire() as conn:
