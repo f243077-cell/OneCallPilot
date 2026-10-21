@@ -59,6 +59,19 @@ class PrometheusClient:
                 points.append((float(ts), value))
         return points
 
+    async def query_value(self, promql: str, at: datetime) -> float | None:
+        """An instant query's first value; None for no series, NaN, or Inf (no traffic)."""
+        data = await _get(
+            self._client, f"{self._base}/api/v1/query", {"query": promql, "time": _unix(at)}
+        )
+        result = (data or {}).get("result") or []
+        if not result:
+            return None
+        value = float(result[0]["value"][1])
+        if value != value or value in (float("inf"), float("-inf")):
+            return None
+        return value
+
 
 class LokiClient:
     def __init__(self, client: httpx.AsyncClient, base_url: str) -> None:

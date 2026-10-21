@@ -39,7 +39,7 @@ def docker_base_url(docker_host: str) -> str:
     return "http://" + docker_host.removeprefix("tcp://").rstrip("/")
 
 
-def _time(value: Any) -> datetime | None:
+def docker_time(value: Any) -> datetime | None:
     if not isinstance(value, str) or value.startswith("0001-"):
         return None
     text = value.rstrip("Z")
@@ -62,7 +62,7 @@ def project(inspect: dict[str, Any]) -> ContainerHealth:
         restart_count=int(inspect.get("RestartCount") or 0),
         oom_killed=bool(state.get("OOMKilled")),
         exit_code=None if running else state.get("ExitCode"),
-        started_at=_time(state.get("StartedAt")),
+        started_at=docker_time(state.get("StartedAt")),
     )
 
 
