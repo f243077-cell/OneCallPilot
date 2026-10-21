@@ -2,6 +2,25 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 8: auto-resolve and pushes
+
+### Done
+- Pushed chunk 7 after all six workflows were green on `d58c0b7`.
+- **FR-011 auto-resolve** (`d085790`): `AutoResolver` in `worker/loops.py`; an open incident with no execution in progress whose triggering signals stay within the verification bounds for 3 minutes → `resolved` (`auto_recovered`); a pending proposal is closed as `expired`. "Normal since" is in memory (a worker restart only delays it); stale samples never count.
+- **B2.11** (`76877d1`): `oncallpilot/push/` (FCM HTTP v1 over httpx with a service-account RS256 assertion signed by PyJWT, no new dependency; `FakePushTransport`; `Notifier` hooked into `EventStream`), `POST /devices`, `DELETE /devices/{id}`. A security test checks that the worker process loads neither the API nor the approve/execute code.
+- Totals: 297 unit, 111 integration, 113 security, 70 db tests passing locally.
+
+### Decisions to confirm (Tanzeel)
+- **Docs disagree:** FR-018 says unregistered tokens are *deleted* and §10.5 says the device row is deleted on sign-out, but DB-011 gives `ocp_backend` no DELETE on any table. I kept DB-011: such devices get `push_enabled = false` (and `DELETE /devices/{id}` does the same, owner-only, 204, safe to repeat). If you prefer real deletes, a forward migration can `grant delete on ocp.devices to ocp_backend` and DB-011/test_privileges change with it.
+- C9 says pushes go "through `firebase-admin`"; I used the same FCM HTTP v1 API through httpx + PyJWT to avoid a large dependency. The message shape is unchanged.
+- `POST /devices` with a token already registered by another user moves the device to the caller (the same phone signed in as someone else).
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged (see chunk 7), plus: a Firebase service-account JSON in `infrastructure/secrets/` for real pushes (A0.1).
+
 ## 2026-10-21 — Cloud session 1, chunk 7: approvals, worker entry point, execution outcomes
 
 ### Done
