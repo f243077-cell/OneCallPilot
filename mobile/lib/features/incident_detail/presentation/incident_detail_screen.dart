@@ -15,6 +15,7 @@ import '../../../shared/formatting.dart';
 import '../../../shared/widgets/confidence_bar.dart';
 import '../../../shared/widgets/evidence_card.dart';
 import '../../../shared/widgets/severity_badge.dart';
+import '../../../shared/widgets/stale_banner.dart';
 import '../../../shared/widgets/time_since.dart';
 import '../../incident_feed/presentation/incident_feed_screen.dart';
 import '../application/incident_detail_provider.dart';
@@ -30,30 +31,37 @@ class IncidentDetailScreen extends ConsumerWidget {
     final detail = ref.watch(provider);
     return Scaffold(
       appBar: AppBar(title: const Text('Incident')),
-      body: switch (detail) {
-        AsyncValue(:final value?) => IncidentDetailBody(value),
-        AsyncError(:final error) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  error is ApiError && error.code == ApiErrorCode.notFound
-                      ? 'Incident not found'
-                      : describeError(error),
+      body: Column(
+        children: [
+          const StaleBanner(),
+          Expanded(
+            child: switch (detail) {
+              AsyncValue(:final value?) => IncidentDetailBody(value),
+              AsyncError(:final error) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        error is ApiError && error.code == ApiErrorCode.notFound
+                            ? 'Incident not found'
+                            : describeError(error),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton(
+                        onPressed: () => ref.invalidate(provider),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                OutlinedButton(
-                  onPressed: () => ref.invalidate(provider),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+              ),
+              _ => const Center(child: CircularProgressIndicator()),
+            },
           ),
-        ),
-        _ => const Center(child: CircularProgressIndicator()),
-      },
+        ],
+      ),
     );
   }
 }

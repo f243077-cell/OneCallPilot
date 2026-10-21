@@ -11,6 +11,7 @@ import '../../../data/models/enums.dart';
 import '../../../data/models/incident.dart';
 import '../../../shared/formatting.dart';
 import '../../../shared/widgets/severity_badge.dart';
+import '../../../shared/widgets/stale_banner.dart';
 import '../../../shared/widgets/time_since.dart';
 import '../application/incident_list_provider.dart';
 
@@ -39,29 +40,36 @@ class IncidentFeedScreen extends ConsumerWidget {
             ],
           ),
         ),
-        body: switch (incidents) {
-          AsyncValue(:final value?) => TabBarView(
-            children: [
-              _IncidentList(
-                value
-                    .where((i) => i.status != IncidentStatus.resolved)
-                    .toList(),
-                empty: 'No open incidents',
-              ),
-              _IncidentList(
-                value
-                    .where((i) => i.status == IncidentStatus.resolved)
-                    .toList(),
-                empty: 'No past incidents',
-              ),
-            ],
-          ),
-          AsyncError(:final error) => _ErrorState(
-            error,
-            onRetry: () => ref.invalidate(incidentListProvider),
-          ),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
+        body: Column(
+          children: [
+            const StaleBanner(),
+            Expanded(
+              child: switch (incidents) {
+                AsyncValue(:final value?) => TabBarView(
+                  children: [
+                    _IncidentList(
+                      value
+                          .where((i) => i.status != IncidentStatus.resolved)
+                          .toList(),
+                      empty: 'No open incidents',
+                    ),
+                    _IncidentList(
+                      value
+                          .where((i) => i.status == IncidentStatus.resolved)
+                          .toList(),
+                      empty: 'No past incidents',
+                    ),
+                  ],
+                ),
+                AsyncError(:final error) => _ErrorState(
+                  error,
+                  onRetry: () => ref.invalidate(incidentListProvider),
+                ),
+                _ => const Center(child: CircularProgressIndicator()),
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

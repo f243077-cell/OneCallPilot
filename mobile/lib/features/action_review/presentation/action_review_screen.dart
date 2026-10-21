@@ -6,9 +6,9 @@
 // reason (MOB-010) and stays enabled whenever the proposal is pending.
 //
 // Approve is enabled only for a pending, unexpired proposal shown in its latest
-// version (the incident is refetched on every newer event) while the socket is
-// `connectedSynced` (MOB-015; the StaleBanner itself is task A3.4). Reject
-// stays enabled whenever the proposal is pending.
+// version while the socket is `connectedSynced` (MOB-015): an event newer than
+// the incident on screen disables it until the refetch lands. StaleBanner
+// says why. Reject stays enabled whenever the proposal is pending.
 
 import 'dart:async';
 
@@ -22,11 +22,14 @@ import '../../../data/models/enums.dart';
 import '../../../data/models/evidence.dart';
 import '../../../data/models/incident.dart';
 import '../../../data/models/proposal.dart';
+import '../../../data/models/ws_event.dart';
+import '../../../data/repositories/incident_repository.dart';
 import '../../../shared/formatting.dart';
 import '../../../shared/server_clock.dart';
 import '../../../shared/widgets/evidence_card.dart';
 import '../../../shared/widgets/expiry_countdown.dart';
 import '../../../shared/widgets/risk_badge.dart';
+import '../../../shared/widgets/stale_banner.dart';
 import '../../incident_detail/application/incident_detail_provider.dart';
 import '../application/approval_controller.dart';
 import '../application/proposal_lookup.dart';
@@ -107,11 +110,23 @@ class ActionReviewBody extends ConsumerStatefulWidget {
 
 class _ActionReviewBodyState extends ConsumerState<ActionReviewBody> {
   Timer? _expiry;
+  StreamSubscription<WsEvent>? _events;
+
+  /// The newest state_version announced for this incident; while it is newer
+  /// than the one shown, the view is not the latest (MOB-015).
+  int _newestVersion = 0;
 
   @override
   void initState() {
     super.initState();
     _scheduleExpiry();
+    _events = ref.read(incidentRepositoryProvider).events().listen((event) {
+      if (event.incidentId == widget.incident.id &&
+          event.stateVersion > _newestVersion &&
+          mounted) {
+        setState(() => _newestVersion = event.stateVersion);
+      }
+    });
   }
 
   @override
@@ -136,6 +151,7 @@ class _ActionReviewBodyState extends ConsumerState<ActionReviewBody> {
   @override
   void dispose() {
     _expiry?.cancel();
+    unawaited(_events?.cancel());
     super.dispose();
   }
 
@@ -199,161 +215,187 @@ class _ActionReviewBodyState extends ConsumerState<ActionReviewBody> {
     final expired = !proposal.expiresAt.isAfter(ref.watch(serverNowProvider)());
     final synced =
         ref.watch(connectionStatusProvider) == ConnectionStatus.connectedSynced;
-    final canApprove = pending && !expired && synced && !approval.busy;
+    final updating = _newestVersion > incident.stateVersion;
+    final canApprove =
+        pending && !expired && synced && !updating && !approval.busy;
     final canReject = pending && !approval.busy;
     final evidence = {for (final e in incident.evidence) e.ref: e};
     final dryRun = proposal.dryRunResult;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+    return Column(
       children: [
-        Text(
-          humanize(proposal.action),
-          key: const ValueKey('action'),
-          style: theme.textTheme.titleLarge,
+        StaleBanner(
+          reason: !pending
+              ? null
+              : updating
+              ? 'This incident changed — updating'
+              : expired
+              ? 'This proposal expired'
+              : null,
         ),
-        if (proposal.kind == ProposalKind.rollback)
-          const Text('Rollback of the action that failed verification'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            RiskBadge(proposal.riskTier),
-            Chip(
-              key: const ValueKey('requirement'),
-              avatar: Icon(
-                proposal.approvalRequirement == ApprovalRequirement.tap
-                    ? Icons.touch_app_outlined
-                    : Icons.fingerprint,
-                size: 18,
-              ),
-              label: Text(requirementLabel(proposal.approvalRequirement)),
-            ),
-            if (pending)
-              ExpiryCountdown(proposal.expiresAt, key: const ValueKey('expiry'))
-            else
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            children: [
               Text(
-                humanize(proposal.status),
-                key: const ValueKey('status'),
-                style: theme.textTheme.labelLarge,
+                humanize(proposal.action),
+                key: const ValueKey('action'),
+                style: theme.textTheme.titleLarge,
               ),
-          ],
-        ),
-        _Heading('Parameters'),
-        for (final MapEntry(:key, :value) in proposal.params.entries)
-          _Row(key, '$value'),
-        _Heading('Expected effect'),
-        Text(proposal.expectedEffect, key: const ValueKey('expected-effect')),
-        _Heading('Why'),
-        Text(proposal.rationale, key: const ValueKey('rationale')),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 6,
-          children: [
-            for (final cited in proposal.evidenceRefs)
-              ActionChip(
-                key: ValueKey('evidence-chip-$cited'),
-                label: Text(cited),
-                onPressed: switch (evidence[cited]) {
-                  final e? => () => _showEvidence(context, e, incident),
-                  null => null,
-                },
+              if (proposal.kind == ProposalKind.rollback)
+                const Text('Rollback of the action that failed verification'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  RiskBadge(proposal.riskTier),
+                  Chip(
+                    key: const ValueKey('requirement'),
+                    avatar: Icon(
+                      proposal.approvalRequirement == ApprovalRequirement.tap
+                          ? Icons.touch_app_outlined
+                          : Icons.fingerprint,
+                      size: 18,
+                    ),
+                    label: Text(requirementLabel(proposal.approvalRequirement)),
+                  ),
+                  if (pending)
+                    ExpiryCountdown(
+                      proposal.expiresAt,
+                      key: const ValueKey('expiry'),
+                    )
+                  else
+                    Text(
+                      humanize(proposal.status),
+                      key: const ValueKey('status'),
+                      style: theme.textTheme.labelLarge,
+                    ),
+                ],
               ),
-          ],
-        ),
-        _Heading('Dry run'),
-        Text(dryRun.predictedEffect, key: const ValueKey('predicted-effect')),
-        const SizedBox(height: 8),
-        Text('Would change', style: theme.textTheme.labelLarge),
-        if (dryRun.wouldChange.isEmpty) const Text('Nothing'),
-        for (final change in dryRun.wouldChange)
-          _Row(change.target, change.change),
-        const SizedBox(height: 8),
-        Text('Current state', style: theme.textTheme.labelLarge),
-        if (dryRun.current.activeRelease case final release?)
-          _Row('Active release', release),
-        if (dryRun.current.runningReplicas case final replicas?)
-          _Row('Running replicas', '$replicas'),
-        if (dryRun.current.cacheKeys case final keys?)
-          _Row('Cache keys', '$keys'),
-        for (final c in dryRun.current.containers)
-          _Row(c.name, '${humanize(c.state)} · ${humanize(c.health)}'),
-        const SizedBox(height: 8),
-        Text('Preconditions', style: theme.textTheme.labelLarge),
-        _Check('Rate limit', dryRun.preconditions.rateLimitOk),
-        _Check('Cooldown', dryRun.preconditions.cooldownOk),
-        _Check('Slots available', dryRun.preconditions.slotsAvailable),
-        if (dryRun.warnings.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          for (final warning in dryRun.warnings)
-            ListTile(
-              key: ValueKey('warning-$warning'),
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                Icons.warning_amber_rounded,
-                color: theme.colorScheme.error,
+              _Heading('Parameters'),
+              for (final MapEntry(:key, :value) in proposal.params.entries)
+                _Row(key, '$value'),
+              _Heading('Expected effect'),
+              Text(
+                proposal.expectedEffect,
+                key: const ValueKey('expected-effect'),
               ),
-              title: Text(warning),
-            ),
-        ],
-        _Heading('Rollback'),
-        Text(switch (proposal.rollbackStep) {
-          final step? =>
-            '${humanize(step.action)} ${formatParams(step.params)}',
-          null => 'Not reversible',
-        }, key: const ValueKey('rollback-step')),
-        const SizedBox(height: 24),
-        if (approval.message case final message?)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              message,
-              key: const ValueKey('approval-message'),
-              style: TextStyle(color: theme.colorScheme.error),
-            ),
-          ),
-        if (approval.canRetry)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: OutlinedButton.icon(
-              key: const ValueKey('retry'),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-              onPressed: () => ref.read(provider.notifier).retry(),
-            ),
-          ),
-        // Not while the user confirms: nothing is waiting on the network then.
-        if (approval.busy && approval.phase != ApprovalPhase.confirming)
-          const LinearProgressIndicator(),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                key: const ValueKey('reject'),
-                onPressed: canReject ? _reject : null,
-                child: const Text('Reject'),
+              _Heading('Why'),
+              Text(proposal.rationale, key: const ValueKey('rationale')),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                children: [
+                  for (final cited in proposal.evidenceRefs)
+                    ActionChip(
+                      key: ValueKey('evidence-chip-$cited'),
+                      label: Text(cited),
+                      onPressed: switch (evidence[cited]) {
+                        final e? => () => _showEvidence(context, e, incident),
+                        null => null,
+                      },
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                key: const ValueKey('approve'),
-                icon: Icon(
-                  proposal.approvalRequirement == ApprovalRequirement.tap
-                      ? Icons.check
-                      : Icons.fingerprint,
+              _Heading('Dry run'),
+              Text(
+                dryRun.predictedEffect,
+                key: const ValueKey('predicted-effect'),
+              ),
+              const SizedBox(height: 8),
+              Text('Would change', style: theme.textTheme.labelLarge),
+              if (dryRun.wouldChange.isEmpty) const Text('Nothing'),
+              for (final change in dryRun.wouldChange)
+                _Row(change.target, change.change),
+              const SizedBox(height: 8),
+              Text('Current state', style: theme.textTheme.labelLarge),
+              if (dryRun.current.activeRelease case final release?)
+                _Row('Active release', release),
+              if (dryRun.current.runningReplicas case final replicas?)
+                _Row('Running replicas', '$replicas'),
+              if (dryRun.current.cacheKeys case final keys?)
+                _Row('Cache keys', '$keys'),
+              for (final c in dryRun.current.containers)
+                _Row(c.name, '${humanize(c.state)} · ${humanize(c.health)}'),
+              const SizedBox(height: 8),
+              Text('Preconditions', style: theme.textTheme.labelLarge),
+              _Check('Rate limit', dryRun.preconditions.rateLimitOk),
+              _Check('Cooldown', dryRun.preconditions.cooldownOk),
+              _Check('Slots available', dryRun.preconditions.slotsAvailable),
+              if (dryRun.warnings.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                for (final warning in dryRun.warnings)
+                  ListTile(
+                    key: ValueKey('warning-$warning'),
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      Icons.warning_amber_rounded,
+                      color: theme.colorScheme.error,
+                    ),
+                    title: Text(warning),
+                  ),
+              ],
+              _Heading('Rollback'),
+              Text(switch (proposal.rollbackStep) {
+                final step? =>
+                  '${humanize(step.action)} ${formatParams(step.params)}',
+                null => 'Not reversible',
+              }, key: const ValueKey('rollback-step')),
+              const SizedBox(height: 24),
+              if (approval.message case final message?)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    message,
+                    key: const ValueKey('approval-message'),
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
                 ),
-                label: const Text('Approve'),
-                onPressed: canApprove
-                    ? () => ref
-                          .read(provider.notifier)
-                          .approve(proposal, confirmTap: _confirmTap)
-                    : null,
+              if (approval.canRetry)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('retry'),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                    onPressed: () => ref.read(provider.notifier).retry(),
+                  ),
+                ),
+              // Not while the user confirms: nothing is waiting on the network then.
+              if (approval.busy && approval.phase != ApprovalPhase.confirming)
+                const LinearProgressIndicator(),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      key: const ValueKey('reject'),
+                      onPressed: canReject ? _reject : null,
+                      child: const Text('Reject'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      key: const ValueKey('approve'),
+                      icon: Icon(
+                        proposal.approvalRequirement == ApprovalRequirement.tap
+                            ? Icons.check
+                            : Icons.fingerprint,
+                      ),
+                      label: const Text('Approve'),
+                      onPressed: canApprove
+                          ? () => ref
+                                .read(provider.notifier)
+                                .approve(proposal, confirmTap: _confirmTap)
+                          : null,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
