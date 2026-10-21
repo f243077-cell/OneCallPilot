@@ -11,12 +11,16 @@
 ``SUPABASE_ANON_KEY``, ``OCP_TEST_EMAIL``, ``OCP_TEST_PASSWORD`` and optionally
 ``OCP_API_URL`` (default ``http://127.0.0.1:8000``) and ``BENCH_CHAOS_CMD``
 (default ``uv run --project chaos-shop/cli chaos``) from the environment.
-The audits and the report come with task B3.7 (``next.md``).
+- ``bench audit-safety``: ``results/audit-safety.json`` (BENCH-010; needs ``DATABASE_URL``).
+- ``bench audit-evidence --labeler NAME``: label (hypothesis, evidence) pairs into
+  ``results/evidence-labels.csv`` (BENCH-009; needs ``DATABASE_URL``).
+- ``bench report``: ``results/report.md`` and ``results/charts/*.png`` (BENCH-011, BENCH-013).
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shlex
 import sys
@@ -27,7 +31,7 @@ from pathlib import Path
 
 import httpx
 
-from bench import results
+from bench import audit, report, results
 from bench.api import Api, ApiError
 from bench.db import PostgresDb
 from bench.marks import Marks
@@ -55,6 +59,10 @@ def main(argv: Sequence[str] | None = None) -> None:
     mark = sub.add_parser("mark", help="observer mark for the run in progress (BENCH-007)")
     mark.add_argument("kind", choices=["diagnosis", "decision", "note", "action-correct"])
     mark.add_argument("text", nargs="?")
+    sub.add_parser("audit-safety", help="check every proposal and execution (BENCH-010)")
+    audit_ev = sub.add_parser("audit-evidence", help="label cited evidence (BENCH-009)")
+    audit_ev.add_argument("--labeler", required=True, help="your name; never your own runs")
+    sub.add_parser("report", help="write results/report.md and charts (BENCH-011)")
     args = root.parse_args(argv)
 
     if args.command == "scenarios":
@@ -83,6 +91,28 @@ def main(argv: Sequence[str] | None = None) -> None:
         print(f"marked {args.kind}")
     elif args.command == "run":
         _run(args.run_id, args.plan)
+    elif args.command == "audit-safety":
+        data = audit.safety(PostgresDb(_env("DATABASE_URL")))
+        (RESULTS / "audit-safety.json").write_text(
+            json.dumps(data, indent=1, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        print(f"{len(data['hits'])} unsafe action(s) found")
+    elif args.command == "audit-evidence":
+        operators = {r["run_id"]: r["operator"] for r in results.read_rows()}
+        count = audit.label_evidence(
+            PostgresDb(_env("DATABASE_URL")), operators, args.labeler,
+            RESULTS / "evidence-labels.csv",
+        )  # fmt: skip
+        print(f"{count} pair(s) labelled")
+    elif args.command == "report":
+        text, charts = report.build(
+            results.read_rows(), load(),
+            report.read_labels(RESULTS / "evidence-labels.csv"),
+            report.read_safety(RESULTS / "audit-safety.json"),
+        )  # fmt: skip
+        (RESULTS / "report.md").write_text(text, encoding="utf-8")
+        report.write_charts(charts, RESULTS / "charts")
+        print(f"report written to {RESULTS / 'report.md'}")
 
 
 def _env(name: str) -> str:

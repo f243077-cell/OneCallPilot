@@ -5,6 +5,7 @@ description = "bench: the OnCallPilot benchmark harness (BENCH-001…013, docs/p
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "httpx>=0.28",
+    "matplotlib>=3.9",
     "oncallpilot-contracts",
     "psycopg[binary]>=3.2",
     "pydantic>=2.9",

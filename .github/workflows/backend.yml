@@ -175,5 +175,5 @@ jobs:
       - name: Mypy (strict)
         run: uv run mypy
 
-      - name: Pytest (BENCH-001, BENCH-002, BENCH-007)
+      - name: Pytest (BENCH-001…BENCH-013)
         run: uv run pytest -q

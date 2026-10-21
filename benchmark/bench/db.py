@@ -33,6 +33,10 @@ class PostgresDb:
                 cur.execute(sql, params)
                 return list(cur.fetchall())
 
+    def rows(self, sql: str) -> list[dict[str, Any]]:
+        """A fixed audit query (bench/audit.py), read-only."""
+        return self._rows(sql)
+
     def run_incident(self, run_id: str) -> tuple[str, datetime] | None:
         rows = self._rows(
             "select id::text, opened_at from ocp.incidents where benchmark_run_id = %s"
