@@ -1,11 +1,12 @@
-# CI skeleton (phases.md S0.3, TEST-012). Placeholder job that always passes;
-# the owner replaces the step with real checks in the task that adds code.
+# Backend checks (B1.2; TEST-012): lint, format, strict type-check, unit tests
+# (backend/tests: auth, error envelope, routes with fakes), then the
+# integration suite (tests/integration: backend-api against a real
+# pgvector/pgvector Postgres, a fake Redis and a local JWKS). CI never calls
+# Supabase, an LLM, or FCM (CLAUDE.md §7).
 #
 # Path filtering (TEST-012): this workflow covers backend/, tests/integration/, tests/agent_regression/.
 # The trigger is deliberately NOT path-filtered, because a required check
-# that never reports blocks merges. When real steps arrive, filter inside
-# the job (skip expensive steps when no covered path changed) and keep the
-# job name stable, since branch protection requires it by name.
+# that never reports blocks merges. Keep the job name stable.
 name: backend
 
 on:
@@ -25,7 +26,47 @@ jobs:
   backend:
     name: backend
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.1-pg17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      OCP_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
     steps:
-      - name: Placeholder
-        run: echo "backend - no checks yet (CI skeleton, S0.3)"
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pipx install uv==0.12.7
+
+      - name: Install dependencies (locked)
+        run: uv sync --locked
+
+      - name: Ruff lint
+        run: uv run ruff check . ../tests/integration
+
+      - name: Ruff format
+        run: uv run ruff format --check . ../tests/integration
+
+      - name: Mypy (strict)
+        run: |
+          uv run mypy
+          uv run mypy ../tests/integration
+
+      - name: Pytest (unit tests)
+        run: uv run pytest -q tests
+
+      - name: Pytest (integration, Postgres)
+        run: uv run pytest -c pyproject.toml ../tests/integration -q

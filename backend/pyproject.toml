@@ -5,6 +5,13 @@ description = "OnCallPilot backend: backend-api and backend-worker (one image, t
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "asyncpg>=0.30,<1",
+    "fastapi>=0.115,<1",
+    "httpx>=0.28,<1",
+    "oncallpilot-contracts",
+    "pydantic-settings>=2.6,<3",
+    "pyjwt[crypto]>=2.10,<3",
+    "redis>=6.0,<9",
+    "uvicorn>=0.32,<1",
 ]
 
 [dependency-groups]
@@ -14,7 +21,12 @@ dev = [
     "mypy>=1.13",
     "ruff>=0.8",
     "asyncpg-stubs>=0.30",
+    "jsonschema>=4.23",
+    "types-jsonschema",
 ]
+
+[tool.uv.sources]
+oncallpilot-contracts = { path = "../contracts/python", editable = true }
 
 [build-system]
 requires = ["uv_build>=0.12,<0.13"]
@@ -25,6 +37,7 @@ module-root = ""
 module-name = "oncallpilot"
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
@@ -34,11 +47,12 @@ markers = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-include = ["../tests/db/*.py"]
+extend-include = ["../tests/db/*.py", "../tests/integration/*.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
 strict = true
+plugins = ["pydantic.mypy"]
 packages = ["oncallpilot", "tests"]
