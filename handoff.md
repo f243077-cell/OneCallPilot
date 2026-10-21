@@ -2,6 +2,19 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 18: A3.6 and S3.1 (crash resilience)
+
+### Done
+- **A3.6** (`dbd5e4d`): the remaining widget-test gaps (TEST-011): error-code mapping for every approval code, login validation and busy state, loading/error/retry of Action Review, Execution Status, Audit History and Settings, a queued execution. Mobile: 202 tests.
+- **S3.1 / NFR-005, runner half** (this chunk's runner commit): `runner/tests/live/test_live_crash.py` kills the real runner image (SIGKILL) before it reads an approved execute (restart → runs once) and right after it started the target slot (restart → re-reads its pending entry, finds the ID claimed, acknowledges it; nothing repeated, no result). The worker half was already covered (`tests/integration/test_agent_jobs.py` agent_interrupted, `test_outcomes.py` runner_timeout).
+- **The whole stack now runs in the cloud container**: testbed images built with the session proxy's CA in the build's dependency stage only (scratch Dockerfile variants, `docker build --network host`), `nginx`/`postgres` pulled through `mirror.gcr.io`, a local `compose.override.yaml` (DISABLE_IPV6 for the socket proxies; listed in `.git/info/exclude`, never committed), then `ocp up --no-build` → 14 services healthy. The full runner live suite passed locally (19 tests, 16 min).
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+Unchanged.
+
 ## 2026-10-21 — Cloud session 1, chunk 17: Stream A Phase 3 in mock and live code (A3.1, A3.4, A3.5)
 
 ### Done
