@@ -2,6 +2,24 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-10-21 — Cloud session 1, chunk 6: proposal validation and dry run (B2.8)
+
+### Done
+- Pushed the held chunk-5 commits once runner CI on `b7a24b3` was green (all six workflows green there).
+- **B2.8** (`ce51de8`): `oncallpilot/catalogue.py` (catalogue + target allowlist + ledger rollback targets; fail closed on unreadable files), `oncallpilot/runner_link.py` (signed `dry_run` with `RUNNER_LINK_KEY`, wait 15 s, retry once, only signature-verified results with the same `request_id` are trusted), `agent/proposer.py` (`RunnerProposer`, C8 fingerprint), `db/proposals.py`, `DbEffects.propose` (pending proposal, `awaiting_approval`, `proposal.created` + `incident.updated` on consecutive versions, audit rows; `audit(proposal.rejected_by_validator)` on a validator failure). Runner refusals `ACTION_NOT_ALLOWED`/`TARGET_NOT_ALLOWED`/`VALIDATION_ERROR` → `proposal_invalid`; anything else → `dry_run_unavailable`. `tests/integration/fake_runner.py` = the `FakeRunnerConsumer`.
+- Tests: 277 unit, 66 integration (agent coverage 98 %), 110 security, all passing locally.
+
+### Decisions to confirm (Tanzeel)
+- `contracts/fixtures/ws/proposal.created.json`: its `fingerprint` is not the C8 §2 hash of its own fields (it looks like a placeholder). Harmless (nothing recomputes it), but a future contract PR could regenerate it.
+- When the dry run cannot fill the rollback step (e.g. no `active_release`), the proposal is stored with `rollback_step = null` (not reversible) rather than refused.
+- If the incident left `investigating` while the dry run ran (e.g. auto-resolved), the proposal is not stored.
+
+### Next
+`next.md` §2: B2.9 (approvals), worker entry point (also copy `contracts/actions.yaml` and `runner/targets.yaml` into the backend image), B2.10, B2.11, B2.12.
+
+### Waiting on Tanzeel
+Unchanged: delete branches `tanzeel`/`usman`, the `contracts-v0.1.0` tag, Supabase (B0.1), Gemini key (B0.3), Firebase (A0.1); plus the decisions above and in chunks 3–5.
+
 ## 2026-10-21 — Cloud session 1, chunk 5: tools, redaction, agent effects, worker consumer, Gemini, citations
 
 ### Done
