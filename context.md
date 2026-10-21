@@ -1,63 +1,36 @@
 # Context — current state
 
-> Rewritten at the end of every session so it matches reality (`CLAUDE.md` §11.4). Read it right after `CLAUDE.md`, then `handoff.md`, then **`next.md`**, the step-by-step plan for the next session.
-> **Last updated:** 2026-10-10, end of session 3.
+> Rewritten at the end of every session (or chunk) so it matches reality (`CLAUDE.md` §11.4). Read it right after `CLAUDE.md`, then the newest `handoff.md` entry, then **`next.md`**.
+> **Last updated:** 2026-10-21, cloud session 1.
 
 ## Who and where
-- This checkout is **Usman's** (Stream B: backend, AI agent, database, observability, benchmark). Teammate: **Tanzeel** (Stream A: Flutter app, Chaos Shop testbed, runner).
-- Repository: `https://github.com/f243077-cell/OneCallPilot` · local folder `H:\projects\OneCallPilot`.
+- **Tanzeel** is the only developer since 2026-10-21 (Usman has left). Sessions work for him and may edit every folder.
+- Repository `https://github.com/f243077-cell/OneCallPilot`; all work is committed and pushed **directly to `main`** (`CLAUDE.md` §11). Sessions may run in the cloud while his laptop is off.
 
 ## Branches
-| Branch | Owner | What is on it |
-|---|---|---|
-| `main` | both | Only the initial README. Nothing is merged yet. |
-| `tanzeel` | Tanzeel | Up to `b71ed6b`: Stream A Phase 0, A1.1–A1.6, A2.1 runner verification, `ocp up/down/doctor`, Gate G1 checks, the Dart fixture test. Draft PR #1. CI on `b71ed6b`: 5 jobs green, **chaos-shop red** (cause not yet known). |
-| `usman` | Usman | **All of `tanzeel` up to `b71ed6b`, merged** (`d5c49a0`, `0ca3034`), plus Usman's work: contracts C1/C2/C3/C5/C8/C9 with the review fixes, socket-proxy-ro, `contract-review-b.md`, the chaos CLI lock refresh, and the session notes. Pushed; head `ae54f2f` before the notes commit. |
-
-A local `.git/hooks/pre-push` (not in git) allows `usman` and Usman's PR branches (`contract/*`, `feat/b-*`, `fix/*`, `chore/*`, `docs/*`, `test/*`, `bench/*`), and refuses `main`, `tanzeel`, `feat/a-*`, and tags (`CLAUDE.md` §11.1, relaxed on 2026-10-10).
+| Branch | State |
+|---|---|
+| `main` | Everything: both streams' Phase 0, Stream A Phase 1 and Phase 2 up to A2.5 (PRs #1, #2), plus Stream B work from 2026-10-21. |
+| `tanzeel`, `usman` | Fully merged into `main`; to be deleted by hand (the cloud session's delete got HTTP 403). |
 
 ## Phase
-**Phase 0, closing.**
-- Both reviews are done in writing; Tanzeel said a walkthrough isn't needed.
-- All contracts are drafted and reviewed: C4, C6, and C7 approved (C7 needs his deviations written in), and every C1/C2/C3/C5/C8/C9 issue fixed or accepted.
-- The Dart fixture test exists on Tanzeel's side.
-- **Waiting on Tanzeel's go-ahead** to merge into `main`: contracts through `contract/*` PRs, the rest through PRs, each merged with green CI. Then the `contracts-v0.1.0` tag, then Phase 1.
-
-## Usman's open Phase 0 tasks
-| Task | Status |
-|---|---|
-| S0.6 Docker Desktop on Usman's laptop | **installed, not running**: WSL 2 is missing (steps in `handoff.md`, session 3) |
-| B0.1 Supabase `ocp-dev`, `ocp-bench` | not started (Usman, by hand) |
-| B0.3 LLM and embedding API keys | not started (Usman, by hand) |
-| S0.7 (a) ro proxy + Alloy · (c) embeddings · (d) Supabase JWKS | blocked on S0.6 · B0.3 · B0.1 |
-| C8-issue fixtures (MOB-019, MOB-011, MOB-012, MOB-017) | accepted for a later contract PR |
-
-## Where things are (contracts)
-| Contract | Files |
-|---|---|
-| C1 domain models | `contracts/python/oncallpilot_contracts/{common,enums,domain}.py` |
-| C2 REST API | `contracts/openapi.yaml` + `api.py` |
-| C3 WebSocket | `ws.py` (incl. `cut_evidence_payload`), `contracts/ws-protocol.md`, `contracts/fixtures/ws/` |
-| C5 runner messaging | `runner.py`, `signing.py`, `contracts/fixtures/signing/vectors.json` |
-| C8 approval protocol | `approval.py`, `contracts/approval-protocol.md` |
-| C9 push payload | `push.py`, `contracts/push.md` |
-| Phase 0 timelines | `timeline.py`, `contracts/fixtures/timelines/` |
-| Reviews | `docs/checks/contract-review-a.md` (Tanzeel on Usman's), `docs/checks/contract-review-b.md` (Usman on Tanzeel's, plus replies) |
+- **Stream A (testbed, runner, app):** Phase 2, A2.1–A2.5 done (see `docs/checks/week-3.md`, `gate-g2.md`).
+- **Stream B (backend, agent, DB, observability, benchmark):** Phase 1. **B1.1 done** (migrations + `tests/db`). Next: B1.2 (see `next.md`).
+- Phase 0 leftovers: the `contracts-v0.1.0` tag (on Tanzeel's say-so); S0.7 (c) embeddings and (d) Supabase JWKS need the Gemini key and Supabase (Tanzeel, by hand).
 
 ## How to run the checks
-- Contracts, from `contracts/python`: `uv sync --locked`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy oncallpilot_contracts tests`, `uv run pytest -q` (259 tests), then `uv run python -m oncallpilot_contracts.schema_export` and `git diff --exit-code -- ../schemas`.
-- Every lockfile: run `uv lock --check` in `contracts/python`, `chaos-shop`, `chaos-shop/cli`, `runner`, and `tools/ocp`. A change to the contracts package's dependencies also changes `chaos-shop/cli/uv.lock`, because that CLI depends on contracts by path.
+- Contracts (`contracts/python`): `uv sync --locked`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy oncallpilot_contracts tests`, `uv run pytest -q`, then `uv run python -m oncallpilot_contracts.schema_export` and `git diff --exit-code -- ../schemas`.
+- Backend (`backend`): `uv sync --locked`, ruff, format, `uv run mypy`.
+- Database suite: from `backend`, `OCP_TEST_DATABASE_URL=… uv run pytest -c pyproject.toml ../tests/db -q` against a `pgvector/pgvector:0.8.1-pg17` container (`next.md` §1).
+- Every lockfile: `uv lock --check` in `contracts/python`, `backend`, `chaos-shop`, `chaos-shop/cli`, `runner`, `tools/ocp` (uv 0.12.7, as in CI).
 
-## Machine (Usman's laptop)
-- Windows 10 Home; git 2.50 (Git Credential Manager; pushing `usman` works).
-- `uv` 0.12.7 (pip, system Python 3.13); `uv` manages Python 3.12 for each package's `.venv`.
-- **Docker Desktop 29.8.2 is installed** (`%LOCALAPPDATA%\Programs\DockerDesktop`, not on Git Bash's PATH yet), but **the engine is not running: WSL 2 is not installed.** No Flutter, no `gh` CLI. GitHub job logs need admin rights; check-run status is readable through the public API.
+## Cloud container notes
+- uv 0.12.7 is at `/usr/local/bin/uv`; Docker's daemon is not running at start (`dockerd &` works); Docker Hub answers 429, so use `mirror.gcr.io/...`.
+- `git push --delete` is refused by the session proxy (403). There is no `gh` CLI; use the GitHub MCP tools for CI status.
 
-## Decisions made (and where they are written)
-- `usman` merges `origin/tanzeel`, never rebases (`CLAUDE.md` §11).
-- **Nothing goes to `main` until Tanzeel says go, and then only through PRs with green CI** (Usman's decision, 2026-10-10). §11.1 now allows Usman's PR branches; push one only when Usman asks.
-- Schema files are snake_case; the runner stream field is `msg`; HMAC is computed over the JSON as sent; keys are hex (`runner.py`, `signing.py`).
-- `proposal.fingerprint` formula: `approval-protocol.md` §2. WS `hello` comes after auth.
-- `evidence.added` payloads over 4,096 bytes are cut by dropping list items from the end (`ws-protocol.md` §4.1).
-- Runner: a refused or aborted `execute` claims its idempotency key; unanswerable messages get no result; a different `catalogue_version` is refused (`runner.py`).
-- Metric payloads carry `unit` from `METRIC_UNITS`.
+## Decisions (and where they are written)
+- Single developer, direct pushes to `main` (`CLAUDE.md` §8.1, §11).
+- `ocp_backend` is `NOLOGIN BYPASSRLS` in the migration; the login and password are set by hand per Supabase project. RLS stays on with no policies (`supabase/migrations/20261021190000_initial_schema.sql`).
+- `audit_log` also refuses TRUNCATE (a statement trigger), besides UPDATE and DELETE.
+- Migration CI: forward-only check against the previous head of `main`; names `<14 digits>_<snake>.sql`; Postgres 17 (`pgvector/pgvector:0.8.1-pg17`).
+- Earlier contract decisions (snake_case schemas, `msg` stream field, HMAC over the JSON as sent, hex keys, `proposal.fingerprint` formula, the 4 KB evidence cut) are unchanged; see `docs/checks/contract-review-*.md`.

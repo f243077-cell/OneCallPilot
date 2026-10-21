@@ -1,6 +1,24 @@
 # Handoff — session log
 
-> One dated entry per session, **newest first**, each with four parts: **Done** (with commits), **Next** (in order), **Waiting on** (Usman or Tanzeel), and **Message for Tanzeel** (when there is one). Old entries are never edited (`CLAUDE.md` §11.4).
+> One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
+
+## 2026-10-21 — Cloud session 1: single developer, branches, B1.1 migrations
+
+### Done
+- **`CLAUDE.md` §1, §8.1, §11 rewritten** for one developer: commit and push directly to `main`, test before each push, no force-push, tags only on request (`6b268d9`).
+- **Branches `tanzeel` and `usman`:** both are fully merged into `main` (0 commits ahead), but **deleting them failed**: `git push origin --delete tanzeel usman` got HTTP 403 from this session's git proxy (a policy refusal, not retried). Tanzeel deletes them by hand (below).
+- **CI:** the chaos-shop job was already green on `main` (`a96be5f`); Tanzeel's DOCKER_API_VERSION fix (`9ff85a0`) solved it. All six workflows passed on `a96be5f`.
+- **B1.1 migrations** (`f1bfbf0`, after the backend package skeleton `76f75ab`): `supabase/migrations/20261021190000_initial_schema.sql` with all 10 tables, enums, triggers, RLS, and the `ocp_backend` role; `tests/db/` with 70 negative/positive tests (TEST-016); `migrations.yml` now checks forward-only edits (DB-013), applies the files with psql, and runs the suite. `OCP_TEST_DATABASE_URL` added to `.env.example`.
+
+### Next
+See `next.md` §2: B1.2 backend-api skeleton, then B1.3, B1.4, B1.6, B1.7, B1.5, B1.8.
+
+### Waiting on Tanzeel
+- **Delete the merged branches** `tanzeel` and `usman` in the GitHub web UI (Code → Branches → bin icon), since the session's proxy refused the delete.
+- **Tag `contracts-v0.1.0`** on `main` when you are happy with the contracts (`git tag contracts-v0.1.0 && git push origin contracts-v0.1.0`), or tell a session to do it.
+- **B0.1 Supabase:** create `ocp-dev` and `ocp-bench`; disable sign-ups; switch both to an asymmetric JWT signing key; create your user and a test user (`OCP_TEST_EMAIL` / `OCP_TEST_PASSWORD` in `.env.local`); leave `ocp` out of the Data API's exposed schemas; apply the migration with `supabase db push`; then give the `ocp_backend` role a login and password by hand (`alter role ocp_backend with login password '…'`) and put the session-pooler URL in `.env` as `DATABASE_URL`. Then check DB-012 (anon REST call fails) and DB-014.
+- **B0.3:** a Gemini API key (LLM and embeddings) in `.env.local`, for S0.7 (c) and B2.5.
+- **A0.1 Firebase:** `google-services.json` and the FCM service account in `infrastructure/secrets/` (for B2.11 and the app).
 
 ## 2026-10-10 — Session 3: PR branches allowed, Docker check, Phase 0 status
 
