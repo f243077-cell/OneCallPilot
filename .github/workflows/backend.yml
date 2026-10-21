@@ -86,22 +86,28 @@ jobs:
         run: uv sync --locked
 
       - name: Ruff lint
-        run: uv run ruff check . ../tests/integration ../tests/security
+        run: uv run ruff check . ../tests/integration ../tests/security ../tests/agent_regression
 
       - name: Ruff format
-        run: uv run ruff format --check . ../tests/integration ../tests/security
+        run: uv run ruff format --check . ../tests/integration ../tests/security ../tests/agent_regression
 
       - name: Mypy (strict)
         run: |
           uv run mypy
           uv run mypy ../tests/integration
           uv run mypy ../tests/security
+          MYPYPATH=../tests/integration uv run mypy ../tests/agent_regression
 
       - name: Pytest (unit tests)
         run: uv run pytest -q tests --cov=oncallpilot.agent --cov=oncallpilot.approvals
 
       - name: Pytest (integration, Postgres and Redis)
         run: uv run pytest -c pyproject.toml ../tests/integration -q --cov=oncallpilot.agent --cov=oncallpilot.approvals --cov-append
+
+      # TEST-002: the 8 scenarios replayed through the real pipeline with FakeProvider
+      # (synthetic tool outputs until B2.6 records them from the testbed).
+      - name: Agent regression suite (TEST-002)
+        run: uv run pytest -c pyproject.toml ../tests/agent_regression -q --cov=oncallpilot.agent --cov-append
 
       # The database-backed agent effects are covered by the integration suite,
       # so the floor applies to unit + integration together.

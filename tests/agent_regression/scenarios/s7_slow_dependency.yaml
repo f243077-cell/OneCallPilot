@@ -1,0 +1,52 @@
+# Scenario 7, slow dependency (architecture §11.3): payments answers in 2.5 s.
+# The right outcome is escalation: payments is a third party, no catalogue action fits.
+# SYNTHETIC tool outputs until task B2.6 records them from the live testbed.
+name: slow-dependency
+alert:
+  service: api
+  observed_at: "2026-10-21T10:00:25Z"
+  signals:
+    - {name: p95_latency, value: 2.8, baseline: 0.12, zscore: 8.1,
+       first_anomalous_at: "2026-10-21T09:58:55Z"}
+ledger:
+  - {service: api, release: "1.4.0", kind: deploy, deployed_at: "2026-10-05T09:05:00Z"}
+  - {service: api, release: "1.4.0", kind: reset, deployed_at: "2026-10-21T09:00:00Z"}
+logs:
+  - match: 'service="api"'
+    lines:
+      - {level: WARNING, msg: "payments call took 2513 ms"}
+      - {level: WARNING, msg: "payments call took 2498 ms"}
+      - {level: INFO, msg: "POST /checkout 200"}
+metrics:
+  - {match: 'upstream="payments"', change_at: "2026-10-21T09:58:45Z", before: 0.05, after: 2.5}
+  - {match: "http_request_duration", change_at: "2026-10-21T09:58:45Z", before: 0.12, after: 2.8}
+containers:
+  - {name: cs-api-140-1, service: api, release: "1.4.0"}
+runner: {active_release: "1.4.0", replicas: 1}
+model:
+  gather:
+    - - {tool: query_metrics, args: {template: upstream_latency_p95, service: api}}  # E2
+      - {tool: get_recent_deploys, args: {service: api}}                            # E3
+      - {tool: query_logs, args: {service: api, level: WARNING}}                    # E4
+  hypotheses:
+    hypotheses:
+      - {rank: 1, root_cause_category: dependency_slow, confidence: 0.85, evidence_refs: [E2, E4],
+         summary: "The payments provider slowed to 2.5 s and drags api p95 up with it"}
+  disproof:
+    target_rank: 1
+    tool: get_service_health
+    params: {service: api}                                                          # E5
+    expectation_if_true: "api containers are healthy; only the upstream is slow"
+  reflection:
+    items:
+      - {rank: 1, citations_supported: true, adjusted_confidence: 0.82, note: "upstream matches"}
+    top_verdict: survived
+  proposal:
+    action: none
+    params: {}
+    expected_effect: "None of the catalogue actions changes a third party's latency"
+    rationale: "The slowness is in payments (E2, E4); restarting or scaling api would not help."
+    evidence_refs: [E2]
+expect:
+  phase: ESCALATED
+  escalation_reason: no_catalogue_action_fits

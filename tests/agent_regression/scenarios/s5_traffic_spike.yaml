@@ -1,0 +1,45 @@
+# Scenario 5, traffic spike (architecture §11.3): one api replica saturates; three recover.
+# SYNTHETIC tool outputs until task B2.6 records them from the live testbed.
+name: traffic-spike
+alert:
+  service: api
+  observed_at: "2026-10-21T10:00:25Z"
+  signals:
+    - {name: p95_latency, value: 1.9, baseline: 0.12, zscore: 7.4,
+       first_anomalous_at: "2026-10-21T09:58:55Z"}
+ledger:
+  - {service: api, release: "1.4.0", kind: reset, deployed_at: "2026-10-21T09:00:00Z"}
+metrics:
+  - {match: 'sum(rate(http_requests_total{service="api"}[1m]))', change_at: "2026-10-21T09:58:30Z", before: 5, after: 60}
+  - {match: "process_cpu_seconds_total", change_at: "2026-10-21T09:58:30Z", before: 0.08, after: 0.5}
+containers:
+  - {name: cs-api-140-1, service: api, release: "1.4.0"}
+runner: {active_release: "1.4.0", replicas: 1}
+model:
+  gather:
+    - - {tool: query_metrics, args: {template: request_rate, service: api}}  # E2
+      - {tool: query_metrics, args: {template: cpu_usage, service: api}}     # E3
+      - {tool: get_service_health, args: {service: api}}                     # E4
+  hypotheses:
+    hypotheses:
+      - {rank: 1, root_cause_category: traffic_surge, confidence: 0.83, evidence_refs: [E2, E3],
+         summary: "Requests rose twelvefold and the single replica is CPU bound"}
+  disproof:
+    target_rank: 1
+    tool: get_recent_deploys
+    params: {service: api}                                                   # E5
+    expectation_if_true: "No deploy coincides with the latency rise"
+  reflection:
+    items:
+      - {rank: 1, citations_supported: true, adjusted_confidence: 0.8, note: "load matches"}
+    top_verdict: survived
+  proposal:
+    action: scale_service
+    params: {service: api, replicas: 3}
+    expected_effect: "Three replicas share the load; p95 returns under 0.3 s"
+    rationale: "Request rate rose from 5 to 60 rps (E2) and the one replica is at its CPU limit (E3, E4)."
+    evidence_refs: [E2, E3]
+expect:
+  phase: PROPOSED
+  action: scale_service
+  params: {service: api, replicas: 3}

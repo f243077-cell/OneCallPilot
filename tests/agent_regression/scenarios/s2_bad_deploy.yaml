@@ -1,0 +1,59 @@
+# Scenario 2, bad deploy (architecture §11.3): api 1.5.0 breaks /checkout.
+# SYNTHETIC tool outputs until task B2.6 records them from the live testbed.
+name: bad-deploy
+alert:
+  service: api
+  observed_at: "2026-10-21T10:00:25Z"
+  signals:
+    - {name: error_rate, value: 0.31, baseline: 0.004, zscore: 9.2,
+       first_anomalous_at: "2026-10-21T09:58:50Z"}
+ledger:
+  - {service: api, release: "1.4.0", kind: deploy, deployed_at: "2026-10-05T09:05:00Z"}
+  - {service: api, release: "1.4.0", kind: reset, deployed_at: "2026-10-21T09:00:00Z"}
+  - {service: api, release: "1.5.0", kind: deploy, deployed_at: "2026-10-21T09:58:30Z",
+     image_tag: "chaos-shop/api:1.5.0", deployed_by: ci,
+     commit_message: "checkout: compute totals with new pricing rounding"}
+logs:
+  - match: 'service="api"'
+    lines:
+      - {level: ERROR, msg: "POST /checkout failed", exc_type: TypeError}
+      - {level: ERROR, msg: "POST /checkout failed", exc_type: TypeError}
+      - {level: ERROR, msg: "POST /checkout failed", exc_type: TypeError}
+      - {level: INFO, msg: "GET /products 200"}
+metrics:
+  - {match: 'status=~"5.."', change_at: "2026-10-21T09:58:40Z", before: 0.004, after: 0.31}
+containers:
+  - {name: cs-api-150-1, service: api, release: "1.5.0"}
+  - {name: cs-api-140-1, service: api, release: "1.4.0", state: exited, health: none}
+runner: {active_release: "1.5.0", replicas: 1}
+model:
+  gather:
+    - - {tool: query_logs, args: {service: api, level: ERROR}}          # E2
+      - {tool: get_recent_deploys, args: {service: api}}                # E3
+    - - {tool: query_metrics, args: {template: error_rate, service: api}}  # E4
+  hypotheses:
+    hypotheses:
+      - {rank: 1, root_cause_category: bad_deploy, confidence: 0.88, evidence_refs: [E3, E4, E2],
+         summary: "Release 1.5.0, deployed 20 s before the errors began, breaks checkout"}
+      - {rank: 2, root_cause_category: application_bug, confidence: 0.35, evidence_refs: [E2],
+         summary: "A latent checkout bug triggered by unusual traffic"}
+  disproof:
+    target_rank: 1
+    tool: get_service_health
+    params: {service: api}                                              # E5
+    expectation_if_true: "Only the 1.5.0 slot runs; 1.4.0 is stopped"
+  reflection:
+    items:
+      - {rank: 1, citations_supported: true, adjusted_confidence: 0.86, note: "deploy precedes errors"}
+      - {rank: 2, citations_supported: true, adjusted_confidence: 0.3, note: "no other trigger"}
+    top_verdict: survived
+  proposal:
+    action: rollback_deploy
+    params: {service: api, target_release: "1.4.0"}
+    expected_effect: "Checkout errors stop once 1.4.0 serves traffic"
+    rationale: "Errors began right after 1.5.0 was deployed (E3) and all come from checkout (E2, E4)."
+    evidence_refs: [E3, E4]
+expect:
+  phase: PROPOSED
+  action: rollback_deploy
+  params: {service: api, target_release: "1.4.0"}

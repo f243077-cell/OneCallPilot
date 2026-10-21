@@ -1,0 +1,48 @@
+# Scenario 4, cache outage (architecture §11.3): cs-redis was stopped and stays stopped.
+# SYNTHETIC tool outputs until task B2.6 records them from the live testbed.
+name: cache-outage
+alert:
+  service: redis
+  observed_at: "2026-10-21T10:00:25Z"
+  signals:
+    - {name: restarts, value: 0, baseline: null, zscore: null, first_anomalous_at: "2026-10-21T09:59:30Z"}
+ledger:
+  - {service: api, release: "1.4.0", kind: reset, deployed_at: "2026-10-21T09:00:00Z"}
+logs:
+  - match: 'service="api"'
+    lines:
+      - {level: ERROR, msg: "GET /products degraded: cache unavailable", exc_type: ConnectionError}
+      - {level: ERROR, msg: "GET /cart degraded: cache unavailable", exc_type: ConnectionError}
+metrics:
+  - {match: "cache_operations_total", change_at: "2026-10-21T09:59:20Z", before: 0, after: 4.2}
+containers:
+  - {name: cs-redis, service: redis, release: "7.4.0", state: exited, exit_code: 0, health: none}
+runner: {active_release: null, replicas: 0}
+model:
+  gather:
+    - - {tool: get_service_health, args: {service: redis}}                 # E2
+      - {tool: query_logs, args: {service: api, level: ERROR}}             # E3
+      - {tool: query_metrics, args: {template: cache_errors, service: api}}  # E4
+  hypotheses:
+    hypotheses:
+      - {rank: 1, root_cause_category: cache_failure, confidence: 0.86, evidence_refs: [E2, E3, E4],
+         summary: "The cache container is stopped, so every cache operation fails"}
+  disproof:
+    target_rank: 1
+    tool: get_recent_deploys
+    params: {service: api}                                                 # E5
+    expectation_if_true: "No deploy coincides; the api release is unchanged"
+  reflection:
+    items:
+      - {rank: 1, citations_supported: true, adjusted_confidence: 0.85, note: "stopped container"}
+    top_verdict: survived
+  proposal:
+    action: restart_service
+    params: {service: redis}
+    expected_effect: "The cache starts again; cache errors stop"
+    rationale: "cs-redis has exited (E2) and api cache calls fail since then (E3, E4)."
+    evidence_refs: [E2, E3]
+expect:
+  phase: PROPOSED
+  action: restart_service
+  params: {service: redis}

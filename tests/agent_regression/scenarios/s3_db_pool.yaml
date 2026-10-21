@@ -1,0 +1,52 @@
+# Scenario 3, database pool exhaustion (architecture §11.3): checkout holds pool connections.
+# SYNTHETIC tool outputs until task B2.6 records them from the live testbed.
+name: db-pool
+alert:
+  service: api
+  observed_at: "2026-10-21T10:00:25Z"
+  signals:
+    - {name: p95_latency, value: 4.5, baseline: 0.12, zscore: 11.0,
+       first_anomalous_at: "2026-10-21T09:58:50Z"}
+ledger:
+  - {service: api, release: "1.4.0", kind: deploy, deployed_at: "2026-10-05T09:05:00Z"}
+  - {service: api, release: "1.4.0", kind: reset, deployed_at: "2026-10-21T09:00:00Z"}
+logs:
+  - match: 'service="api"'
+    lines:
+      - {level: ERROR, msg: "POST /checkout failed: pool timeout after 5.0 s", exc_type: PoolTimeout}
+      - {level: ERROR, msg: "GET /cart failed: pool timeout after 5.0 s", exc_type: PoolTimeout}
+metrics:
+  - {match: "db_pool_connections", change_at: "2026-10-21T09:58:40Z", before: 2, after: 10}
+  - {match: "db_pool_wait_seconds", change_at: "2026-10-21T09:58:40Z", before: 0.01, after: 4.8}
+containers:
+  - {name: cs-api-140-1, service: api, release: "1.4.0"}
+runner: {active_release: "1.4.0", replicas: 1}
+model:
+  gather:
+    - - {tool: query_metrics, args: {template: db_pool_in_use, service: api}}    # E2
+      - {tool: query_metrics, args: {template: db_pool_wait_p95, service: api}}  # E3
+      - {tool: query_logs, args: {service: api, level: ERROR}}                   # E4
+  hypotheses:
+    hypotheses:
+      - {rank: 1, root_cause_category: db_connection_exhaustion, confidence: 0.8,
+         evidence_refs: [E2, E3, E4],
+         summary: "Every pool connection is held; requests wait for one and time out"}
+  disproof:
+    target_rank: 1
+    tool: get_recent_deploys
+    params: {service: api}                                                       # E5
+    expectation_if_true: "No deploy explains it; the release is the baseline one"
+  reflection:
+    items:
+      - {rank: 1, citations_supported: true, adjusted_confidence: 0.78, note: "pool saturated"}
+    top_verdict: survived
+  proposal:
+    action: restart_service
+    params: {service: api}
+    expected_effect: "A restart releases the held connections; latency returns to baseline"
+    rationale: "All pool connections are in use (E2), waits reach 4.8 s (E3), checkout times out (E4)."
+    evidence_refs: [E2, E3, E4]
+expect:
+  phase: PROPOSED
+  action: restart_service
+  params: {service: api}

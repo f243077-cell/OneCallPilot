@@ -1,0 +1,49 @@
+# Scenario 1, memory leak (architecture §11.3): cs-worker-210 leaks until OOM, restarts, leaks again.
+# SYNTHETIC tool outputs until task B2.6 records them from the live testbed.
+name: memory-leak
+alert:
+  service: worker
+  observed_at: "2026-10-21T10:00:25Z"
+  signals:
+    - {name: restarts, value: 3, baseline: null, zscore: null, first_anomalous_at: "2026-10-21T09:57:00Z"}
+ledger:
+  - {service: worker, release: "2.1.0", kind: deploy, deployed_at: "2026-10-01T14:40:00Z"}
+  - {service: worker, release: "2.1.0", kind: reset, deployed_at: "2026-10-21T09:00:00Z"}
+logs:
+  - match: 'service="worker"'
+    lines:
+      - {level: INFO, msg: "job receipt_email done"}
+      - {level: INFO, msg: "worker started"}
+metrics:
+  - {match: "process_resident_memory_bytes", change_at: "2026-10-21T09:40:00Z", before: 90000000, after: 480000000}
+containers:
+  - {name: cs-worker-210, service: worker, release: "2.1.0", restarts: 3, oom_killed: true}
+runner: {active_release: "2.1.0", replicas: 1}
+model:
+  gather:
+    - - {tool: query_metrics, args: {template: memory_rss, service: worker}}  # E2
+      - {tool: get_service_health, args: {service: worker}}                  # E3
+      - {tool: get_recent_deploys, args: {service: worker}}                  # E4
+  hypotheses:
+    hypotheses:
+      - {rank: 1, root_cause_category: memory_leak, confidence: 0.84, evidence_refs: [E2, E3],
+         summary: "Worker memory climbs to the limit and the container is OOM-killed repeatedly"}
+  disproof:
+    target_rank: 1
+    tool: query_logs
+    params: {service: worker, level: ERROR}                                  # E5
+    expectation_if_true: "No application errors explain the restarts"
+  reflection:
+    items:
+      - {rank: 1, citations_supported: true, adjusted_confidence: 0.82, note: "OOM and growth agree"}
+    top_verdict: survived
+  proposal:
+    action: restart_service
+    params: {service: worker}
+    expected_effect: "A graceful restart clears the leaking state; memory returns to baseline"
+    rationale: "Memory grows until OOM (E2) and the container restarts (E3); no deploy since reset (E4)."
+    evidence_refs: [E2, E3]
+expect:
+  phase: PROPOSED
+  action: restart_service
+  params: {service: worker}

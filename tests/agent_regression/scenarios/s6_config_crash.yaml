@@ -1,0 +1,51 @@
+# Scenario 6, config crash (architecture §11.3): worker 2.2.0 has an invalid setting and crash-loops.
+# SYNTHETIC tool outputs until task B2.6 records them from the live testbed.
+name: config-crash
+alert:
+  service: worker
+  observed_at: "2026-10-21T10:00:25Z"
+  signals:
+    - {name: restarts, value: 4, baseline: null, zscore: null, first_anomalous_at: "2026-10-21T09:58:40Z"}
+ledger:
+  - {service: worker, release: "2.1.0", kind: deploy, deployed_at: "2026-10-01T14:40:00Z"}
+  - {service: worker, release: "2.1.0", kind: reset, deployed_at: "2026-10-21T09:00:00Z"}
+  - {service: worker, release: "2.2.0", kind: deploy, deployed_at: "2026-10-21T09:58:20Z",
+     deployed_by: ci, commit_message: "jobs: batch size from configuration",
+     config_hash: "7f1c0e8b5a2d4c6e9f0a1b3c5d7e9f1a2b4c6d8e0f1a3b5c7d9e1f2a4b6c8d0e"}
+logs:
+  - match: 'service="worker"'
+    lines:
+      - {level: CRITICAL, msg: "startup failed: invalid QUEUE_BATCH_SIZE", exc_type: ValueError}
+      - {level: CRITICAL, msg: "startup failed: invalid QUEUE_BATCH_SIZE", exc_type: ValueError}
+containers:
+  - {name: cs-worker-220, service: worker, release: "2.2.0", state: restarting, restarts: 4, exit_code: 1}
+  - {name: cs-worker-210, service: worker, release: "2.1.0", state: exited, health: none}
+runner: {active_release: "2.2.0", replicas: 1}
+model:
+  gather:
+    - - {tool: get_recent_deploys, args: {service: worker}}         # E2
+      - {tool: query_logs, args: {service: worker, level: ERROR}}   # E3
+      - {tool: get_service_health, args: {service: worker}}         # E4
+  hypotheses:
+    hypotheses:
+      - {rank: 1, root_cause_category: config_error, confidence: 0.87, evidence_refs: [E2, E3, E4],
+         summary: "Release 2.2.0 starts with an invalid batch-size setting and crash-loops"}
+  disproof:
+    target_rank: 1
+    tool: query_metrics
+    params: {template: job_failure_rate, service: worker}           # E5
+    expectation_if_true: "No jobs are processed at all, rather than failing one by one"
+  reflection:
+    items:
+      - {rank: 1, citations_supported: true, adjusted_confidence: 0.85, note: "crash at startup"}
+    top_verdict: survived
+  proposal:
+    action: rollback_deploy
+    params: {service: worker, target_release: "2.1.0"}
+    expected_effect: "2.1.0 runs again with the previous configuration; restarts stop"
+    rationale: "The crash loop started with the 2.2.0 deploy (E2): startup rejects its setting (E3, E4)."
+    evidence_refs: [E2, E3]
+expect:
+  phase: PROPOSED
+  action: rollback_deploy
+  params: {service: worker, target_release: "2.1.0"}
