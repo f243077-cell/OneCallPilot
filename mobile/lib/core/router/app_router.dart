@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/action_review/presentation/action_review_screen.dart';
 import '../../features/auth/application/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/execution_status/presentation/execution_status_screen.dart';
 import '../../features/incident_detail/presentation/incident_detail_screen.dart';
 import '../../features/incident_feed/presentation/incident_feed_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -56,10 +57,9 @@ GoRouter buildRouter(AuthSession session) => GoRouter(
     ),
     GoRoute(
       path: '/executions/:id',
-      builder: (_, state) => PlaceholderScreen(
-        title: 'Execution',
-        task: 'A2.9',
-        id: state.pathParameters['id'],
+      builder: (_, state) => ExecutionStatusScreen(
+        executionId: state.pathParameters['id']!,
+        incidentId: state.uri.queryParameters['incident'],
       ),
     ),
     GoRoute(

@@ -25,6 +25,52 @@ const _$StepStatusEnumMap = {
   StepStatus.unknown: 'unknown',
 };
 
+StructuralHealth _$StructuralHealthFromJson(Map<String, dynamic> json) =>
+    StructuralHealth(
+      passed: json['passed'] as bool,
+      checkedAt: DateTime.parse(json['checked_at'] as String),
+      containers: (json['containers'] as List<dynamic>)
+          .map((e) => ContainerState.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      probes: (json['probes'] as List<dynamic>)
+          .map((e) => ProbeResult.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+SignalHealth _$SignalHealthFromJson(Map<String, dynamic> json) => SignalHealth(
+  passed: json['passed'] as bool,
+  checkedAt: DateTime.parse(json['checked_at'] as String),
+  windowSeconds: (json['window_seconds'] as num).toInt(),
+  signals: (json['signals'] as List<dynamic>)
+      .map(
+        (e) => $enumDecode(
+          _$SignalNameEnumMap,
+          e,
+          unknownValue: SignalName.unknown,
+        ),
+      )
+      .toList(),
+);
+
+const _$SignalNameEnumMap = {
+  SignalName.errorRate: 'error_rate',
+  SignalName.p95Latency: 'p95_latency',
+  SignalName.jobFailureRate: 'job_failure_rate',
+  SignalName.restarts: 'restarts',
+  SignalName.stackTraces: 'stack_traces',
+  SignalName.unknown: 'unknown',
+};
+
+HealthAfter _$HealthAfterFromJson(Map<String, dynamic> json) => HealthAfter(
+  structural: json['structural'] == null
+      ? null
+      : StructuralHealth.fromJson(json['structural'] as Map<String, dynamic>),
+  signals: json['signals'] == null
+      ? null
+      : SignalHealth.fromJson(json['signals'] as Map<String, dynamic>),
+  verdict: json['verdict'] as String?,
+);
+
 Execution _$ExecutionFromJson(Map<String, dynamic> json) => Execution(
   id: json['id'] as String,
   proposalId: json['proposal_id'] as String,
@@ -37,7 +83,9 @@ Execution _$ExecutionFromJson(Map<String, dynamic> json) => Execution(
       .map((e) => ExecutionStep.fromJson(e as Map<String, dynamic>))
       .toList(),
   errorCode: json['error_code'] as String?,
-  healthAfter: json['health_after'] as Map<String, dynamic>?,
+  healthAfter: json['health_after'] == null
+      ? null
+      : HealthAfter.fromJson(json['health_after'] as Map<String, dynamic>),
   startedAt: json['started_at'] == null
       ? null
       : DateTime.parse(json['started_at'] as String),

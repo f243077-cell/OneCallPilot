@@ -326,7 +326,7 @@ void main() {
         router.state.uri.toString(),
         '/executions/${timeline.executionId}?incident=${timeline.incidentId}',
       );
-      expect(find.text('execution ${timeline.executionId}'), findsOneWidget);
+      expect(find.text('Execution'), findsOneWidget);
     }
 
     testWidgets('a low-risk proposal: tap, confirm, execution status', (

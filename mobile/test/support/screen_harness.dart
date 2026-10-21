@@ -5,11 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oncallpilot/data/repositories/incident_repository.dart';
 import 'package:oncallpilot/features/action_review/presentation/action_review_screen.dart';
+import 'package:oncallpilot/features/execution_status/presentation/execution_status_screen.dart';
 import 'package:oncallpilot/features/incident_detail/presentation/incident_detail_screen.dart';
 import 'package:oncallpilot/features/incident_feed/presentation/incident_feed_screen.dart';
 import 'package:oncallpilot/shared/formatting.dart';
 
-/// The feed, detail and action review screens with their routes, a repository
+/// The feed, detail, action review and execution screens with their routes, a repository
 /// and a clock. Returns the router so a test can read the location.
 Future<GoRouter> pumpScreens(
   WidgetTester tester, {
@@ -40,8 +41,10 @@ Future<GoRouter> pumpScreens(
       ),
       GoRoute(
         path: '/executions/:id',
-        builder: (_, state) =>
-            Scaffold(body: Text('execution ${state.pathParameters['id']}')),
+        builder: (_, state) => ExecutionStatusScreen(
+          executionId: state.pathParameters['id']!,
+          incidentId: state.uri.queryParameters['incident'],
+        ),
       ),
       GoRoute(path: '/settings', builder: (_, _) => const Scaffold()),
     ],

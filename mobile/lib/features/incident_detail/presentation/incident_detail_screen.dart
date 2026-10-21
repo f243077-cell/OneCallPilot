@@ -145,6 +145,19 @@ class _IncidentDetailBodyState extends State<IncidentDetailBody> {
                 ),
               ),
             ),
+          if (incident.executions.isNotEmpty) ...[
+            _Section('Actions'),
+            for (final e in incident.executions)
+              ListTile(
+                key: ValueKey('execution-${e.id}'),
+                leading: const Icon(Icons.play_circle_outline),
+                title: Text(_actionOf(incident, e.proposalId)),
+                subtitle: Text(humanize(e.status)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () =>
+                    context.push('/executions/${e.id}?incident=${incident.id}'),
+              ),
+          ],
           _Section('Hypotheses'),
           if (active.isEmpty) const _Empty('No hypotheses yet'),
           for (final h in active)
@@ -245,6 +258,15 @@ class HypothesisTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _actionOf(IncidentDetail incident, String proposalId) {
+  final proposal = incident.proposals
+      .where((p) => p.id == proposalId)
+      .firstOrNull;
+  if (proposal == null) return 'Action';
+  final rollback = proposal.kind == ProposalKind.rollback ? ' (rollback)' : '';
+  return '${humanize(proposal.action)}$rollback';
 }
 
 class _Section extends StatelessWidget {
