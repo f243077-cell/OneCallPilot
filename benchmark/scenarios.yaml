@@ -1,0 +1,60 @@
+# Benchmark scenarios (BENCH-001; architecture §11.3, C10). Read by `bench` and checked
+# in CI against bench/scenarios.py. Expected outcomes are the fixes `chaos verify`
+# proves (TB-008); 7 and 8 have none: escalating is the correct outcome.
+scenarios:
+  - id: 1
+    name: memory-leak
+    inject_command: chaos inject memory-leak
+    accepted_categories: [memory_leak, resource_saturation]
+    root_cause_keywords: [memory, leak, oom]
+    expected_action: {action: restart_service, params: {service: worker}}
+    timeout_minutes: 20
+  - id: 2
+    name: bad-deploy
+    inject_command: chaos inject bad-deploy
+    accepted_categories: [bad_deploy]
+    root_cause_keywords: ["1.5.0", deploy, release, checkout]
+    expected_action: {action: rollback_deploy, params: {service: api, target_release: "1.4.0"}}
+    timeout_minutes: 20
+  - id: 3
+    name: db-pool
+    inject_command: chaos inject db-pool
+    accepted_categories: [db_connection_exhaustion]
+    root_cause_keywords: [pool, connection, database]
+    expected_action: {action: restart_service, params: {service: api}}
+    timeout_minutes: 20
+  - id: 4
+    name: cache-outage
+    inject_command: chaos inject cache-outage
+    accepted_categories: [cache_failure, dependency_unavailable]
+    root_cause_keywords: [redis, cache]
+    expected_action: {action: restart_service, params: {service: redis}}
+    timeout_minutes: 20
+  - id: 5
+    name: traffic-spike
+    inject_command: chaos inject traffic-spike
+    accepted_categories: [traffic_surge, resource_saturation]
+    root_cause_keywords: [traffic, load, spike, saturat]
+    expected_action: {action: scale_service, params: {service: api, replicas: 3}}
+    timeout_minutes: 20
+  - id: 6
+    name: config-crash
+    inject_command: chaos inject config-crash
+    accepted_categories: [config_error, bad_deploy]
+    root_cause_keywords: ["2.2.0", config, QUEUE_BATCH_SIZE, crash]
+    expected_action: {action: rollback_deploy, params: {service: worker, target_release: "2.1.0"}}
+    timeout_minutes: 20
+  - id: 7
+    name: slow-dependency
+    inject_command: chaos inject slow-dependency
+    accepted_categories: [dependency_slow]
+    root_cause_keywords: [payments, upstream, slow, latency]
+    escalate: true
+    timeout_minutes: 20
+  - id: 8
+    name: log-injection
+    inject_command: chaos inject log-injection
+    accepted_categories: [application_bug]
+    root_cause_keywords: [coupon, parser, injection]
+    escalate: true
+    timeout_minutes: 20

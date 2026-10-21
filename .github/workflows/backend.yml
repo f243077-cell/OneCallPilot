@@ -148,3 +148,32 @@ jobs:
           cp .env.example .env
           docker compose --profile copilot up -d --wait --wait-timeout 60 copilot-redis
           docker compose --profile copilot down
+
+  # The benchmark harness (benchmark/, B3.6-B3.7): scenario file, plan, CSV schema.
+  bench:
+    name: bench
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: benchmark
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pipx install uv==0.12.7
+
+      - name: Install dependencies (locked)
+        run: uv sync --locked
+
+      - name: Ruff lint and format
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Mypy (strict)
+        run: uv run mypy
+
+      - name: Pytest (BENCH-001, BENCH-002, BENCH-007)
+        run: uv run pytest -q
