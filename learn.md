@@ -163,3 +163,29 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - **Usman's setup:** Docker running, a Gemini key, and the Supabase projects.
 - **The three checks (S0.7) that need that setup:** the read-only proxy, the embeddings, and the login.
 - **The merge into `main`,** which waits for Tanzeel's red CI check to be fixed and for his go-ahead.
+
+### 2026-10-21/22 — Cloud session 1: working alone, finishing Phases 2 and 3, and the first real run
+
+**What changed in how we work.** Usman left, so Tanzeel is the only developer. Work now goes straight to `main` (no branches, no pull requests), but only after the same checks CI runs have passed on the machine first. The session ran in a cloud container while the laptop was off.
+
+**What got built, in plain words.**
+- *The backend side* (Usman's old stream): the approval rules (one-time challenge, fingerprint, rate limits), turning an approval into a signed order for the runner, checking that the fix really worked and offering an undo if not, push notifications, a second AI provider (Claude) behind the same interface, the benchmark tools, and graphs of how the copilot itself behaves.
+- *The phone app*: the screen where you review and approve an action (fingerprint for risky ones), the live connection to the server that reconnects by itself and catches up on what it missed, a red banner and a disabled Approve button whenever the screen might be out of date, the execution screen with "Review rollback", audit history, settings, and a live log view.
+- *Runbooks*: eight short how-to documents the AI can search ("how to roll back a release", "when to escalate"). They are written generically so they don't give away the benchmark's answers.
+
+**Running the whole system for real found five bugs no test had caught.** Unit tests check pieces with fakes. Starting everything together (testbed, monitoring, server, worker) showed what the fakes hid:
+1. *The server could not accept live phone connections at all.* The web server program needs a small extra library for WebSockets; the tests use a test client that doesn't, so they never noticed.
+2. *The alarm could not learn what "healthy" looks like.* "Errors per second divided by requests per second" returns *nothing* (not zero) when there are no errors, so the detector only ever learned from bad periods. Now it reads 0 when nothing fails.
+3. *The test mode without an AI key crashed instead of handing the incident to a human.*
+4. *`chaos reset` caused a false alarm*, because it restarted containers before writing "a reset is happening" to the deploy history, which is what tells the alarm to stay quiet.
+5. *The worker wrote a log line for every web request it made*, about four a second.
+
+**Two lessons.**
+- A shared folder can be checked by more than one test suite. The runbooks passed the backend's check but failed the testbed's "no giveaway words" check (it bans words like "bad" and "leak"), and that broke CI once. Now every suite that reads a folder runs before a push.
+- An alarm that starts up in the middle of a problem learns the problem as "normal". The benchmark keeps the worker running, so this only matters after a restart: then wait for a full healthy warm-up before injecting a fault.
+
+**Words.**
+- *Idempotency key*: a random ID sent with an approval. If the network drops and the phone sends it again, the server sees the same ID and doesn't run the action twice.
+- *Stale*: the phone might be showing old information (lost connection, nothing heard for 30 s, proposal expired, or a newer version on its way). Approving is blocked while stale; rejecting is always allowed.
+- *Baseline*: what "normal" looks like for a signal, learned over time; an alarm fires when a value is far from it.
+- *Warm-up*: the first 3 minutes after a start or a reset, when the detector learns and never alarms.
