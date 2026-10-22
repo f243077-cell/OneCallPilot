@@ -12,6 +12,7 @@
   - The crashed job showed the AI-025 recovery working for real: reclaimed after 300 s, the incident escalated `agent_interrupted` with its evidence kept.
   - `a6a2a0c` **detector**: the `error_rate` and `job_failure_rate` shares were *empty* (no data) whenever nothing failed, because Prometheus has no series for the 5xx/error numerator then; the detector never learnt a healthy baseline and `query_metrics` showed gaps. The numerator now falls back to `vector(0)` (no traffic still reads as no data). Live check after the fix: with a fresh worker, a full warm-up and then `chaos inject 2`, the incident opened 11 s after injection (new stack-trace type) and `error_rate` joined it 15 s later at 3.9 %.
   - the runbook folder was empty → next item.
+- The app's live data-layer tests (`mobile/test/live`) also pass against the **production backend image** on port 8000 (REST, WebSocket, resume after a disconnect), seeding inside the container: `docker exec -i oncallpilot-backend-api-1 python -m oncallpilot.seed /dev/stdin --new-ids < contracts/fixtures/timelines/bad_deploy_success.json`.
 - **S1.2/S2.2 runbooks** (`e5f2888`): eight generic runbooks (roll back a bad release, restart a service, scale for a surge, cache problems, slow third-party dependencies, crash loops, reading logs safely, when to escalate); a backend test checks chunk limits and that no runbook names a benchmark scenario, testbed release or container (H7). Ingested on the real start: 35 chunks.
 
 ### Observations (no change made)
