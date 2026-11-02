@@ -22,7 +22,7 @@ FORBIDDEN_ON_WORKER_SIDE = (
 
 def test_execute_is_constructed_in_exactly_one_module() -> None:
     builders = sorted(
-        str(path.relative_to(BACKEND))
+        path.relative_to(BACKEND).as_posix()
         for path in BACKEND.rglob("*.py")
         if EXECUTE.search(path.read_text(encoding="utf-8"))
     )

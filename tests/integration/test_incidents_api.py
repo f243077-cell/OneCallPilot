@@ -59,7 +59,7 @@ async def test_healthz_reports_the_database(api: Api) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
-        "contracts_version": "0.1.0",
+        "contracts_version": (CONTRACTS / "VERSION").read_text("utf-8").strip(),
         "db": "up",
         "redis": "up",
     }

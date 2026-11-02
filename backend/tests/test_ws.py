@@ -9,6 +9,7 @@ import time
 import uuid
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
+from pathlib import Path
 from typing import Any, cast
 
 import pytest
@@ -28,6 +29,13 @@ TEST_INGEST = IngestConfig(SecretStr("test-ingest-token"), True, b"")
 KEY = SigningKey("k1")
 TIMINGS = WsTimings(auth_timeout=0.3, ping_interval=0.25, max_missed_pongs=2, read_block_ms=20)
 INCIDENT = uuid.uuid4()
+
+# The version the backend reports is the contracts package's (contracts/VERSION).
+CONTRACTS_VERSION = (
+    (Path(__file__).resolve().parents[2] / "contracts" / "VERSION")
+    .read_text(encoding="utf-8")
+    .strip()
+)
 
 
 def entry(n: int) -> dict[str, Any]:
@@ -175,7 +183,7 @@ def test_hello_after_auth(client: TestClient, stream: MemoryStream) -> None:
         hello = receive(session)
         assert hello["type"] == "hello"
         assert hello["latest_event_id"] == "3-0"
-        assert hello["contracts_version"] == "0.1.0"
+        assert hello["contracts_version"] == CONTRACTS_VERSION
 
 
 def test_hello_on_an_empty_stream(client: TestClient) -> None:

@@ -6,6 +6,7 @@ import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, cast
 
 import httpx
@@ -22,6 +23,13 @@ from tests.keys import ISSUER, FakeJwks, SigningKey
 
 TEST_INGEST = IngestConfig(SecretStr("test-ingest-token"), True, b"")
 KEY = SigningKey("k1")
+
+# The version the backend reports is the contracts package's (contracts/VERSION).
+CONTRACTS_VERSION = (
+    (Path(__file__).resolve().parents[2] / "contracts" / "VERSION")
+    .read_text(encoding="utf-8")
+    .strip()
+)
 
 
 class FakePool:
@@ -133,7 +141,7 @@ async def test_healthz_ok_without_auth(env: tuple[Env, httpx.AsyncClient]) -> No
     assert response.status_code == 200
     body = Healthz.model_validate(response.json())
     assert (body.status, body.db, body.redis) == ("ok", "up", "up")
-    assert body.contracts_version == "0.1.0"
+    assert body.contracts_version == CONTRACTS_VERSION
 
 
 async def test_healthz_503_when_redis_is_down(env: tuple[Env, httpx.AsyncClient]) -> None:
