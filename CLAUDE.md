@@ -441,8 +441,8 @@ From 2026-10-21, **Tanzeel** is the only developer and owns every folder, includ
 ### 11.2 Test before every push
 Run the checks for every package the change touches, the same steps as its workflow in `.github/workflows/`:
 - `contracts/python`: `uv sync --locked`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy oncallpilot_contracts tests`, `uv run pytest -q`, then `uv run python -m oncallpilot_contracts.schema_export` and `git diff --exit-code -- ../schemas`.
-- `backend`, `runner`, `chaos-shop`, `chaos-shop/cli`, `tools/ocp`: `uv sync --locked`, `ruff check`, `ruff format --check`, `mypy`, `pytest -q`.
-- Every lockfile: `uv lock --check` in each Python package.
+- `backend`, `runner`, `chaos-shop`, `chaos-shop/cli`, `tools/ocp`, `benchmark`: `uv sync --locked`, `ruff check`, `ruff format --check`, `mypy`, `pytest -q`.
+- Every lockfile: `uv lock --check` in each Python package (`git ls-files '*uv.lock'`; a contracts version bump changes `backend`, `benchmark` and `chaos-shop/cli`).
 - Migrations: apply them to a fresh `pgvector/pgvector` container and run `tests/db/`.
 After pushing, check that CI on `main` is green; if it is red, fixing it is the next task.
 

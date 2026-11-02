@@ -23,7 +23,7 @@
 - Contracts (`contracts/python`): `uv sync --locked`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy oncallpilot_contracts tests`, `uv run pytest -q`, then `uv run python -m oncallpilot_contracts.schema_export` and `git diff --exit-code -- ../schemas`.
 - Backend (`backend`): `uv sync --locked`, ruff, format, `uv run mypy`.
 - Database suite: from `backend`, `OCP_TEST_DATABASE_URL=… uv run pytest -c pyproject.toml ../tests/db -q` against a `pgvector/pgvector:0.8.1-pg17` container (`next.md` §1).
-- Every lockfile: `uv lock --check` in `contracts/python`, `backend`, `chaos-shop`, `chaos-shop/cli`, `runner`, `tools/ocp` (uv 0.12.7, as in CI).
+- Every lockfile: `uv lock --check` in `contracts/python`, `backend`, `benchmark`, `chaos-shop`, `chaos-shop/cli`, `runner`, `tools/ocp` (uv 0.12.7, as in CI; `git ls-files '*uv.lock'` lists them).
 
 ## Laptop notes
 - Windows, Git Bash and PowerShell; uv 0.12.7. Docker Desktop is often off: start it before suites that need containers. 16 GB RAM, Docker 10 GB. Docker Desktop logs with the `local` driver (the chaos helper forces `json-file`).
