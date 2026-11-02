@@ -113,6 +113,7 @@
           "anyOf": [
             {
               "enum": [
+                "openrouter",
                 "gemini",
                 "anthropic",
                 "fake"

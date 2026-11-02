@@ -527,7 +527,7 @@ class AgentMeta(ContractModel):
     """``incidents.agent_meta`` (§6.7, AI-024). Empty in manual mode; filled as the run goes."""
 
     prompt_version: str | None = Field(default=None, pattern=r"^v[0-9]+$")
-    provider: Literal["gemini", "anthropic", "fake"] | None = None
+    provider: Literal["openrouter", "gemini", "anthropic", "fake"] | None = None  # ADR-23
     model: str | None = Field(default=None, max_length=100)
     catalogue_version: Semver | None = None
     agent_config_hash: Sha256Hex | None = None
