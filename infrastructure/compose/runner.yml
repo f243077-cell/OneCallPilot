@@ -1,16 +1,58 @@
 # Owner: Tanzeel. Runner and socket-proxy-rw (architecture §2.10, §2.11, §3, §7.3).
-# The runner service is added once copilot-redis exists (Usman's copilot.yml,
-# task B1.3): without it the runner cannot consume, and `ocp up` starts this
-# profile. The image is built from runner/Dockerfile and tested in A2.1
-# (docs/checks/week-3.md).
+# The runner consumes ocp:runner:requests on copilot-redis (copilot.yml) as the
+# `runner` ACL user. Its isolation (RUN-016) is checked by
+# runner/tests/test_isolation.py against this file and by the live tests against
+# the running container. The image is built from runner/Dockerfile (A2.1,
+# docs/checks/week-3.md).
 #
 # SAFETY (CLAUDE.md §6.5, RUN-017, TEST-015): socket-proxy-rw allows exactly
 # CONTAINERS (GET), ALLOW_START, ALLOW_STOP and ALLOW_RESTARTS, with POST=0.
 # The image enables EVENTS, PING and VERSION (and their LIBPOD_* twins) by
 # default, so they are switched off explicitly below. Never widen this list.
 # Only this proxy and socket-proxy-ro may mount the Docker socket.
+#
+# SAFETY (RUN-016, CLAUDE.md §4.8, §6.5, §6.6): never loosen the runner service.
+# Non-root, read-only, no capabilities, 128m; no Docker socket, Docker only
+# through socket-proxy-rw; no DATABASE_URL, LLM keys, FCM credentials,
+# INGEST_TOKEN or Supabase keys (§7.3). The only mount is the deploy ledger.
 
 services:
+  runner:
+    image: oncallpilot/runner:0.1.0
+    build:
+      context: ../../runner
+      additional_contexts:
+        contracts: ../../contracts
+    profiles: [runner]
+    user: "10001:10001"
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    # rw_proxy_net: socket-proxy-rw; copilot_net: copilot-redis; chaos_net: the
+    # targets' /healthz and cs-api's /internal/cache (clear_cache).
+    networks: [rw_proxy_net, copilot_net, chaos_net]
+    volumes:
+      - deploy_ledger:/ledger  # rw: the runner appends rollback and scale records
+    environment:
+      RUNNER_REDIS_URL: ${RUNNER_REDIS_URL}
+      ACTION_SIGNING_KEY: ${ACTION_SIGNING_KEY}
+      RUNNER_LINK_KEY: ${RUNNER_LINK_KEY}
+      LEDGER_PATH: /ledger/deploys.jsonl
+      DOCKER_HOST: tcp://socket-proxy-rw:2375
+      # The proxy blocks /version, so the API version is pinned (RUN-017). 1.48 is
+      # the newest both hosts accept: CI's Docker 28 serves up to 1.48 and the
+      # laptop's Docker 29 accepts 1.44 and later (docs/checks/proxy.md).
+      DOCKER_API_VERSION: "1.48"
+      RUNNER_ADMIN_TOKEN: ${RUNNER_ADMIN_TOKEN}
+    depends_on:
+      copilot-redis:
+        condition: service_healthy
+      socket-proxy-rw:
+        condition: service_healthy
+    restart: unless-stopped
+
   socket-proxy-rw:
     image: lscr.io/linuxserver/socket-proxy:3.4.6-r0-ls101
     profiles: [runner]

@@ -1,11 +1,10 @@
 # The intended `runner` service (architecture §2.10, §7.3; RUN-016, CLAUDE.md §4.8).
 #
-# Not in infrastructure/compose/runner.yml yet: it is added there once
-# copilot-redis and its `runner` ACL user exist (Usman's copilot.yml). Until
-# then this file is the spec that tests/test_isolation.py checks, and the live
-# stack (tests/live/stack.py) runs the image with the same settings, which
-# tests/live/test_live_limits.py checks with `docker inspect`. When the service
-# moves to runner.yml, test_isolation.py checks it there too.
+# The isolation spec: tests/test_isolation.py checks that it and the real
+# `runner` service in infrastructure/compose/runner.yml satisfy the policy and
+# agree, and runs every loosening against it. The live stack
+# (tests/live/stack.py) runs the image with the same settings, which
+# tests/live/test_live_limits.py checks with `docker inspect`.
 #
 # SAFETY: never loosen any line below. No Docker socket; Docker only through
 # socket-proxy-rw. No DATABASE_URL, LLM keys, FCM credentials, INGEST_TOKEN or

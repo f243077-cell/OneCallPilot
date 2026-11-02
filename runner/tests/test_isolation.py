@@ -1,9 +1,9 @@
 """RUN-016: the runner's isolation, at config level (A2.5).
 
-The intended service (tests/runner_service.yml) must satisfy the policy in
-tests/isolation.py, and every way of loosening it must be caught. Once the
-`runner` service is in infrastructure/compose/runner.yml it is checked too.
-The running container is checked in tests/live/test_live_limits.py.
+The `runner` service of infrastructure/compose/runner.yml and the intended
+spec (tests/runner_service.yml) must satisfy the policy in tests/isolation.py,
+and every way of loosening it must be caught. The running container is checked
+in tests/live/test_live_limits.py.
 """
 
 import copy
@@ -31,11 +31,24 @@ def test_the_intended_service_is_isolated() -> None:
     assert service_problems(spec()) == []
 
 
-def test_the_compose_runner_service_is_isolated_once_it_exists() -> None:
-    services = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))["services"]
-    if "runner" not in services:
-        pytest.skip("not in runner.yml yet (waits for copilot-redis)")
-    assert service_problems(services["runner"]) == []  # pragma: no cover
+def compose_service() -> dict[str, Any]:
+    service: dict[str, Any] = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))["services"][
+        "runner"
+    ]
+    return service
+
+
+def test_the_compose_runner_service_is_isolated() -> None:
+    assert service_problems(compose_service()) == []
+
+
+def test_the_compose_service_matches_the_spec() -> None:
+    service, intended = compose_service(), spec()
+    for key in ("user", "read_only", "tmpfs", "cap_drop", "security_opt", "mem_limit",
+                "networks", "volumes"):  # fmt: skip
+        assert service[key] == intended[key], key
+    assert set(service["environment"]) == set(intended["environment"])
+    assert service["environment"]["DOCKER_HOST"] == "tcp://socket-proxy-rw:2375"
 
 
 def test_the_image_runs_as_uid_10001() -> None:
