@@ -27,3 +27,4 @@ Checked against the live API on 2026-11-02, with the agent's real schemas and to
 - Routing goes through a third party. Only redacted, truncated evidence reaches prompts anyway (§6.4, SEC-007), and `data_collection: "deny"` keeps prompts away from providers that store them.
 - Reasoning tokens make calls slower and larger than a non-reasoning model would; `effort = "low"` keeps them within the 30 s per-call and 90 s per-investigation budgets.
 - The runner's isolation test also refuses `OPENROUTER_API_KEY` (§7.3: the runner never receives an LLM key).
+- C1 `AgentMeta.provider` gained `openrouter` (contracts 0.2.0): the first live smoke showed `GET /incidents/{id}` failing with 500 because the value did not validate.

@@ -423,6 +423,7 @@ For every tool call:
 - `proposal_rejected`
 - `proposal_expired`
 - `rolled_back_after_failed_action`
+- `action_failed_no_rollback` (verification failed and the action has no `rollback_step`, so there is nothing to offer; FR-015)
 - `runner_refused` (the runner refused or aborted and changed nothing; §5.10 step 6)
 - `runner_timeout` (no final result within `EXECUTION_TIMEOUT_SECONDS`; §5.10 step 8)
 - `agent_interrupted` (the worker died mid-investigation; see §5.2)
@@ -1077,6 +1078,7 @@ create table monitor_settings (
  "action":"rollback_deploy","params":{"service":"api","target_release":"1.4.0"},
  "state_fingerprint":"sha256|null","idempotency_key":"…|null","approved_by":"uuid|null",
  "approved_at":"ts|null","issued_at":"ts","expires_at":"ts","catalogue_version":"1.0.0",
+ "proposal_kind":"primary|rollback|null",   // contracts 0.2.0; only `rollback` skips the runner's cooldown (§7.6)
  "sig":"hex(hmac_sha256(KEY, canonical_json(all fields except sig)))"}   // KEY = ACTION_SIGNING_KEY for execute, RUNNER_LINK_KEY for dry_run
 
 // result
