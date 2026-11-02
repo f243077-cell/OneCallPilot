@@ -53,23 +53,19 @@ void main() {
 
   group('deploy ledger', () {
     final file = File('${dir.path}/ledger/deploys.jsonl');
-    test(
-      'every line parses',
-      () {
-        final lines = file
-            .readAsLinesSync()
-            .where((l) => l.trim().isNotEmpty)
-            .toList();
-        expect(lines, isNotEmpty);
-        for (final line in lines) {
-          final record = jsonDecode(line) as Map<String, dynamic>;
-          req<String>(record, 'release', 'ledger');
-          req<String>(record, 'commit_message', 'ledger');
-          reqTime(record, 'deployed_at', 'ledger');
-        }
-      },
-      skip: file.existsSync() ? false : 'no ledger fixture in ${dir.path}',
-    );
+    test('every line parses', () {
+      final lines = file
+          .readAsLinesSync()
+          .where((l) => l.trim().isNotEmpty)
+          .toList();
+      expect(lines, isNotEmpty);
+      for (final line in lines) {
+        final record = jsonDecode(line) as Map<String, dynamic>;
+        req<String>(record, 'release', 'ledger');
+        req<String>(record, 'commit_message', 'ledger');
+        reqTime(record, 'deployed_at', 'ledger');
+      }
+    }, skip: file.existsSync() ? false : 'no ledger fixture in ${dir.path}');
   });
 
   // A1.5: the real DTOs (lib/data/models) parse the same fixtures, and every
@@ -130,6 +126,27 @@ void main() {
         );
         repo.dispose();
       });
+    }
+  });
+
+  test('every C1 escalation reason has a Dart value (MOB-020)', () {
+    final schema =
+        jsonDecode(
+              File(
+                '${dir.parent.path}/schemas/incident_summary.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final options = schema['properties']['status_reason']['anyOf'] as List;
+    final values =
+        (options.firstWhere((o) => (o as Map).containsKey('enum'))
+                as Map)['enum']
+            as List;
+    String camel(String s) =>
+        s.replaceAllMapped(RegExp('_([a-z])'), (m) => m[1]!.toUpperCase());
+    final names = dto.EscalationReason.values.map((v) => v.name).toSet();
+    for (final value in values) {
+      expect(names, contains(camel(value as String)), reason: value);
     }
   });
 

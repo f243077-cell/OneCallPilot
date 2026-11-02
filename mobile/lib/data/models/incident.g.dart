@@ -165,6 +165,7 @@ const _$EscalationReasonEnumMap = {
   EscalationReason.proposalExpired: 'proposal_expired',
   EscalationReason.rolledBackAfterFailedAction:
       'rolled_back_after_failed_action',
+  EscalationReason.actionFailedNoRollback: 'action_failed_no_rollback',
   EscalationReason.runnerRefused: 'runner_refused',
   EscalationReason.runnerTimeout: 'runner_timeout',
   EscalationReason.agentInterrupted: 'agent_interrupted',

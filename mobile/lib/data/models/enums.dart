@@ -35,6 +35,7 @@ enum EscalationReason {
   proposalRejected,
   proposalExpired,
   rolledBackAfterFailedAction,
+  actionFailedNoRollback,
   runnerRefused,
   runnerTimeout,
   agentInterrupted,
