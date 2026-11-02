@@ -102,6 +102,7 @@ async def test_valid_proposal_is_stored_pending_after_a_signed_dry_run(
     assert (request.type, request.action) == ("dry_run", "rollback_deploy")
     assert request.params == {"service": "api", "target_release": "1.4.0"}
     assert request.approved_by is None and request.idempotency_key is None
+    assert request.proposal_kind == "primary"  # the agent's own proposal (C5 0.2.0)
 
     incident_id = effects.incident_id
     assert await statuses(pool, incident_id) == ("awaiting_approval", None)

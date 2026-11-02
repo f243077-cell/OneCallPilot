@@ -30,11 +30,18 @@ class FakeLink:
         self.reply = reply
         self.kwargs = kwargs
         self.calls: list[tuple[str, dict[str, Any], uuid.UUID, str]] = []
+        self.kinds: list[str] = []
 
     async def dry_run(
-        self, action: str, params: dict[str, Any], proposal_id: uuid.UUID, catalogue_version: str
+        self,
+        action: str,
+        params: dict[str, Any],
+        proposal_id: uuid.UUID,
+        catalogue_version: str,
+        proposal_kind: str = "primary",
     ) -> RunnerResult | None:
         self.calls.append((action, params, proposal_id, catalogue_version))
+        self.kinds.append(proposal_kind)
         if self.reply is None and not self.kwargs:
             return None
         return RunnerResult.model_validate(dry_run_reply(str(uuid.uuid4()), **self.kwargs))
@@ -68,6 +75,14 @@ async def test_valid_proposal_is_prepared_from_the_catalogue_and_dry_run(tmp_pat
     }
     assert prepared.dry_run_at == DRY_RUN_AT
     assert prepared.dry_run.state_fingerprint == STATE_FINGERPRINT
+
+
+async def test_the_proposal_kind_reaches_the_signed_dry_run(tmp_path: Path) -> None:
+    link = FakeLink(active="1.5.0")
+    params: dict[str, Any] = {"service": "api", "target_release": "1.4.0"}
+    await proposer(tmp_path, link).prepare(rollback())
+    await proposer(tmp_path, link).prepare_action("rollback_deploy", params, kind="rollback")
+    assert link.kinds == ["primary", "rollback"]
 
 
 async def test_invalid_proposal_never_reaches_the_runner(tmp_path: Path) -> None:

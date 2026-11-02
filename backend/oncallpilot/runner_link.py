@@ -55,6 +55,7 @@ class RunnerLink:
         params: dict[str, Any],
         proposal_id: uuid.UUID,
         catalogue_version: str,
+        proposal_kind: str = "primary",
     ) -> dict[str, Any]:
         now = self.clock()
         message: dict[str, Any] = {
@@ -71,6 +72,7 @@ class RunnerLink:
             "issued_at": _iso(now),
             "expires_at": _iso(now + timedelta(seconds=REQUEST_TTL_SECONDS)),
             "catalogue_version": catalogue_version,
+            "proposal_kind": proposal_kind,
         }
         message["sig"] = sign(message, self.link_key)
         return message
@@ -81,10 +83,13 @@ class RunnerLink:
         params: dict[str, Any],
         proposal_id: uuid.UUID,
         catalogue_version: str,
+        proposal_kind: str = "primary",
     ) -> RunnerResult | None:
         """The verified ``dry_run_result``, or None after two attempts without one."""
         for attempt in (1, 2):
-            message = self.dry_run_message(action, params, proposal_id, catalogue_version)
+            message = self.dry_run_message(
+                action, params, proposal_id, catalogue_version, proposal_kind
+            )
             try:
                 result = await self._send_and_wait(message)
             except RedisError as exc:

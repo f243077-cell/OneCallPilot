@@ -114,3 +114,14 @@ async def test_openrouter_needs_its_key_and_serves_the_embeddings_too() -> None:
     assert isinstance(provider, OpenRouterProvider)
     assert provider.model == "google/gemini-3.8-flash"  # the ADR-23 default
     assert isinstance(embedder, OpenRouterEmbeddingProvider)  # never mixed with Gemini's
+
+
+def test_every_llm_provider_is_a_valid_agent_meta_provider() -> None:
+    """The first live smoke with openrouter failed GET /incidents/{id} with 500:
+    agent_meta.provider did not validate against C1 (contracts 0.2.0)."""
+    from typing import get_args
+
+    from oncallpilot_contracts.domain import AgentMeta
+
+    for name in get_args(WorkerSettings.model_fields["llm_provider"].annotation):
+        assert AgentMeta(provider=name).provider == name

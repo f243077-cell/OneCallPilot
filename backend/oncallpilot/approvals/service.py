@@ -297,6 +297,7 @@ class Approvals:
             approved_by=user_id,
             approved_at=now,
             catalogue_version=p["catalogue_version"],
+            proposal_kind=p["kind"],
             key=self.action_signing_key,
         )
         try:

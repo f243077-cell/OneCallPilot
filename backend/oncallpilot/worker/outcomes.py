@@ -20,8 +20,8 @@ result                      execution    proposal     incident
 A result for an execution that has already ended changes nothing. A failed
 action with a rollback step gets a ``kind=rollback`` proposal (new dry run,
 re-approval); a failed rollback escalates ``rolled_back_after_failed_action``.
-A failed action without a rollback step stays ``action_failed`` for a human
-(the escalation reasons of C1 have no value for it; see ``handoff.md``).
+A failed action without a rollback step escalates ``action_failed_no_rollback``
+(FR-015, contracts 0.2.0): there is nothing to offer, so a human takes over.
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ COOLDOWN_SECONDS = 120
 
 class ActionPreparer(Protocol):
     async def prepare_action(
-        self, action: str, params: dict[str, Any]
+        self, action: str, params: dict[str, Any], kind: str = "primary"
     ) -> PreparedProposal | Refusal: ...
 
 
@@ -232,13 +232,12 @@ class Outcomes:
             await self._escalate(incident_id, "rolled_back_after_failed_action")
             return
         step = self._rollback_step(row, captured)
-        if step is None:
-            log.warning(
-                "failed action has no rollback step; left action_failed for a human",
-                extra={"incident_id": incident_id, "proposal_id": row["proposal_id"]},
-            )
+        if step is None:  # FR-015: nothing to offer, so a human takes over
+            await self._escalate(incident_id, "action_failed_no_rollback")
             return
-        prepared = await self.proposer.prepare_action(step["action"], step["params"])
+        prepared = await self.proposer.prepare_action(
+            step["action"], step["params"], kind="rollback"
+        )
         if isinstance(prepared, Refusal):
             reason: EscalationReason = (
                 "proposal_invalid" if prepared.outcome == "invalid" else "dry_run_unavailable"
@@ -280,7 +279,9 @@ class Outcomes:
     async def repropose(self, row: Any) -> None:
         """FR-017: a fresh dry run and a new proposal with the same action and parameters."""
         incident_id = row["incident_id"]
-        prepared = await self.proposer.prepare_action(row["action"], dict(row["params"]))
+        prepared = await self.proposer.prepare_action(
+            row["action"], dict(row["params"]), kind=row["kind"]
+        )
         if isinstance(prepared, Refusal):
             now = self.clock()
             async with self.pool.acquire() as conn:

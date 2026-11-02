@@ -46,11 +46,13 @@ class Preparer:
     def __init__(self, refuse: str | None = None) -> None:
         self.refuse = refuse
         self.calls: list[tuple[str, dict[str, Any]]] = []
+        self.kinds: list[str] = []
 
     async def prepare_action(
-        self, action: str, params: dict[str, Any]
+        self, action: str, params: dict[str, Any], kind: str = "primary"
     ) -> PreparedProposal | Refusal:
         self.calls.append((action, params))
+        self.kinds.append(kind)
         if self.refuse == "invalid":
             return Refusal("invalid", ("no",))
         if self.refuse == "dry_run_unavailable":
@@ -213,6 +215,7 @@ async def test_verification_timeout_offers_a_rollback(env: Env, worker: Worker) 
     assert worker.preparer.calls == [
         ("rollback_deploy", {"service": "api", "target_release": "1.5.0"})
     ]
+    assert worker.preparer.kinds == ["rollback"]  # its dry run shows the cooldown exemption
     await detail_validates(env)
 
 
@@ -260,7 +263,7 @@ async def test_failed_rollback_escalates(env: Env, worker: Worker) -> None:
     assert len(s["proposals"]) == 2
 
 
-async def test_failed_action_without_rollback_step_stays_action_failed(
+async def test_failed_action_without_rollback_step_escalates(  # FR-015
     env: Env,
     worker: Worker,
 ) -> None:
@@ -280,8 +283,12 @@ async def test_failed_action_without_rollback_step_stays_action_failed(
     assert response.status_code == 202
     await worker.deliver(result(env, response.json()["execution_id"], "failed", health=False))
     s = await state(env)
-    assert s["incident"]["status"] == "action_failed"
+    assert (s["incident"]["status"], s["incident"]["status_reason"]) == (
+        "escalated",
+        "action_failed_no_rollback",
+    )
     assert worker.preparer.calls == []
+    await detail_validates(env)
 
 
 async def test_state_drift_supersedes_and_reproposes(env: Env, worker: Worker) -> None:

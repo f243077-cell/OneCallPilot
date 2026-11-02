@@ -57,6 +57,7 @@ class DryRunLink(Protocol):
         params: dict[str, Any],
         proposal_id: uuid.UUID,
         catalogue_version: str,
+        proposal_kind: str = "primary",
     ) -> RunnerResult | None: ...
 
 
@@ -128,9 +129,11 @@ class RunnerProposer:
         return await self.prepare_action(proposal.action, proposal.params)
 
     async def prepare_action(
-        self, action: str, params: dict[str, Any]
+        self, action: str, params: dict[str, Any], kind: str = "primary"
     ) -> PreparedProposal | Refusal:
-        """The same validation and dry run for a rollback or a re-proposal after drift."""
+        """The same validation and dry run for a rollback or a re-proposal after drift.
+        ``kind`` goes into the signed dry run, so a rollback's preview shows the
+        cooldown exemption (§7.6)."""
         try:
             catalogue = Catalogue.load(self.catalogue_path)
             targets = Targets.load(self.targets_path)
@@ -143,7 +146,7 @@ class RunnerProposer:
 
         proposal_id = self.new_id()
         result = await self.link.dry_run(
-            valid.action.name, dict(valid.params), proposal_id, valid.catalogue_version
+            valid.action.name, dict(valid.params), proposal_id, valid.catalogue_version, kind
         )
         if result is None:
             return Refusal("dry_run_unavailable", ("no dry run result after a retry",))

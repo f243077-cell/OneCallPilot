@@ -33,6 +33,7 @@ def execute_message(
     approved_by: uuid.UUID,
     approved_at: datetime,
     catalogue_version: str,
+    proposal_kind: str,
     key: bytes,
 ) -> dict[str, Any]:
     message: dict[str, Any] = {
@@ -49,6 +50,7 @@ def execute_message(
         "issued_at": _iso(approved_at),
         "expires_at": _iso(approved_at + timedelta(seconds=EXECUTE_TTL_SECONDS)),
         "catalogue_version": catalogue_version,
+        "proposal_kind": proposal_kind,  # signed: only `rollback` skips the runner's cooldown
     }
     message["sig"] = sign(message, key)
     RunnerRequest.model_validate(message)  # the runner would refuse anything else

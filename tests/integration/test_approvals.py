@@ -112,6 +112,7 @@ async def test_approve_creates_one_execution_and_sends_one_signed_execute(env: E
     assert str(request.approved_by) == env.user and str(request.idempotency_key) == key
     assert request.state_fingerprint == STATE_FINGERPRINT
     assert request.expires_at - request.issued_at == timedelta(seconds=60)
+    assert request.proposal_kind == "primary"  # signed; the runner keeps its cooldown
 
     # SEC-017: the audit snapshot of what the engineer saw.
     audit = await env.pool.fetchrow(
@@ -256,6 +257,10 @@ async def test_rollback_proposals_are_exempt_from_the_cooldown(env: Env) -> None
         )
     response = await env.approve(key=str(uuid.uuid4()))
     assert response.status_code == 202, response.text
+    # The runner skips its own cooldown only on this signed marker (C5 0.2.0, §7.6).
+    [message] = await execute_requests(env.redis)
+    assert verify(message, ACTION_KEY)
+    assert RunnerRequest.model_validate(message).proposal_kind == "rollback"
 
 
 # --- idempotency (TEST-005) --------------------------------------------------------------
