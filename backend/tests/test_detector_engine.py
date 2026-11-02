@@ -158,7 +158,8 @@ def test_restarts_rule(config: DetectorConfig, sample: RestartsSample, fires: bo
 def test_stack_traces_need_a_new_exception_type(config: DetectorConfig) -> None:
     detector = Detector(config, started_at=T0)
     warm = TracesSample(per_minute=9, exception_types=frozenset({"TimeoutError"}))
-    assert detector.step(T0, {"api": Samples(stack_traces=warm)}).alerts == []
+    learning = T0 + timedelta(seconds=config.warmup_settle_seconds)  # after the settle period
+    assert detector.step(learning, {"api": Samples(stack_traces=warm)}).alerts == []
     after = T0 + timedelta(seconds=config.warmup_seconds)
     assert detector.step(after, {"api": Samples(stack_traces=warm)}).alerts == []
     few = TracesSample(per_minute=4, exception_types=frozenset({"IndexError"}))
@@ -198,23 +199,64 @@ def test_warm_up_keeps_learning_normal_samples(config: DetectorConfig) -> None:
     # The normal level moves during warm-up (0.4 % -> 1 %, under the 2 % floor, so
     # not a breach); the baseline follows it.
     end = at + timedelta(seconds=config.warmup_seconds)
+    before = detector._services["api"].signals["error_rate"].ewma.mean
     while at < end:
         value = max(0.0, noisy(rng, 0.01, 0.001))
         assert detector.step(at, {"api": Samples(error_rate=value)}).alerts == []
         at += STEP
     mean = detector._services["api"].signals["error_rate"].ewma.mean
-    assert mean is not None and 0.008 < mean < 0.012
+    # Learnt only after the settle period (ADR-24), but learnt: it moved towards 1 %.
+    assert before is not None and mean is not None and before + 0.001 < mean < 0.012
     # The new level is normal now.
     for _ in range(20):
         value = max(0.0, noisy(rng, 0.01, 0.001))
         assert detector.step(at, {"api": Samples(error_rate=value)}).alerts == []
         at += STEP
     assert not detector.warming_up(at)
+    mean = detector._services["api"].signals["error_rate"].ewma.mean
+    assert mean is not None and 0.008 < mean < 0.012
     fired = []
     for _ in range(12):  # within 60 s after warm-up
         fired += detector.step(at, {"api": Samples(error_rate=0.31)}).alerts
         at += STEP
     assert len(fired) == 1
+
+
+def test_a_fault_still_running_when_the_reset_starts_is_not_learnt(
+    config: DetectorConfig,
+) -> None:
+    """ADR-24: `chaos reset` writes its ledger record first and restores the
+    testbed after it, and the 1-minute windows still show the old fault for a
+    while. A fresh worker that only ever saw that fault must still catch the
+    same fault when it comes back after the warm-up (found by `ocp smoke`)."""
+    rng = random.Random(17)
+    detector = Detector(config, started_at=T0)
+    fault = {
+        "error_rate": 0.11,
+        "stack_traces": TracesSample(per_minute=30, exception_types=frozenset({"IndexError"})),
+    }
+    healthy = TracesSample(per_minute=0, exception_types=frozenset())
+    detector.reset(T0)
+    at = T0
+    settled = T0 + timedelta(seconds=config.warmup_settle_seconds)
+    while at < settled:  # the old fault lingers in the samples
+        assert detector.step(at, {"api": Samples(**fault)}).alerts == []  # type: ignore[arg-type]
+        at += STEP
+    at = feed_baseline(detector, at, 48, rng, error_rate=(0.004, 0.001))  # healthy: 240 s
+    for _ in range(12):  # within 60 s of the new injection
+        cycle = detector.step(at, {"api": Samples(**fault)})  # type: ignore[arg-type]
+        if cycle.alerts:
+            break
+        at += STEP
+    [alert] = cycle.alerts
+    assert {s.name for s in alert.signals} >= {"stack_traces"}
+    assert detector.step(at, {"api": Samples(stack_traces=healthy)}).alerts == []
+
+
+def test_the_settle_period_must_end_inside_the_warm_up() -> None:
+    raw = read_config(CONFIG).replace(b"warmup_settle_seconds: 150", b"warmup_settle_seconds: 180")
+    with pytest.raises(ValueError, match="shorter than warmup_seconds"):
+        load_config(raw)
 
 
 # --- FR-011 recovery ------------------------------------------------------------

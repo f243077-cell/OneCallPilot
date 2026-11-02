@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 DEFAULT_PATH = Path("config") / "detector.yaml"
 
@@ -69,8 +69,15 @@ class Signals(_Strict):
 class DetectorConfig(_Strict):
     ewma_alpha: float = Field(gt=0, lt=1)
     warmup_seconds: int = Field(ge=0)
+    warmup_settle_seconds: int = Field(ge=0)  # ADR-24: learn nothing this long after a reset
     recovery_minutes: float = Field(gt=0)
     signals: Signals
+
+    @model_validator(mode="after")
+    def _settle_inside_warm_up(self) -> DetectorConfig:
+        if self.warmup_settle_seconds >= self.warmup_seconds > 0:
+            raise ValueError("warmup_settle_seconds must be shorter than warmup_seconds")
+        return self
 
 
 def load_config(raw: bytes, overrides: dict[str, float] | None = None) -> DetectorConfig:

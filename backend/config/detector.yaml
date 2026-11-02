@@ -9,6 +9,8 @@
 
 ewma_alpha: 0.1
 warmup_seconds: 180          # no triggers after a `kind=reset` ledger record (FR-003)
+warmup_settle_seconds: 150   # and nothing learnt for this long: the reset itself (≤ 90 s, TB-007)
+                             # plus the 1-minute query windows that still show the old fault (ADR-24)
 recovery_minutes: 3          # every triggering signal normal this long → recovered (FR-011)
 
 signals:

@@ -21,6 +21,10 @@ the alerts to send and the services that recovered. No I/O, no clock.
   while breaching samples stay frozen out as always, so a fault injected right
   after ``chaos reset`` is not learnt as normal: it triggers as soon as the
   warm-up ends. (Relearning from scratch would make that impossible.)
+  For the first ``warmup_settle_seconds`` nothing is learnt at all, neither
+  baselines nor exception types (ADR-24): the reset writes its ledger record
+  before it restores the testbed, and the 1-minute query windows still show
+  the old fault, so those samples describe the fault, not the normal state.
 - **Recovery**: a service whose triggered signals have all been normal for
   ``recovery_minutes`` is reported once as recovered (FR-011).
 """
@@ -126,6 +130,7 @@ class Detector:
         self.config = config
         self._services: dict[str, _ServiceState] = {}
         self._warm_until = started_at + timedelta(seconds=config.warmup_seconds)
+        self._learn_from = started_at + timedelta(seconds=config.warmup_settle_seconds)
 
     # --- public -------------------------------------------------------------
 
@@ -137,9 +142,14 @@ class Detector:
         for state in self._services.values():
             state.warmup_exceptions.clear()
         self._warm_until = at + timedelta(seconds=self.config.warmup_seconds)
+        self._learn_from = at + timedelta(seconds=self.config.warmup_settle_seconds)
 
     def warming_up(self, at: datetime) -> bool:
         return at < self._warm_until
+
+    def settling(self, at: datetime) -> bool:
+        """The start of a warm-up, when nothing is learnt (ADR-24)."""
+        return at < self._learn_from
 
     def step(self, at: datetime, samples: dict[str, Samples]) -> Cycle:
         alerts: list[Alert] = []
@@ -199,6 +209,9 @@ class Detector:
         warming: bool,
     ) -> Signal | None:
         s = self._state(service_state, name)
+        if self.settling(at):  # nothing learnt and nothing triggers (ADR-24)
+            s.streak, s.streak_started = 0, None
+            return None
         z = s.ewma.zscore(value)
         baseline = s.ewma.mean
         breach = (
@@ -260,6 +273,8 @@ class Detector:
     ) -> Signal | None:
         rule = self.config.signals.stack_traces
         s = self._state(service_state, "stack_traces")
+        if self.settling(at):  # the old fault's tracebacks are still in the window
+            return None
         if warming:
             service_state.warmup_exceptions |= sample.exception_types
             return None
