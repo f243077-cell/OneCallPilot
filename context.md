@@ -26,7 +26,9 @@
 - Every lockfile: `uv lock --check` in `contracts/python`, `backend`, `chaos-shop`, `chaos-shop/cli`, `runner`, `tools/ocp` (uv 0.12.7, as in CI).
 
 ## Laptop notes
-- Windows, Git Bash and PowerShell; uv 0.12.7. Docker Desktop is often off: start it before suites that need containers. 16 GB RAM, Docker 10 GB.
+- Windows, Git Bash and PowerShell; uv 0.12.7. Docker Desktop is often off: start it before suites that need containers. 16 GB RAM, Docker 10 GB. Docker Desktop logs with the `local` driver (the chaos helper forces `json-file`).
+- Windows time zone must be Pakistan Standard Time with automatic time: on 2026-11-02 it was Pacific, so Windows UTC (and for a while the Docker VM) was 13 h ahead. After any clock jump, restart the whole stack; Prometheus/Loki volumes may need recreating.
+- The full stack (`ocp up`, backend included) uses about 0.8 GiB.
 - Supabase setup script (one-off, not in the repo): applies new migrations and records them in `supabase_migrations.schema_migrations`; for `ocp-bench`, repeat with that project's values.
 
 ## Cloud container notes (obsolete since 2026-11-02)

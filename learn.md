@@ -204,3 +204,14 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Embedding*: a list of 768 numbers that captures what a text means; texts with similar meaning get similar numbers. Runbook search compares them.
 - *JWKS*: the public keys Supabase publishes; the backend uses them to check that a sign-in token is genuine without asking Supabase each time.
 - *Connection pooler*: a gatekeeper in front of the database that shares a few connections among many clients.
+
+### 2026-11-02 (evening) — The real stack, and a clock that was 13 hours wrong
+
+**What worked.** The backend ran for the first time against the real Supabase database and answered with a real sign-in. The runner now starts with the rest of the stack, and a test checks its safety settings in the real compose file. A new command, `ocp smoke`, plays the whole story: break the shop, wait for the copilot's suggestion, approve it the way the phone would, and check that the shop is fixed.
+
+**What went wrong, and why.** Windows was set to the US Pacific time zone while showing Pakistan time, so the computer believed it was 13 hours later than it was. For a while the containers believed it too. Programs that remember things "until a time" were confused: the metrics database threw away every new measurement as "older than what I already have", and the load balancer kept an old address for the api because it thought its notes were still fresh. Setting the time zone right fixed the clock; restarting the stack clears the confused programs.
+
+**Words.**
+- *Time zone vs clock*: the clock shows local time; the time zone tells the computer how far that is from world time (UTC). A wrong zone with a "right-looking" clock makes world time wrong.
+- *DNS cache*: a remembered "name → address" answer, kept until it expires.
+- *Smoke test*: one quick run through the whole system to see that nothing is badly broken.

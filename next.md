@@ -19,8 +19,10 @@
 
 ## 2. Next tasks, in order
 **Since 2026-11-02 (local sessions on the laptop; cloud sessions are no longer used):** Supabase `ocp-dev` is migrated and `DATABASE_URL`, `SUPABASE_URL` are in `.env` (`SUPABASE_ANON_KEY`, `OCP_TEST_*`, `SUPABASE_DB_ADMIN_URL` in `.env.local`). The LLM is `LLM_PROVIDER=openrouter` (ADR-23).
-A. **Held local commit:** runbook re-embed on a model change (`backend/oncallpilot/db/runbooks.py`, `runbooks/ingest.py`, `tests/integration/test_runbooks.py`): run `../tests/integration` against the test pgvector container, then commit and push.
-B. **First real start with Supabase:** `ocp up`, then `docker compose --profile backend up -d`; fix what the start shows; add `backend` to `PROFILES` in `tools/ocp/ocp_cli/stack.py`; `ocp smoke`.
+A. **Restart the stack** (`ocp down`, `ocp up`): processes started while the Docker VM clock was 13 h ahead keep stale time-based caches (cs-lb's nginx DNS). Check that `cs-loadgen` reports `ok` again and Prometheus has `up` series.
+B. **Proxy security test** (`bash runner/tests/security/run_proxy_test.sh`) and CI on the last push (the runner service and `required: false` fix).
+B2. **`ocp smoke` live** (scenario 2, real model through OpenRouter); record the result in `docs/checks/`. The backend profile is in `ocp up` now; the runner service is in `runner.yml`.
+   Test containers for the backend suites: `ocp-test-pg` (127.0.0.1:54329) and `ocp-test-redis` (127.0.0.1:63799); start them with `docker start ocp-test-pg ocp-test-redis`.
 C. **B2.6 recordings and the recorded-model replay** with OpenRouter (`@pytest.mark.recorded`), then B3.3/B3.4/B3.9.
 D. **Issue 12** (contracts 0.2.0): signed `proposal_kind` in `RunnerRequest`; the runner exempts rollbacks from its cooldown. Plus the escalation reason for a failed action without a rollback step.
 

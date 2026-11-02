@@ -2,6 +2,33 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-02 (evening) — Local session: first real stack with Supabase, runner service, ocp smoke
+
+### Done
+- `977d387` runbook chunks are re-embedded when the embedding model changes (integration test against the test pgvector container).
+- `644fe98` **chaos reset** crashed on this laptop: Docker Desktop logs with the `local` driver, and docker-py returns no output for it. The helper now logs with `json-file`.
+- `.env` completed: 24 missing variables added; `ACTION_SIGNING_KEY`, `RUNNER_LINK_KEY`, `INGEST_TOKEN` and both Redis passwords generated locally (never printed or committed).
+- **First real start against Supabase `ocp-dev`**: backend-api and backend-worker healthy; the worker uses OpenRouter (`google/gemini-3.8-flash`) and embedded 35 runbook chunks; REST with a real Supabase token works (`/healthz` 200, 401 without a token, `/incidents` and `/settings` 200). `ocp doctor` passed (17 services, ports and socket mounts as the architecture says); about 815 MiB for the whole stack.
+- `ae4ebe2`/`1e08326` **runner service** in `runner.yml` (isolation test checks the real service and that it matches the spec; `docker inspect` of the running container passed, every process uid 10001; `DOCKER_API_VERSION` 1.48 so CI's Docker 28 and the laptop's Docker 29 both work). Its `copilot-redis` dependency is `required: false`, so `--profile runner` alone stays valid (that broke the proxy and live jobs in CI on `ae4ebe2`).
+- `ae4ebe2` **`ocp up` starts the backend profile**; `ocp up --no-backend` for hosts without Supabase (CI uses it).
+- `fc7ac7f` flaky WS test fixed: `exp=int(time.time())+1` could be milliseconds away with leeway 0 (CI backend red on `ae4ebe2`).
+- `ocp smoke` (S2.1, TEST-014) written and unit-tested (9 tests). **Live run not passed yet** (below).
+
+### Found today (environment)
+- **Windows time zone was Pacific while the clock showed Pakistan time**: Windows UTC was 13 h ahead. Tanzeel switched to automatic time (now Pakistan Standard Time, all clocks agree).
+- The Docker VM clock followed the wrong time for a while, so processes started then hold future times: Prometheus rejected every new sample as "too old" (fixed by recreating prometheus/loki/alloy with fresh volumes), and **cs-lb's nginx still sends to a stale api address** (its DNS cache expiry is 13 h in the future), so every request through cs-lb fails since the smoke's injection. That is why the smoke saw no incident.
+
+### Next
+1. `ocp down`, then `ocp up` (restart everything with the correct clock). Check `docker logs cs-loadgen`: `ok` must rise again.
+2. Run the proxy security test (`bash runner/tests/security/run_proxy_test.sh`; the pip download is slow here) and check CI on the last push.
+3. `uv run --project tools/ocp ocp smoke`: scenario 2 with the real model; record the result in `docs/checks/`.
+4. Then `next.md` §2 C and D (B2.6 recordings with OpenRouter; issue 12 contracts 0.2.0).
+
+### Waiting on Tanzeel
+- OpenRouter credit (free tier, balance 0).
+- `mobile/pubspec.lock` and `mobile/analysis_options.yaml` local changes: keep or reset?
+- Firebase and the phone; decisions listed in the morning entry.
+
 ## 2026-11-02 — Local session (laptop): OpenRouter (ADR-23), Supabase `ocp-dev` live
 
 ### Done
