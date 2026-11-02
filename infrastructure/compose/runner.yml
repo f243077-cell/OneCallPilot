@@ -49,6 +49,9 @@ services:
     depends_on:
       copilot-redis:
         condition: service_healthy
+        # The proxy tests start socket-proxy-rw with profile runner alone, where
+        # copilot-redis (profile copilot) is not defined; `ocp up` has both.
+        required: false
       socket-proxy-rw:
         condition: service_healthy
     restart: unless-stopped
