@@ -12,9 +12,12 @@ from pathlib import Path
 from typing import Any
 
 PROJECT = "oncallpilot"
-# architecture §12.1: the default `ocp up` starts all four. A profile with no
+# architecture §12.1: the default `ocp up` starts all of them. A profile with no
 # services yet (before its owner adds the file) selects nothing.
-PROFILES = ("testbed", "obs", "copilot", "runner")
+PROFILES = ("testbed", "obs", "copilot", "runner", "backend")
+# backend-api and backend-worker need the Supabase project (DATABASE_URL,
+# SUPABASE_URL); hosts without it (CI) run `ocp up --no-backend`.
+BACKEND_PROFILE = "backend"
 # Created stopped and started only by `chaos` and the runner (week-1.md).
 SLOT_PROFILE = "testbed-slots"
 COMPOSE_MIN = (2, 20)
@@ -128,9 +131,9 @@ class Stack:
         numbers = raw.lstrip("v").split("-")[0].split(".")
         return tuple(int(n) for n in numbers if n.isdigit())
 
-    def expected_services(self) -> list[str]:
-        """Services the four profiles start (the slots are not among them)."""
-        out = self.check([*self.compose(*PROFILES), "config", "--services"]).stdout
+    def expected_services(self, profiles: Sequence[str] = PROFILES) -> list[str]:
+        """Services the profiles start (the slots are not among them)."""
+        out = self.check([*self.compose(*profiles), "config", "--services"]).stdout
         return sorted(line.strip() for line in out.splitlines() if line.strip())
 
     def images(self) -> dict[str, str]:

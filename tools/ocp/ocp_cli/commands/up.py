@@ -1,8 +1,9 @@
 """ocp up: start the stack, reset the testbed, wait for health, print the LAN URL.
 
-architecture §12.1: `docker compose up -d --build` with all four profiles, then
+architecture §12.1: `docker compose up -d --build` with every profile, then
 `chaos reset`, then wait for health. The testbed's stopped slots are created
-here too (week-1.md, "Compose profiles").
+here too (week-1.md, "Compose profiles"). `--no-backend` leaves out
+backend-api and backend-worker, for hosts without the Supabase project (CI).
 """
 
 import argparse
@@ -10,7 +11,7 @@ import time
 
 from ocp_cli import policy
 from ocp_cli.lan import lan_address
-from ocp_cli.stack import COMPOSE_MIN, PROFILES, SLOT_PROFILE, Stack, StackError
+from ocp_cli.stack import BACKEND_PROFILE, COMPOSE_MIN, PROFILES, SLOT_PROFILE, Stack, StackError
 
 NAME = "up"
 HELP = "start the stack, reset the testbed, wait for health, print the LAN URL"
@@ -25,6 +26,11 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         "--no-build", action="store_true", help="use the images already built (offline)"
     )
     parser.add_argument(
+        "--no-backend",
+        action="store_true",
+        help="leave out backend-api and backend-worker (no Supabase project, e.g. CI)",
+    )
+    parser.add_argument(
         "--timeout", type=float, default=HEALTH_TIMEOUT, help="seconds to wait for health"
     )
 
@@ -36,9 +42,10 @@ def run(args: argparse.Namespace, stack: Stack) -> int:
     if not (stack.root / ".env").is_file():
         raise StackError("no .env in the repository root; copy .env.example and fill it in")
 
+    profiles = [p for p in PROFILES if not (args.no_backend and p == BACKEND_PROFILE)]
     started = time.monotonic()
-    print(f"[ocp up] starting profiles {', '.join(PROFILES)}")
-    up = [*stack.compose(*PROFILES), "up", "-d", "--wait", "--wait-timeout", f"{args.timeout:.0f}"]
+    print(f"[ocp up] starting profiles {', '.join(profiles)}")
+    up = [*stack.compose(*profiles), "up", "-d", "--wait", "--wait-timeout", f"{args.timeout:.0f}"]
     up += ["--no-build"] if args.no_build else ["--build"]
     stack.check(up, capture=False)
 
@@ -48,7 +55,7 @@ def run(args: argparse.Namespace, stack: Stack) -> int:
     print("[ocp up] chaos reset")
     stack.check(["uv", "run", "--project", "chaos-shop/cli", "chaos", "reset"], capture=False)
 
-    expected = stack.expected_services()
+    expected = stack.expected_services(profiles)
     problems = wait_healthy(stack, expected, args.timeout)
     if problems:
         print("[ocp up] not healthy:")

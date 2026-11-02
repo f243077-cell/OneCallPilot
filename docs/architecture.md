@@ -1252,7 +1252,7 @@ infrastructure/compose/
 ├── runner.yml         (Tanzeel)   # runner, socket-proxy-rw
 └── test.yml           (Usman)     # pgvector postgres + redis for local pytest
 ```
-- **Profiles:** `testbed`, `obs`, `copilot`, `runner`. The default `ocp up` starts all four.
+- **Profiles:** `testbed`, `obs`, `copilot`, `runner`, `backend`. The default `ocp up` starts all five; `ocp up --no-backend` leaves out backend-api and backend-worker on a host without the Supabase project (CI).
 - **One command:** `ocp up` runs `docker compose up -d --build`, then `chaos reset`, then waits for health and prints the LAN URL to put in the app.
 - **Health checks:** every service has one; dependent services use `depends_on: condition: service_healthy`.
 - **Images:** pinned tags only (no `latest`); Python images are built from `python:3.12-slim`.

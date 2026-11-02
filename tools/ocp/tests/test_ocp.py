@@ -9,7 +9,15 @@ import pytest
 from ocp_cli import main as entry
 from ocp_cli import policy
 from ocp_cli.commands import doctor, down, up
-from ocp_cli.stack import PROFILES, SLOT_PROFILE, Container, Result, Stack, StackError
+from ocp_cli.stack import (
+    BACKEND_PROFILE,
+    PROFILES,
+    SLOT_PROFILE,
+    Container,
+    Result,
+    Stack,
+    StackError,
+)
 from tests.fakes import FakeDocker, inspect
 
 
@@ -31,7 +39,9 @@ def stack(root: Path, docker: FakeDocker) -> Stack:
 
 
 def up_args(**overrides: object) -> argparse.Namespace:
-    return argparse.Namespace(**{"no_build": False, "timeout": 5.0, **overrides})
+    return argparse.Namespace(
+        **{"no_build": False, "no_backend": False, "timeout": 5.0, **overrides}
+    )
 
 
 # --- entry point ---
@@ -88,6 +98,16 @@ def test_up_starts_all_profiles_creates_slots_resets_and_prints_the_url(
     assert "3 services healthy" in out
     assert "API_BASE_URL=http://192.168.1.20:8000  (backend-api is not in the stack yet)" in out
     assert "WS_URL=ws://192.168.1.20:8000/ws/incidents" in out
+
+
+def test_up_starts_the_backend_unless_told_not_to(stack: Stack, docker: FakeDocker) -> None:
+    assert BACKEND_PROFILE in PROFILES
+    assert up.run(up_args(), stack) == 0
+    assert docker.ran("up", "--profile", BACKEND_PROFILE)
+    docker.commands.clear()
+    assert up.run(up_args(no_backend=True), stack) == 0
+    assert not any(BACKEND_PROFILE in c for c in docker.commands if "up" in c or "config" in c)
+    assert docker.ran("up", "--profile", "runner")
 
 
 def test_up_without_build_and_without_env(stack: Stack, docker: FakeDocker, root: Path) -> None:

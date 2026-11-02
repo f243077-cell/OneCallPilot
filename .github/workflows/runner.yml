@@ -96,10 +96,11 @@ jobs:
       - name: Dummy env (TEST-ONLY values from .env.example)
         run: cp .env.example .env
 
-      # Builds the testbed images, starts the stack (socket-proxy-rw included)
-      # and runs `chaos reset`, which seeds the deploy ledger.
+      # Builds the testbed and runner images, starts the stack (socket-proxy-rw
+      # and the runner service included) and runs `chaos reset`, which seeds the
+      # deploy ledger. CI has no Supabase project, so the backend stays out.
       - name: Stack up
-        run: uv run --project tools/ocp ocp up
+        run: uv run --project tools/ocp ocp up --no-backend
 
       - name: Runner image
         run: docker build --build-context contracts=contracts -t oncallpilot/runner:0.1.0 runner

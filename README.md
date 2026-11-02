@@ -38,7 +38,7 @@ Storage: Supabase Postgres (schema `ocp`, pgvector) and a private Redis (`copilo
 1. Docker with Compose ≥ 2.20, Python 3.12 and `uv` on the host.
 2. `cp .env.example .env` and fill in real values (never commit `.env`). Each variable has a one-line comment in `.env.example`.
 3. `uv run --project tools/ocp ocp up` starts the testbed, observability, copilot-redis and the runner profile and resets the testbed; `ocp doctor` checks ports, health and versions.
-4. backend-api and backend-worker run in the Compose profile `backend` once the Supabase project exists: `docker compose --profile backend up -d`.
+4. `ocp up` also starts backend-api and backend-worker (profile `backend`), which need the Supabase project (`DATABASE_URL`, `SUPABASE_URL`) and an LLM key (`OPENROUTER_API_KEY`, ADR-23). Without Supabase, use `ocp up --no-backend`.
 
 Checks, per package (`backend/`, `runner/`, `contracts/python/`, `chaos-shop/`, `tools/ocp/`, `benchmark/`): `uv sync --locked`, `uv run ruff check .`, `uv run mypy`, `uv run pytest -q`. The backend's database, integration, regression and security suites need throwaway Postgres (`pgvector/pgvector`) and Redis containers (`OCP_TEST_DATABASE_URL`, `OCP_TEST_REDIS_URL`).
 

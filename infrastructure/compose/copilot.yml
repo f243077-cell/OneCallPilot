@@ -1,9 +1,8 @@
 # Owner: Tanzeel (Stream B). Copilot services (architecture §2.2, §2.3, §2.7, §3, §12.1).
 # B1.3 adds copilot-redis; B1.4 adds backend-seed (profile `tools`, run once by
 # `ocp seed-incident`, never by `ocp up`). backend-api and backend-worker are in
-# profile `backend`, which `ocp up` does not start yet: they need the Supabase
-# project (DATABASE_URL). Once it exists, start them with
-# `docker compose --profile backend up -d`, then add the profile to `ocp up`.
+# profile `backend`, which `ocp up` starts; they need the Supabase project
+# (DATABASE_URL, SUPABASE_URL), so a host without it runs `ocp up --no-backend`.
 #
 # SAFETY (SEC-004): ACL users only (default is off); the runner user reaches only
 # ocp:runner:*. copilot-redis is never published on the host.
