@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import time
 import uuid
 from collections.abc import AsyncIterator, Iterator
@@ -116,6 +117,13 @@ def close_code(ws: WebSocketTestSession) -> int:
     return closed.value.code
 
 
+def expiring_soon() -> int:
+    """An ``exp`` 1–2 s from now. ``int(time.time()) + 1`` can be only a few ms
+    away (it truncates), so with no leeway the token was sometimes already
+    expired at ``auth`` and the socket closed before ``hello``."""
+    return math.ceil(time.time()) + 1
+
+
 def receive(ws: WebSocketTestSession, kind: str | None = None) -> dict[str, Any]:
     """Next message (skipping pings unless asked for), validated against C3."""
     while True:
@@ -176,7 +184,7 @@ def test_hello_on_an_empty_stream(client: TestClient) -> None:
 
 
 def test_expired_token_without_refresh_closes_4401(client: TestClient) -> None:
-    with authed(client, KEY.token(exp=int(time.time()) + 1)) as session:
+    with authed(client, KEY.token(exp=expiring_soon())) as session:
         receive(session)
         started = time.monotonic()
         while True:
@@ -191,7 +199,7 @@ def test_expired_token_without_refresh_closes_4401(client: TestClient) -> None:
 
 def test_refresh_extends_the_session(client: TestClient) -> None:
     user = str(uuid.uuid4())
-    with authed(client, KEY.token(sub=user, exp=int(time.time()) + 1)) as session:
+    with authed(client, KEY.token(sub=user, exp=expiring_soon())) as session:
         receive(session)
         session.send_json({"type": "auth", "token": KEY.token(sub=user)})
         deadline = time.monotonic() + 2
