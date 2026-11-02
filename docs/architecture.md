@@ -34,6 +34,7 @@ The original specification leaves some engineering details open. Each gap is res
 | ADR-20 | **Settings are editable only while `BENCHMARK_LOCK=false`.** Every change bumps `detector_config_version`, which is stamped on each incident. | Keeps the spec's Settings screen without letting thresholds drift during the benchmark. | Confirmed |
 | ADR-21 | **socket-proxy-ro also sets `ALLOW_LOGS=1`** (`docs/adr/ADR-21-ro-proxy-allow-logs.md`). | S0.7 (a): the proxy refuses `GET /containers/{id}/logs` without it, so Alloy could not read logs. Still GET-only; `archive`, `export`, `top`, `changes` stay refused. | Accepted 2026-10-21 |
 | ADR-22 | **Detector warm-up keeps learning normal samples** instead of relearning from scratch (`docs/adr/ADR-22-detector-warm-up-keeps-learning.md`). | Relearning from scratch makes FR-003's own acceptance impossible: a fault injected right after a reset would become the baseline. | Accepted 2026-10-21 |
+| ADR-23 | **LLM and embeddings through OpenRouter** (`docs/adr/ADR-23-llm-and-embeddings-through-openrouter.md`). `LLM_PROVIDER=openrouter` reaches the ADR-13 primary (`google/gemini-3.8-flash`) and `gemini-embedding-001` (768 dimensions, normalised in code) with one `OPENROUTER_API_KEY`; strict `json_schema` replies, reasoning details replayed unchanged, `data_collection: deny`. The direct Gemini and Claude adapters stay. | The project has an OpenRouter key, not a Gemini key; the live API was checked with the agent's real schemas and tools. Task types do not reach the embedding model. | Accepted 2026-11-02 |
 
 ---
 
@@ -84,7 +85,7 @@ flowchart LR
 
   SUPA[("Supabase (hosted)<br/>Postgres + pgvector + Auth")]
   FCM["Firebase Cloud Messaging"]
-  LLM["LLM API (Gemini or Claude)"]
+  LLM["LLM API (OpenRouter, Gemini or Claude)"]
   EMB["Embedding API"]
 
   APP <-- "REST + WS (LAN :8000)" --> API
@@ -134,8 +135,8 @@ flowchart LR
 | flutter_secure_storage | App | Stores the Supabase session (refresh token) and the device ID |
 | supabase_flutter | App | Email/password login against Supabase Auth only; data never comes through Supabase |
 | Python 3.12, FastAPI, Pydantic v2 | backend-api, backend-worker, runner, chaos-shop | Async services with strict schemas |
-| Claude API or Gemini API | backend-worker | Tool calling and structured output behind `LLMProvider` |
-| Gemini embeddings (`gemini-embedding-001`, 768 dimensions) | backend-worker | Runbook vectors behind `EmbeddingProvider` |
+| OpenRouter, Gemini or Claude API (ADR-23) | backend-worker | Tool calling and structured output behind `LLMProvider` |
+| Gemini embeddings (`gemini-embedding-001`, 768 dimensions; through OpenRouter with `LLM_PROVIDER=openrouter`, ADR-23) | backend-worker | Runbook vectors behind `EmbeddingProvider` |
 | Supabase Postgres | Hosted | Incidents, evidence, hypotheses, proposals, approvals, executions, audit trail |
 | pgvector | Same Supabase database | `runbook_chunks.embedding vector(768)` with an HNSW cosine index |
 | Supabase Auth | Hosted | User accounts; JWTs verified locally by the backend through JWKS |
@@ -191,7 +192,7 @@ flowchart LR
 - **Security boundary:** sees only **redacted** tool output wrapped as untrusted data. It has no tool that executes anything. It cannot set a risk tier. Its proposal is validated against `contracts/actions.yaml` and the live target list.
 
 ### 2.5 LLM provider — `backend/oncallpilot/agent/providers/` (Usman)
-- `LLMProvider` protocol with `AnthropicProvider`, `GeminiProvider`, and `FakeProvider` (scripted, used by tests).
+- `LLMProvider` protocol with `OpenRouterProvider` (ADR-23), `AnthropicProvider`, `GeminiProvider`, and `FakeProvider` (scripted, used by tests).
 - Settings: temperature `0`, timeout 30 s per call, one retry on 429/5xx.
 - Structured output is always validated against Pydantic models. One repair attempt is allowed; a second failure escalates the incident.
 
@@ -602,7 +603,7 @@ class ProposalOut(BaseModel):
 
 ```python
 class LLMProvider(Protocol):
-    name: str          # "gemini" | "anthropic" | "fake"
+    name: str          # "openrouter" | "gemini" | "anthropic" | "fake"
     model: str
     async def step_with_tools(self, messages: list[Msg], tools: list[ToolSpec]) -> LLMTurn: ...
     async def structured(self, messages: list[Msg], schema: type[BaseModel]) -> BaseModel: ...
@@ -611,6 +612,7 @@ class LLMProvider(Protocol):
 - **Temperature** is always `0`. Max output tokens is set per call type.
 - **Claude adapter:** tool use; structured output is produced by forcing a single tool whose `input_schema` is the model's JSON Schema.
 - **Gemini adapter:** function calling; structured output uses JSON response mode with the response schema.
+- **OpenRouter adapter (ADR-23):** OpenAI-style tool calls; structured output uses `response_format: json_schema` with `strict: true`; `reasoning.effort = low`; each assistant message, reasoning details included, is replayed unchanged.
 - **Prompts** live in `backend/oncallpilot/agent/prompts/v{N}/` (`system.md`, `gather.md`, `hypothesize.md`, `disproof.md`, `reflect.md`, `propose.md`). `PROMPT_VERSION = "v{N}"`. `prompts/manifest.json` stores a SHA-256 hash per file, and a CI test fails if any prompt text changes without a version bump.
 - **Recorded per incident** in `agent_meta`: `prompt_version`, `provider`, `model`, `catalogue_version`, `agent_config_hash`, `tool_calls`, `llm_calls`, `input_tokens`, `output_tokens`, `duration_ms`, `terminal_state`, `run_started_at` (also the lock in §5.2). Each LLM call is also written to `audit_log` (`llm.call`), with the redacted prompt and response in its payload, for reproducibility.
 

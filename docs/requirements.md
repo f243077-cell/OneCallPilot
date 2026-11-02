@@ -258,7 +258,7 @@ Every structured call MUST validate against its Pydantic model (§6.6). On failu
 
 #### AI-021 — Provider abstraction
 `agent` · U · **Must** · Depends: —
-The agent MUST use only the `LLMProvider` protocol, with `GeminiProvider`, `AnthropicProvider`, and `FakeProvider` implementations selected by `LLM_PROVIDER`. No provider SDK may be imported outside `agent/providers/`.
+The agent MUST use only the `LLMProvider` protocol, with `OpenRouterProvider` (ADR-23), `GeminiProvider`, `AnthropicProvider`, and `FakeProvider` implementations selected by `LLM_PROVIDER`. No provider SDK may be imported outside `agent/providers/`.
 **Accept:** An import-lint test; switching the env var switches the adapter with no other code change.
 
 #### AI-022 — Determinism settings
@@ -288,7 +288,7 @@ Each incident MUST be investigated at most once, with concurrency capped at `AGE
 
 #### AI-027 — Embedding provider
 `backend` · U · **Must** · Depends: ADR-14
-Embeddings MUST go through an `EmbeddingProvider` interface, produce 768-dimension L2-normalised vectors, and record `embedding_model`. The Gemini implementation uses `gemini-embedding-001` with `output_dimensionality=768`, `task_type=RETRIEVAL_DOCUMENT` for runbook chunks and `RETRIEVAL_QUERY` for queries, and normalises each vector itself (the API only normalises the 3072-dimension output).
+Embeddings MUST go through an `EmbeddingProvider` interface, produce 768-dimension L2-normalised vectors, and record `embedding_model`. The Gemini implementation uses `gemini-embedding-001` with `output_dimensionality=768`, `task_type=RETRIEVAL_DOCUMENT` for runbook chunks and `RETRIEVAL_QUERY` for queries, and normalises each vector itself (the API only normalises the 3072-dimension output). With `LLM_PROVIDER=openrouter` the same model is reached through OpenRouter, without task types (ADR-23).
 **Accept:** The vector norm is 1 ± 1e-6; a dimension mismatch raises before the insert.
 
 #### AI-028 — Suspicious-content flag
