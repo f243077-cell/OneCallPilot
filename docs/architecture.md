@@ -35,6 +35,7 @@ The original specification leaves some engineering details open. Each gap is res
 | ADR-21 | **socket-proxy-ro also sets `ALLOW_LOGS=1`** (`docs/adr/ADR-21-ro-proxy-allow-logs.md`). | S0.7 (a): the proxy refuses `GET /containers/{id}/logs` without it, so Alloy could not read logs. Still GET-only; `archive`, `export`, `top`, `changes` stay refused. | Accepted 2026-10-21 |
 | ADR-22 | **Detector warm-up keeps learning normal samples** instead of relearning from scratch (`docs/adr/ADR-22-detector-warm-up-keeps-learning.md`). | Relearning from scratch makes FR-003's own acceptance impossible: a fault injected right after a reset would become the baseline. | Accepted 2026-10-21 |
 | ADR-23 | **LLM and embeddings through OpenRouter** (`docs/adr/ADR-23-llm-and-embeddings-through-openrouter.md`). `LLM_PROVIDER=openrouter` reaches the ADR-13 primary (`google/gemini-3.8-flash`) and `gemini-embedding-001` (768 dimensions, normalised in code) with one `OPENROUTER_API_KEY`; strict `json_schema` replies, reasoning details replayed unchanged, `data_collection: deny`. The direct Gemini and Claude adapters stay. | The project has an OpenRouter key, not a Gemini key; the live API was checked with the agent's real schemas and tools. Task types do not reach the embedding model. | Accepted 2026-11-02 |
+| ADR-24 | **The detector learns nothing while a reset settles** (`docs/adr/ADR-24-detector-learns-nothing-while-a-reset-settles.md`). For the first `warmup_settle_seconds` (150 s) of a warm-up, no baseline update and no known exception types. | `chaos reset` writes its record before restoring the testbed and the queries look back 1 minute, so the old fault was learnt as normal (found by `ocp smoke`). | Accepted 2026-11-02 |
 
 ---
 
@@ -628,7 +629,7 @@ class LLMProvider(Protocol):
 | `stack_traces` | Loki `count_over_time({service=~"api\|worker"} \|= "Traceback" [1m])` | ≥ 5 per minute **and** the exception type was not seen during the warm-up |
 
 - **EWMA:** α = 0.1; mean and variance are frozen while a signal is anomalous.
-- **Warm-up:** no triggers for 180 s after `chaos reset`. The detector notices a reset when a new `kind=reset` record appears in the deploy ledger. Baselines keep learning from non-breaching samples during warm-up; breaching samples stay frozen out (ADR-22).
+- **Warm-up:** no triggers for 180 s after `chaos reset`. The detector notices a reset when a new `kind=reset` record appears in the deploy ledger. Baselines keep learning from non-breaching samples during warm-up; breaching samples stay frozen out (ADR-22). Nothing is learnt during the first 150 s (`warmup_settle_seconds`), while the reset and the 1-minute query windows still show the old fault (ADR-24).
 - **Severity:**
   - `sev1`: a service has no running container, or error rate ≥ 25 %;
   - `sev2`: error rate ≥ 5 %, p95 ≥ 3× baseline, or restarts;
