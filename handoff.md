@@ -2,6 +2,26 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-02 — Local session (laptop): OpenRouter (ADR-23), Supabase `ocp-dev` live
+
+### Done
+- Reviewed the cloud sessions' work: `main` was green on all six workflows at `baabaff`; backend (314) and runner (367) unit suites pass on the laptop too.
+- Deleted the merged branches `tanzeel` and `usman` on GitHub and locally (Tanzeel's go).
+- **ADR-23** (`ad9b416`): the agent's model and the runbook embeddings go through **OpenRouter** with one `OPENROUTER_API_KEY` (no Gemini key). Checked against the live API with the agent's real schemas and tools: `google/gemini-3.8-flash` (newest Flash with tools + structured outputs), strict `json_schema` valid for every structured model, reasoning details must be replayed, embeddings 768-d but not unit length, `input_type` ignored.
+- **OpenRouter adapters** (`b837c45`): `OpenRouterProvider`, `OpenRouterEmbeddingProvider` (httpx, no new dependency), `LLM_PROVIDER=openrouter` is now the default; `.env.example`, `copilot.yml`, runner isolation (refuses `OPENROUTER_API_KEY`). 26 new tests; a live run through the adapter (gather → replay → hypotheses → embedding) passed. CI green on all six.
+- **Supabase `ocp-dev`**: migration applied and recorded in `supabase_migrations.schema_migrations`; `ocp_backend` given a login (password generated locally, `DATABASE_URL` written to `.env` only); JWKS ES256, test sign-in, the backend's `TokenVerifier`, sign-ups disabled, RLS, `audit_log` append-only all checked live. **S0.7 (c) and (d) passed** (`docs/checks/proxy.md`).
+- Fix written test-first, **held locally until Docker runs**: runbook ingestion re-embeds chunks whose `embedding_model` differs from the current provider's (`existing_hashes(conn, source, embedding_model)`), so fake and real vectors never mix.
+
+### Next
+`next.md` §2.
+
+### Waiting on Tanzeel
+- Start Docker Desktop (≈ 2 GB free) so the held fix's integration test runs, then the full stack with the `backend` profile.
+- Add OpenRouter credit (the key reports free tier, balance 0).
+- `mobile/pubspec.lock` and `mobile/analysis_options.yaml` have local, uncommitted changes (a newer `flutter pub get`, analyzer excludes): keep or reset?
+- Firebase and the phone (A3.2, A3.3, A3.7, A3.8); decisions: issue 12 rollback marker (contracts 0.2.0), escalation reason for a failed action without a rollback step, device DELETE vs DB-011, runbook review.
+- The scheduled cloud routine can be deleted (cloud sessions are no longer used).
+
 ## 2026-10-28 — Scheduled run (15:54 UTC): nothing to do
 
 ### Done

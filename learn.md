@@ -189,3 +189,18 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Stale*: the phone might be showing old information (lost connection, nothing heard for 30 s, proposal expired, or a newer version on its way). Approving is blocked while stale; rejecting is always allowed.
 - *Baseline*: what "normal" looks like for a signal, learned over time; an alarm fires when a value is far from it.
 - *Warm-up*: the first 3 minutes after a start or a reset, when the detector learns and never alarms.
+
+### 2026-11-02 — Local session: one key for the AI, and the real database
+
+**Where things stood.** Cloud sessions had built almost everything that needs no outside accounts. What was left needed a database account (Supabase), an AI key, and the phone.
+
+**What we did.**
+1. **Switched the AI to OpenRouter.** OpenRouter is a single door to many AI models. The plan said "use Google's Gemini with a Gemini key"; we now reach the *same* Gemini model through OpenRouter with one key. Before writing code we sent real test requests with the agent's own question formats, so we knew it works. Written down as ADR-23.
+2. **Found two surprises in those tests.** The model "thinks" before answering, and its thinking must be sent back unchanged in the next turn or it loses track. And the search-vector service ignores the hint "this is a question" vs "this is a document"; search still found the right runbook.
+3. **Connected the real database.** The script applied the table definitions, created the backend's own database login with a random password (written only to the private `.env` file), and checked that sign-ins work, that strangers cannot sign up, and that the audit log cannot be edited.
+
+**Words.**
+- *OpenRouter*: a service that forwards a request to the AI provider you name, with one bill and one key.
+- *Embedding*: a list of 768 numbers that captures what a text means; texts with similar meaning get similar numbers. Runbook search compares them.
+- *JWKS*: the public keys Supabase publishes; the backend uses them to check that a sign-in token is genuine without asking Supabase each time.
+- *Connection pooler*: a gatekeeper in front of the database that shares a few connections among many clients.
