@@ -151,6 +151,7 @@
             "proposal_rejected",
             "proposal_expired",
             "rolled_back_after_failed_action",
+            "action_failed_no_rollback",
             "runner_refused",
             "runner_timeout",
             "agent_interrupted"

@@ -57,7 +57,7 @@ def test_models_are_frozen_and_strict() -> None:
     ("literal", "size"),
     [
         (enums.IncidentStatus, 7),
-        (enums.EscalationReason, 13),
+        (enums.EscalationReason, 14),
         (enums.RootCauseCategory, 13),
         (enums.MetricTemplate, 12),
         (enums.ToolName, 5),

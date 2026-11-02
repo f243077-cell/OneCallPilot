@@ -46,8 +46,11 @@ Runner checks, in order (§5.10)
     7. targets allowlisted in ``runner/targets.yaml`` → ``TARGET_NOT_ALLOWED``
     8. ``execute`` only: ``SET NX ocp:runner:idem:{execution_id}`` (a
        duplicate is acknowledged and ignored, with no result); rate limit →
-       ``RATE_LIMITED``; cooldown → ``COOLDOWN_ACTIVE``; then the state
-       fingerprint, where a mismatch gives ``aborted`` with ``STATE_DRIFT``.
+       ``RATE_LIMITED``; cooldown → ``COOLDOWN_ACTIVE`` (not for
+       ``proposal_kind = rollback``, architecture §7.6; the marker is inside the
+       signed payload, so it cannot be added or changed without failing check 1);
+       then the state fingerprint, where a mismatch gives ``aborted`` with
+       ``STATE_DRIFT``.
 
     **Every final answer to an ``execute`` claims its ID first.** Before it
     sends any ``refused`` or ``aborted`` result for an ``execute`` (checks 1–7
@@ -92,7 +95,7 @@ from pydantic import Field, StringConstraints, model_validator
 
 from oncallpilot_contracts.common import ContractModel, Semver, Sha256Hex, UtcDatetime
 from oncallpilot_contracts.domain import DryRunResult, ParamName, ParamValue, StructuralHealth
-from oncallpilot_contracts.enums import RunnerErrorCode, StepStatus
+from oncallpilot_contracts.enums import ProposalKind, RunnerErrorCode, StepStatus
 
 REQUESTS_STREAM = "ocp:runner:requests"
 REQUESTS_GROUP = "runner"
@@ -123,6 +126,11 @@ class RunnerRequest(ContractModel):
     issued_at: UtcDatetime
     expires_at: UtcDatetime
     catalogue_version: Semver
+    proposal_kind: ProposalKind | None = Field(
+        default=None,
+        description="The proposal's kind; only `rollback` skips the runner's cooldown (§7.6). "
+        "Absent or null counts as `primary` (fail closed). Covered by `sig`.",
+    )
     sig: Signature
 
     @model_validator(mode="after")

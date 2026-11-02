@@ -98,6 +98,23 @@
       ],
       "title": "Proposal Id"
     },
+    "proposal_kind": {
+      "anyOf": [
+        {
+          "enum": [
+            "primary",
+            "rollback"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The proposal's kind; only `rollback` skips the runner's cooldown (§7.6). Absent or null counts as `primary` (fail closed). Covered by `sig`.",
+      "title": "Proposal Kind"
+    },
     "request_id": {
       "format": "uuid",
       "title": "Request Id",

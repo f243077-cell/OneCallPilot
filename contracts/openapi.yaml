@@ -15,7 +15,7 @@
 openapi: 3.1.0
 info:
   title: OnCallPilot backend-api
-  version: 0.1.0
+  version: 0.2.0
   description: >-
     REST API for the OnCallPilot app and for alert sources. JSON is
     snake_case; timestamps are UTC ISO 8601 with a Z suffix; identifiers are

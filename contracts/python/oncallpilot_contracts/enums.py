@@ -36,6 +36,7 @@ EscalationReason = Literal[
     "proposal_rejected",
     "proposal_expired",
     "rolled_back_after_failed_action",
+    "action_failed_no_rollback",  # FR-015: the failed action has no rollback step
     "runner_refused",
     "runner_timeout",
     "agent_interrupted",
