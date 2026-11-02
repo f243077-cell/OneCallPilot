@@ -147,6 +147,31 @@ http {
 - Use `ipv6=off` (Docker's embedded DNS on these networks is IPv4) and `proxy_next_upstream error timeout http_502`, so a request that hits a replica being stopped is retried on another one.
 - Pin `nginx:1.30.5-alpine` (or a later 1.30.x stable) for `cs-lb`.
 
-## (c) `gemini-embedding-001` at 768 dimensions — Usman, pending
+## (c) `gemini-embedding-001` at 768 dimensions — Tanzeel — 2026-11-02 — **passed (through OpenRouter, ADR-23)**
 
-## (d) Supabase login and JWKS — Usman, pending
+The project has an OpenRouter key, not a Gemini key, so the model was reached through OpenRouter (`POST https://openrouter.ai/api/v1/embeddings`, `model: google/gemini-embedding-001`, `dimensions: 768`; routed to Google).
+
+| Check | Result |
+|---|---|
+| Vector length | 768 for every input (batch of 3) |
+| Unit length as returned | **no**: norm ≈ 0.59, so the provider L2-normalises in code (ADR-14 rule holds); after `OpenRouterEmbeddingProvider` the norm is 1.0 |
+| Task types | `input_type` (`RETRIEVAL_QUERY` or `search_query`) is ignored: same vector, cosine 1.0. Recorded in ADR-23 |
+| Retrieval sanity | query "roll back a release after error rate rises": rollback runbook text 0.76, scaling text 0.57 |
+| `provider: {data_collection: "deny"}` | still routed to Google |
+
+## (d) Supabase login and JWKS — Tanzeel — 2026-11-02 — **passed** (`ocp-dev`)
+
+Run from the laptop against the real project (region ap-southeast-2, Postgres 17.11), with values from the git-ignored `.env` / `.env.local`; nothing secret was printed.
+
+| Check | Result |
+|---|---|
+| JWKS (`/auth/v1/.well-known/jwks.json`) | 3 keys, all `EC` / `ES256` / `P-256` (asymmetric signing key active) |
+| Password sign-in of the test user | 200; token `alg = ES256`, its `kid` is in the JWKS, `iss = <SUPABASE_URL>/auth/v1`, `aud = authenticated` |
+| Backend `TokenVerifier` (live JWKS) | accepts the token; a tampered token is refused (`UnauthorizedError`) |
+| Sign-ups | disabled: `POST /auth/v1/signup` → 422 `signup_disabled` |
+| Migration `20261021190000_initial_schema.sql` | applied in one transaction and recorded in `supabase_migrations.schema_migrations` (the Supabase CLI's table) |
+| Schema | 10 tables in `ocp`, RLS on for all; `vector` 0.8.2 |
+| `ocp_backend` | `LOGIN`, `BYPASSRLS`, not superuser, no `CREATEROLE`; password generated on the laptop and written only to `.env` (`DATABASE_URL`, Supavisor session pooler as `ocp_backend.<ref>`) |
+| As `ocp_backend` through the pooler | reads `ocp.incidents`; `INSERT` into `audit_log` works, `UPDATE` is refused (`InsufficientPrivilegeError`); the probe was rolled back |
+
+`ocp-bench` is set up the same way during the freeze procedure.
