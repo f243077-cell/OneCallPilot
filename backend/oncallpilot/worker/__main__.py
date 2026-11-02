@@ -42,6 +42,7 @@ from oncallpilot.agent.providers.base import LLMProvider, LLMUnavailableError
 from oncallpilot.agent.providers.embeddings import EmbeddingProvider, FakeEmbeddingProvider
 from oncallpilot.agent.providers.fake import FakeProvider
 from oncallpilot.agent.providers.gemini import GeminiEmbeddingProvider, GeminiProvider
+from oncallpilot.agent.providers.openrouter import OpenRouterEmbeddingProvider, OpenRouterProvider
 from oncallpilot.agent.run import Investigation
 from oncallpilot.agent.state_machine import MAX_TOOL_CALLS
 from oncallpilot.agent.toolbox import ToolBox
@@ -93,7 +94,15 @@ def build_providers(
         # escalates llm_unavailable after gathering its seed evidence.
         unavailable = LLMUnavailableError("LLM_PROVIDER=fake: no model is configured")
         return FakeProvider(model="fake-1", unscripted=unavailable), FakeEmbeddingProvider()
-    # Embeddings are always Gemini (ADR-14); Claude has no embedding API.
+    if settings.llm_provider == "openrouter":
+        # One key for the model and the embeddings (ADR-23).
+        if settings.openrouter_api_key is None:
+            raise SystemExit("LLM_PROVIDER=openrouter needs OPENROUTER_API_KEY")
+        return (
+            OpenRouterProvider(http, settings.openrouter_api_key, settings.llm_model),
+            OpenRouterEmbeddingProvider(http, settings.openrouter_api_key),
+        )
+    # Otherwise embeddings are Gemini (ADR-14); Claude has no embedding API.
     embedder: EmbeddingProvider
     if settings.gemini_api_key is not None:
         embedder = GeminiEmbeddingProvider(http, settings.gemini_api_key)

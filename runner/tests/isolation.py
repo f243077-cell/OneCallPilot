@@ -19,7 +19,8 @@ ALLOWED_ENV = frozenset({
 })  # fmt: skip
 FORBIDDEN_ENV = (
     "DATABASE_URL", "INGEST_TOKEN", "FCM_CREDENTIALS_PATH", "GEMINI_API_KEY",
-    "ANTHROPIC_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY",
+    "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
 )  # fmt: skip
 DOCKER_HOST = "tcp://socket-proxy-rw:2375"
 NETWORKS = frozenset({"rw_proxy_net", "copilot_net", "chaos_net"})

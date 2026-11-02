@@ -92,3 +92,25 @@ async def test_anthropic_provider_needs_its_key_and_keeps_gemini_embeddings() ->
         )
     assert isinstance(provider, AnthropicProvider) and provider.model == "claude-opus-5-5"
     assert isinstance(embedder, GeminiEmbeddingProvider)
+
+
+async def test_openrouter_needs_its_key_and_serves_the_embeddings_too() -> None:
+    from oncallpilot.agent.providers.openrouter import (
+        OpenRouterEmbeddingProvider,
+        OpenRouterProvider,
+    )
+
+    async with httpx.AsyncClient() as http:
+        with pytest.raises(SystemExit, match="OPENROUTER_API_KEY"):
+            build_providers(settings(llm_provider="openrouter"), http)
+        provider, embedder = build_providers(
+            settings(
+                llm_provider="openrouter",
+                openrouter_api_key=SecretStr("k"),
+                gemini_api_key=SecretStr("not used"),
+            ),
+            http,
+        )
+    assert isinstance(provider, OpenRouterProvider)
+    assert provider.model == "google/gemini-3.8-flash"  # the ADR-23 default
+    assert isinstance(embedder, OpenRouterEmbeddingProvider)  # never mixed with Gemini's

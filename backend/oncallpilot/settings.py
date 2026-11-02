@@ -48,8 +48,9 @@ class WorkerSettings(BaseSettings):
     runner_link_key: SecretStr  # hex; signs dry_run requests, verifies runner results
     ingest_token: SecretStr
     ingest_url: str = "http://backend-api:8000/ingest/alert"
-    llm_provider: Literal["gemini", "anthropic", "fake"] = "gemini"
-    llm_model: str = "gemini-2.5-flash"
+    llm_provider: Literal["openrouter", "gemini", "anthropic", "fake"] = "openrouter"
+    llm_model: str = "google/gemini-3.8-flash"  # ADR-23
+    openrouter_api_key: SecretStr | None = None  # LLM and embeddings (ADR-23)
     gemini_api_key: SecretStr | None = None  # LLM and embeddings (ADR-14)
     anthropic_api_key: SecretStr | None = None  # Claude adapter (ADR-13 fallback)
     prompt_version: str = "v1"

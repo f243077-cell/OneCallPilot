@@ -86,7 +86,7 @@ class Structured[T]:
 
 
 class LLMProvider(Protocol):
-    name: str  # "gemini" | "anthropic" | "fake"
+    name: str  # "openrouter" | "gemini" | "anthropic" | "fake"
     model: str
 
     async def step_with_tools(self, messages: list[Msg], tools: list[ToolSpec]) -> LLMTurn: ...
