@@ -6,7 +6,8 @@ most once. Then, for every action, in C5's order:
 
 1. **Second gate** (RUN-006, limits.py): the runner's own rate limit, then its
    cooldown. A closed gate ends the execution `refused` with `RATE_LIMITED` or
-   `COOLDOWN_ACTIVE`, and nothing changes.
+   `COOLDOWN_ACTIVE`, and nothing changes. A signed `proposal_kind = rollback`
+   skips the cooldown, never the rate limit (architecture §7.6).
 2. **Fingerprint** (RUN-008): the state is read again exactly as the dry run
    read it. A different fingerprint ends the execution `aborted` with
    `STATE_DRIFT`, before anything changes. A state that cannot be read, or target
@@ -125,7 +126,8 @@ class Executor:
             return Outcome("aborted", "ACTION_NOT_ALLOWED", reason="no execute handler")
         assert request.execution_id is not None  # checks.py: an execute always has one
         service = limits_service(request.action, request.params)
-        closed = self.limits.refusal(service)  # a Redis error propagates: fail closed
+        rollback = request.proposal_kind == "rollback"
+        closed = self.limits.refusal(service, rollback=rollback)  # Redis error: fail closed
         if closed is not None:
             return Outcome("refused", closed[0], reason=closed[1])
         problem = self._precheck(request)

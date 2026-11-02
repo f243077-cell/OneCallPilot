@@ -85,6 +85,28 @@ def test_tampered_params_are_refused(checker: Checker, keys: Keys) -> None:
     assert_refused(check(checker, message), "BAD_SIGNATURE", keys, message)
 
 
+@pytest.mark.parametrize(("signed_as", "sent_as"), [(None, "rollback"), ("primary", "rollback")])
+def test_a_rollback_marker_added_after_signing_is_refused(
+    checker: Checker, keys: Keys, signed_as: str | None, sent_as: str
+) -> None:
+    """proposal_kind skips the cooldown, so it must be covered by `sig` (C5 0.2.0)."""
+    fields: dict[str, Any] = {} if signed_as is None else {"proposal_kind": signed_as}
+    message = {**signed_for(build_request(now=NOW, **fields), keys), "proposal_kind": sent_as}
+    assert_refused(check(checker, message), "BAD_SIGNATURE", keys, message)
+
+
+@pytest.mark.parametrize("kind", ["primary", "rollback", None])
+def test_a_signed_proposal_kind_is_accepted(checker: Checker, keys: Keys, kind: str | None) -> None:
+    decision = check(checker, signed_for(build_request(now=NOW, proposal_kind=kind), keys))
+    assert isinstance(decision, Accepted)
+    assert decision.request.proposal_kind == (kind or "primary")
+
+
+def test_an_unknown_proposal_kind_is_refused(checker: Checker, keys: Keys) -> None:
+    message = signed_for(build_request(now=NOW, proposal_kind="urgent"), keys)
+    assert_refused(check(checker, message), "VALIDATION_ERROR", keys, message)
+
+
 def test_an_execute_signed_with_the_link_key_is_refused(checker: Checker, keys: Keys) -> None:
     message = signed_for(build_request(now=NOW), keys, wrong_key=True)
     assert_refused(check(checker, message), "BAD_SIGNATURE", keys, message)

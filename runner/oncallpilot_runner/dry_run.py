@@ -67,6 +67,12 @@ class DryRunner:
     now: Callable[[], datetime]
 
     def run(self, request: Request) -> dict[str, Any]:
+        preview = self._preview(request)
+        if request.proposal_kind == "rollback":  # rollbacks skip the cooldown (§7.6)
+            preview["preconditions"]["cooldown_ok"] = True
+        return preview
+
+    def _preview(self, request: Request) -> dict[str, Any]:
         params = request.params
         try:
             if request.action == "rollback_deploy":

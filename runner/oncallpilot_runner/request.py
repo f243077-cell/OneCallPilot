@@ -1,7 +1,8 @@
 """Shape of a runner request (C5 ``RunnerRequest``, architecture §9.5).
 
 The rules of the C5 model, checked with the standard library: every field
-present and no other (extra fields are refused), the types and patterns, the
+present and no other (extra fields are refused; `proposal_kind`, added in
+contracts 0.2.0, may be absent), the types and patterns, the
 approval fields on ``execute`` (SEC-002), and ``expires_at`` after
 ``issued_at``. ``action`` and ``params`` are only shape-checked here; the
 catalogue decides what they may be (RUN-003, RUN-018).
@@ -25,6 +26,10 @@ FIELDS = (
     "issued_at", "expires_at", "catalogue_version", "sig",
 )  # fmt: skip
 APPROVAL_FIELDS = ("execution_id", "idempotency_key", "approved_by", "approved_at")
+# Optional (contracts 0.2.0): absent or null means `primary`. Only `rollback`
+# skips the runner's cooldown (architecture §7.6); it is covered by `sig`.
+OPTIONAL_FIELDS = ("proposal_kind",)
+PROPOSAL_KINDS = ("primary", "rollback")
 
 
 class ShapeError(ValueError):
@@ -46,6 +51,7 @@ class Request:
     issued_at: datetime
     expires_at: datetime
     catalogue_version: str
+    proposal_kind: str = "primary"
 
 
 def utc(value: Any, field: str) -> datetime:
@@ -71,7 +77,7 @@ def _match(value: Any, pattern: re.Pattern[str], field: str, *, optional: bool =
 
 def parse(message: dict[str, Any]) -> Request:
     missing = [f for f in FIELDS if f not in message]
-    extra = sorted(set(message) - set(FIELDS))
+    extra = sorted(set(message) - set(FIELDS) - set(OPTIONAL_FIELDS))
     if missing or extra:
         raise ShapeError(f"fields missing {missing} or not allowed {extra}")
     kind = message["type"]
@@ -86,6 +92,9 @@ def parse(message: dict[str, Any]) -> Request:
         # StrictStr | StrictInt: a bool is not an int here.
         if isinstance(value, bool) or not isinstance(value, str | int):
             raise ShapeError(f"parameter {name} must be a string or an integer")
+    proposal_kind = message.get("proposal_kind")
+    if proposal_kind is not None and proposal_kind not in PROPOSAL_KINDS:
+        raise ShapeError("proposal_kind must be primary, rollback or null")
     request = Request(
         type=kind,
         request_id=_match(message["request_id"], UUID, "request_id"),
@@ -104,6 +113,7 @@ def parse(message: dict[str, Any]) -> Request:
         issued_at=utc(message["issued_at"], "issued_at"),
         expires_at=utc(message["expires_at"], "expires_at"),
         catalogue_version=_match(message["catalogue_version"], SEMVER, "catalogue_version"),
+        proposal_kind=proposal_kind or "primary",
     )
     _match(message["sig"], SIGNATURE, "sig")
     if kind == "execute":

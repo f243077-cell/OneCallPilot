@@ -81,15 +81,16 @@ class Limits:
     def cooling(self, service: str) -> bool:
         return self.store.exists(cooldown_key(service))
 
-    def refusal(self, service: str) -> tuple[str, str] | None:
-        """(error_code, reason) if a gate is closed, in C5's order; else None."""
+    def refusal(self, service: str, *, rollback: bool = False) -> tuple[str, str] | None:
+        """(error_code, reason) if a gate is closed, in C5's order; else None.
+        A rollback proposal skips the cooldown, never the rate limit (§7.6)."""
         used = self.used(service)
         if used >= RATE_LIMIT:
             return "RATE_LIMITED", (
                 f"{used} executions on {service} in the last {RATE_WINDOW_SECONDS // 60} min "
                 f"(limit {RATE_LIMIT})"
             )
-        if self.cooling(service):
+        if not rollback and self.cooling(service):
             left = self.store.ttl(cooldown_key(service))
             return "COOLDOWN_ACTIVE", f"{service} is cooling down for {left} s more"
         return None

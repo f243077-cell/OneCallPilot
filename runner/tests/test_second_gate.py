@@ -10,6 +10,7 @@ Fixtures come from test_execute.py, so pytest sees them here by import.
 """
 # ruff: noqa: F811  (each test redefines an imported fixture name as its argument)
 
+import dataclasses
 import json
 import logging
 from copy import deepcopy
@@ -32,7 +33,7 @@ from oncallpilot_runner.limits import (
     limits_service,
     rate_key,
 )
-from oncallpilot_runner.request import parse
+from oncallpilot_runner.request import Request, parse
 from oncallpilot_runner.signing import Keys, verify
 from tests.conftest import NOW
 from tests.fakes import FakeClock, FakeDockerClient, FakeStreams
@@ -195,16 +196,58 @@ def test_a_closed_gate_refuses_every_action_and_changes_nothing(
     assert streams.zsets == counters_before  # a refusal uses no budget
 
 
-def test_a_rollback_is_not_exempt_from_the_cooldown_yet(
+ROLLBACK_STEPS = [  # the actions a rollback proposal can carry (C4 rollback_step)
+    ("rollback_deploy", {"service": "api", "target_release": "1.4.0"}),
+    ("scale_service", {"service": "api", "replicas": 2}),
+]
+
+
+def as_kind(request: Request, kind: str) -> Request:
+    return dataclasses.replace(request, proposal_kind=kind)
+
+
+@pytest.mark.parametrize(("action", "params"), ROLLBACK_STEPS, ids=["rollback", "scale"])
+def test_a_rollback_proposal_skips_the_cooldown(
+    executor: Executor, dry_runner: DryRunner, streams: FakeStreams, action: str, params: Any
+) -> None:
+    """§7.6: rollback proposals are exempt from the cooldown (contracts 0.2.0, issue 12)."""
+    close_gate(streams, "cooldown", "api")
+    outcome, _ = run(executor, as_kind(approved_for(dry_runner, action, params), "rollback"))
+    assert outcome.status == "succeeded"
+    assert counted(streams, "api") == 1  # it still counts against the rate limit
+
+
+@pytest.mark.parametrize(("action", "params"), ROLLBACK_STEPS, ids=["rollback", "scale"])
+def test_a_rollback_proposal_never_skips_the_rate_limit(
+    executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, streams: FakeStreams,
+    action: str, params: Any,
+) -> None:  # fmt: skip
+    close_gate(streams, "rate", "api")
+    outcome, _ = run(executor, as_kind(approved_for(dry_runner, action, params), "rollback"))
+    assert (outcome.status, outcome.error_code) == ("refused", "RATE_LIMITED")
+    assert docker.writes() == []
+
+
+def test_a_primary_rollback_deploy_still_cools_down(
     executor: Executor, dry_runner: DryRunner, docker: FakeDockerClient, streams: FakeStreams
 ) -> None:
-    """§7.6 exempts rollback proposals, but nothing signed says a request is one
-    (contract-review-a issue 12). Until that is decided, rollbacks cool down too."""
-    request = approved_for(dry_runner, "rollback_deploy", ACTIONS[0][1])
+    """The action name proves nothing: only a signed rollback marker skips the cooldown."""
+    request = as_kind(approved_for(dry_runner, "rollback_deploy", ACTIONS[0][1]), "primary")
     close_gate(streams, "cooldown", "api")
     outcome, _ = run(executor, request)
     assert (outcome.status, outcome.error_code) == ("refused", "COOLDOWN_ACTIVE")
     assert docker.writes() == []
+
+
+def test_the_dry_run_shows_the_cooldown_exemption(
+    dry_runner: DryRunner, streams: FakeStreams
+) -> None:
+    close_gate(streams, "cooldown", "api")
+    params: dict[str, str | int] = {"service": "api", "replicas": 2}
+    base = build_request("dry_run", "scale_service", params, now=NOW)
+    for kind, cooldown_ok in (("primary", False), ("rollback", True)):
+        dry = parse({**base, "proposal_kind": kind, "sig": "0" * 64})
+        assert dry_runner.run(dry)["preconditions"]["cooldown_ok"] is cooldown_ok
 
 
 @pytest.mark.parametrize(("action", "params"), ACTIONS, ids=IDS)
@@ -541,8 +584,8 @@ def test_the_fingerprint_is_read_after_the_gate_right_before_the_first_change(
     request = approved_for(dry_runner, action, params)
     gate = executor.limits.refusal
 
-    def gate_then_deploy(service: str) -> tuple[str, str] | None:
-        closed = gate(service)
+    def gate_then_deploy(service: str, *, rollback: bool = False) -> tuple[str, str] | None:
+        closed = gate(service, rollback=rollback)
         another_deploy(ledger)
         return closed
 
