@@ -221,6 +221,20 @@ async def test_a_client_error_is_not_retried(status: int) -> None:
     assert len(server.requests) == 1
 
 
+async def test_a_refusal_reports_the_error_code_and_message_clipped(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    body = {"error": {"code": 400, "message": "Invalid schema " + "x" * 500,
+                      "metadata": {"provider_name": "Google AI Studio"}}}  # fmt: skip
+    server = Server(httpx.Response(400, json=body))
+    llm, client = await provider(server)
+    async with client:
+        with pytest.raises(LLMUnavailableError, match="HTTP 400 400 Google AI Studio Invalid"):
+            await llm.step_with_tools(MESSAGES, [])
+    [record] = [r for r in caplog.records if r.name.endswith("openrouter")]
+    assert len(record.getMessage()) < 300 and "test-key" not in record.getMessage()
+
+
 async def test_an_error_body_with_status_200_is_retried() -> None:
     error = httpx.Response(200, json={"error": {"code": 502, "message": "upstream"}})
     server = Server(error, httpx.Response(200, content=b"not json"), reply({"content": "ok"}))

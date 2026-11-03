@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -48,6 +49,9 @@ MAX_TOKENS = {"gather": 4096, "structured": 8192}  # reasoning tokens count too
 REASONING = {"effort": "low"}
 ROUTING = {"require_parameters": True, "data_collection": "deny"}
 NOT_RUN = "Not run: the tool-call budget for this turn is used up."
+ERROR_TEXT_LIMIT = 200
+
+log = logging.getLogger(__name__)
 
 Sleep = Callable[[float], Awaitable[None]]
 
@@ -75,12 +79,12 @@ class _OpenRouterHttp:
                 last = type(exc).__name__
                 continue
             if response.status_code == 429 or response.status_code >= 500:
-                last = f"HTTP {response.status_code}"
+                last = f"HTTP {response.status_code} {_error_text(response)}".rstrip()
                 continue
             if response.status_code >= 400:
-                raise LLMUnavailableError(
-                    f"OpenRouter refused the request: HTTP {response.status_code}"
-                )
+                reason = f"HTTP {response.status_code} {_error_text(response)}".rstrip()
+                log.warning("OpenRouter refused the request: %s", reason)
+                raise LLMUnavailableError(f"OpenRouter refused the request: {reason}")
             try:
                 data: dict[str, Any] = response.json()
             except ValueError:
@@ -88,10 +92,25 @@ class _OpenRouterHttp:
                 continue
             if not data.get(expect):
                 # An upstream failure can come back as HTTP 200 with an error body.
-                last = "an error from the upstream provider"
+                last = f"upstream error {_error_text(response)}".rstrip()
                 continue
             return data
+        log.warning("OpenRouter unavailable after a retry: %s", last)
         raise LLMUnavailableError(f"OpenRouter unavailable after a retry: {last}")
+
+
+def _error_text(response: httpx.Response) -> str:
+    """OpenRouter's error code and message, clipped: enough to tell a schema
+    problem from a billing one, never the prompt."""
+    try:
+        error = response.json().get("error") or {}
+    except (ValueError, AttributeError):
+        return ""
+    if not isinstance(error, dict):
+        return ""
+    provider = (error.get("metadata") or {}).get("provider_name") or ""
+    text = f"{error.get('code', '')} {provider} {error.get('message', '')}".split()
+    return " ".join(text)[:ERROR_TEXT_LIMIT]
 
 
 def _usage(data: dict[str, Any]) -> Usage:
