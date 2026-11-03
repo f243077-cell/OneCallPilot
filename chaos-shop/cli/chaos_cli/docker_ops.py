@@ -158,8 +158,13 @@ class Docker:
                 stdout=True,
                 stderr=False,
                 mem_limit="64m",
+                # docker-py returns the output only for json-file/journald logs;
+                # Docker Desktop can default to `local`.
+                log_config=docker.types.LogConfig(type=docker.types.LogConfig.types.JSON),
             )
         except docker.errors.ContainerError as exc:
             raise DockerOpsError(f"helper failed: {str(exc)[-500:]}") from exc
+        if output is None:
+            raise DockerOpsError("helper gave no output (its logs could not be read)")
         results: list[Any] = json.loads(output)["results"]
         return results
