@@ -65,7 +65,25 @@ class RestClient {
         ),
       );
 
+  /// For endpoints that answer 204 with no body.
+  Future<void> delete(String path) => _request(
+    (headers) => _dio.delete<Object?>(path, options: Options(headers: headers)),
+  );
+
   Future<Map<String, dynamic>> _send(
+    Future<Response<Object?>> Function(Map<String, String> headers) request,
+  ) async {
+    final response = await _request(request);
+    final data = response.data;
+    if (data is Map<String, dynamic>) return data;
+    throw ApiError(
+      ApiErrorCode.internal,
+      status: response.statusCode ?? 500,
+      message: 'Unexpected response body',
+    );
+  }
+
+  Future<Response<Object?>> _request(
     Future<Response<Object?>> Function(Map<String, String> headers) request,
   ) async {
     for (var attempt = 0; ; attempt++) {
@@ -78,14 +96,7 @@ class RestClient {
         );
       }
       try {
-        final response = await request({'Authorization': 'Bearer $token'});
-        final data = response.data;
-        if (data is Map<String, dynamic>) return data;
-        throw ApiError(
-          ApiErrorCode.internal,
-          status: response.statusCode ?? 500,
-          message: 'Unexpected response body',
-        );
+        return await request({'Authorization': 'Bearer $token'});
       } on DioException catch (e) {
         final error = mapDioError(e);
         if (error is ApiError &&

@@ -7,6 +7,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase push (A3.2, MOB-016). google-services.json is git-ignored (each developer
+// downloads it from the Firebase console); without it the app builds and runs without push.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 // MOB-018 / ADR-16: debug and profile builds may use cleartext HTTP and WS only to the
 // host of the API_BASE_URL dart-define. The config is generated per build, so no LAN IP
 // is committed. Release builds get no network security config at all, so Android's

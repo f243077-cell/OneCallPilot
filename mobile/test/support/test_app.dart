@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:oncallpilot/app.dart';
 import 'package:oncallpilot/core/config/env.dart';
 import 'package:oncallpilot/data/auth/auth_repository.dart';
@@ -16,7 +17,10 @@ import 'sample_timeline.dart';
 class TestApp {
   TestApp._(this.container, this.auth);
 
-  static Future<TestApp> create({bool signedIn = false}) async {
+  static Future<TestApp> create({
+    bool signedIn = false,
+    List<Override> overrides = const [],
+  }) async {
     final auth = await MockAuthRepository.load(InMemoryStore());
     if (signedIn) {
       await auth.signIn(email: 'oncall@example.com', password: 'secret-pw');
@@ -31,6 +35,7 @@ class TestApp {
         envProvider.overrideWithValue(const Env(dataSource: DataSource.mock)),
         authRepositoryProvider.overrideWithValue(auth),
         incidentRepositoryProvider.overrideWithValue(incidents),
+        ...overrides,
       ],
     );
     return TestApp._(container, auth);

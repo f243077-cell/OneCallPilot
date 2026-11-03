@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oncallpilot/core/config/env.dart';
 
@@ -29,5 +31,12 @@ void main() {
       supabaseAnonKey: 'public-anon-key',
     );
     expect(complete.missing, isEmpty);
+  });
+
+  test('appVersion is the version in pubspec.yaml', () {
+    final line = File('pubspec.yaml')
+        .readAsLinesSync()
+        .firstWhere((l) => l.startsWith('version:'));
+    expect(appVersion, line.substring('version:'.length).trim());
   });
 }

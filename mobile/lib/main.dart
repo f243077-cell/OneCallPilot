@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +16,7 @@ import 'data/auth/auth_repository.dart';
 import 'data/auth/key_value_store.dart';
 import 'data/auth/secure_session_storage.dart';
 import 'data/auth/supabase_token_source.dart';
+import 'data/push/push_service.dart';
 import 'data/repositories/fixture_timelines.dart';
 import 'data/repositories/incident_repository.dart';
 import 'data/repositories/live_incident_repository.dart';
@@ -23,7 +26,6 @@ import 'features/incident_detail/application/incident_detail_provider.dart';
 import 'features/incident_feed/application/incident_list_provider.dart';
 import 'shared/server_clock.dart';
 
-// Firebase init joins with push in task A3.2 (architecture §10.1).
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final env = Env.fromDefines();
@@ -74,13 +76,48 @@ Future<List<Override>> _dataLayer(Env env) async {
   final auth = Supabase.instance.client.auth;
   final tokens = SupabaseTokenSource(auth);
   final rest = RestClient(env.apiBaseUrl, tokens);
+  final push = await _push(rest, store);
+  final AuthRepository authRepository = SupabaseAuthRepository(auth);
   return overrides..addAll([
-    authRepositoryProvider.overrideWithValue(SupabaseAuthRepository(auth)),
+    authRepositoryProvider.overrideWithValue(
+      push == null ? authRepository : PushAuthRepository(authRepository, push),
+    ),
+    if (push != null)
+      pushServiceProvider.overrideWith((ref) => _followSignIn(ref, push)),
     wsClientProvider.overrideWith((ref) => _liveSocket(ref, env, tokens)),
     incidentRepositoryProvider.overrideWith(
       (ref) => LiveIncidentRepository(rest, ref.watch(wsClientProvider)!),
     ),
   ]);
+}
+
+/// Push for a live build (A3.2). Without `android/app/google-services.json`
+/// Firebase does not start; the app then works without push.
+Future<PushService?> _push(RestClient rest, KeyValueStore store) async {
+  try {
+    await Firebase.initializeApp();
+  } on FirebaseException {
+    return null;
+  }
+  return PushService(
+    FirebasePushMessaging(FirebaseMessaging.instance),
+    RestDeviceApi(rest),
+    store,
+    appVersion,
+  );
+}
+
+/// Registers the device on every sign-in, including a session restored at start.
+PushService _followSignIn(Ref ref, PushService push) {
+  final session = ref.watch(authStateProvider);
+  void follow() {
+    if (session.signedIn) unawaited(push.signedIn());
+  }
+
+  session.addListener(follow);
+  follow();
+  ref.onDispose(() => session.removeListener(follow));
+  return push;
 }
 
 /// The socket of a live build (A3.1): connected while signed in; a first

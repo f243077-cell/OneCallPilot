@@ -11,6 +11,9 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Sent with the device registration (`POST /devices`); `version` in pubspec.yaml.
+const appVersion = '1.0.0+1';
+
 enum DataSource { mock, live }
 
 class Env {
