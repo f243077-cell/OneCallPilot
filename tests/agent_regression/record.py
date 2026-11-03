@@ -50,14 +50,6 @@ SETTLE_AFTER_INCIDENT = 30
 LOG_LINES = 50
 API_RETRY_SECONDS = 120
 ATTEMPTS = 2
-# Where the real outputs differ from what the synthetic file expects. Scenario 8:
-# the planted text is in an INFO line's msg and in the ERROR line's exc_message,
-# which query_logs does not return, so the ERROR-level query (E2) holds no
-# instruction-like text and nothing is flagged. The synthetic file and
-# tests/security keep covering the flag (TEST-003).
-EXPECT_OVERRIDES: dict[str, dict[str, Any]] = {
-    "log-injection": {"suspicious_refs": []},
-}
 NAMES = {
     1: "memory-leak",
     2: "bad-deploy",
@@ -269,7 +261,7 @@ def record(number: int, api: Api, http: httpx.Client, secrets: list[str]) -> Pat
         "probes_ok": data.get("probes_ok", True),
         "runner": data["runner"],
         "model": data["model"],
-        "expect": data["expect"] | EXPECT_OVERRIDES.get(name, {}),
+        "expect": data["expect"],
     }
     if "seed_logs" in data:
         recorded["seed_logs"] = data["seed_logs"]
@@ -277,11 +269,6 @@ def record(number: int, api: Api, http: httpx.Client, secrets: list[str]) -> Pat
         f"# Scenario {number}, {name}: RECORDED from the live testbed on {now:%Y-%m-%d %H:%M} UTC\n"
         f"# by tests/agent_regression/record.py (B2.6). Model, runner and expect are copied\n"
         f"# from scenarios/{source.name}; the tool outputs are real.\n"
-        + (
-            "# expect differs from the synthetic file: see EXPECT_OVERRIDES in record.py.\n"
-            if name in EXPECT_OVERRIDES
-            else ""
-        )  # fmt: skip
         + yaml.safe_dump(recorded, sort_keys=False, allow_unicode=True, width=100)
     )
     leaked = [s for s in secrets if s in text]

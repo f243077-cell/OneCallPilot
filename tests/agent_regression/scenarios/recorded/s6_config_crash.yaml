@@ -1,19 +1,19 @@
-# Scenario 6, config-crash: RECORDED from the live testbed on 2026-11-03 13:43 UTC
+# Scenario 6, config-crash: RECORDED from the live testbed on 2026-11-03 15:57 UTC
 # by tests/agent_regression/record.py (B2.6). Model, runner and expect are copied
 # from scenarios/s6_config_crash.yaml; the tool outputs are real.
 name: config-crash
-now_offset_s: 46
+now_offset_s: 55
 alert:
   service: worker
-  observed_at: '2026-11-03T13:43:05.553692Z'
+  observed_at: '2026-11-03T15:56:29.091025Z'
   signals:
   - name: restarts
     value: 2.0
     baseline: null
     zscore: null
-    first_anomalous_at: '2026-11-03T13:43:05.553692Z'
+    first_anomalous_at: '2026-11-03T15:56:29.091025Z'
 ledger:
-- deploy_id: 4a4057c3-c008-4a69-b792-1d75b20d732b
+- deploy_id: b87342ae-666c-4116-812e-639033d55c93
   kind: deploy
   service: api
   release: 1.2.0
@@ -25,7 +25,7 @@ ledger:
   deployed_at: '2026-09-14T10:20:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: 7b72a3f4-5c99-4f3b-8351-98bb7e2f625a
+- deploy_id: 3db248f4-a66e-4c2f-bf98-ee418aec49d3
   kind: deploy
   service: worker
   release: 2.0.0
@@ -37,7 +37,7 @@ ledger:
   deployed_at: '2026-09-21T13:05:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: e614f02d-002f-4c4e-8367-144d1694cfee
+- deploy_id: 29429cea-09db-443f-b33e-ebdc9a4702b8
   kind: deploy
   service: api
   release: 1.3.0
@@ -49,7 +49,7 @@ ledger:
   deployed_at: '2026-09-28T09:40:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: d9cbb122-522c-4dc0-b358-87446817e653
+- deploy_id: abdf38a3-c88a-4888-a167-5227067bc163
   kind: deploy
   service: worker
   release: 2.1.0
@@ -61,7 +61,7 @@ ledger:
   deployed_at: '2026-10-01T14:40:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: 17dbf4c1-8dd7-4fda-b9a0-95b0188e4c45
+- deploy_id: 8deb81e3-fef2-40dc-9aa1-22a8e67e59a1
   kind: deploy
   service: api
   release: 1.4.0
@@ -73,7 +73,7 @@ ledger:
   deployed_at: '2026-10-05T09:05:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: 11926e2a-1fd1-4b6a-b40d-a6cb67ce8c3a
+- deploy_id: b20f5b5d-cd49-4d94-9b92-44d69abf5b6d
   kind: reset
   service: api
   release: 1.4.0
@@ -82,10 +82,10 @@ ledger:
   image_tag: chaos-shop/api:1.4.0
   config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
   replicas: 1
-  deployed_at: '2026-11-03T13:38:00Z'
+  deployed_at: '2026-11-03T15:51:24Z'
   deployed_by: setup
   reason: environment restored to baseline
-- deploy_id: 6fb3bf6f-d3d2-4a18-a6cb-6842578e4e04
+- deploy_id: e64c01a2-2121-49a8-8f2e-060d36c0f532
   kind: reset
   service: worker
   release: 2.1.0
@@ -94,10 +94,10 @@ ledger:
   image_tag: chaos-shop/worker:2.1.0
   config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
   replicas: 1
-  deployed_at: '2026-11-03T13:38:00Z'
+  deployed_at: '2026-11-03T15:51:24Z'
   deployed_by: setup
   reason: environment restored to baseline
-- deploy_id: 4607fdca-af34-4ff0-bf75-53d10fe52b03
+- deploy_id: 3b89e459-3f5d-4a5f-b021-bb04ef87e03c
   kind: deploy
   service: worker
   release: 2.2.0
@@ -106,13 +106,13 @@ ledger:
   image_tag: chaos-shop/worker:2.2.0
   config_hash: 83e1e64ab947fe7efe4be6ef9d438fe6009e50f32b8d610f93ec3fe7fee8584d
   replicas: 1
-  deployed_at: '2026-11-03T13:42:43Z'
+  deployed_at: '2026-11-03T15:55:51Z'
   deployed_by: ci
   reason: scheduled release
 logs:
 - match: service="worker"
   lines:
-  - ts: '2026-11-03T13:43:48.227Z'
+  - ts: '2026-11-03T15:57:15.143Z'
     level: CRITICAL
     service: worker
     release: 2.2.0
@@ -128,7 +128,7 @@ logs:
       , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
       \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
       \ 1 and 100, got 250"
-  - ts: '2026-11-03T13:43:40.711Z'
+  - ts: '2026-11-03T15:57:05.463Z'
     level: CRITICAL
     service: worker
     release: 2.2.0
@@ -144,7 +144,7 @@ logs:
       , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
       \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
       \ 1 and 100, got 250"
-  - ts: '2026-11-03T13:43:31.597Z'
+  - ts: '2026-11-03T15:56:54.671Z'
     level: CRITICAL
     service: worker
     release: 2.2.0
@@ -160,7 +160,7 @@ logs:
       , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
       \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
       \ 1 and 100, got 250"
-  - ts: '2026-11-03T13:43:19.560Z'
+  - ts: '2026-11-03T15:56:39.285Z'
     level: CRITICAL
     service: worker
     release: 2.2.0
@@ -176,7 +176,7 @@ logs:
       , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
       \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
       \ 1 and 100, got 250"
-  - ts: '2026-11-03T13:43:10.907Z'
+  - ts: '2026-11-03T15:56:25.063Z'
     level: CRITICAL
     service: worker
     release: 2.2.0
@@ -192,7 +192,7 @@ logs:
       , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
       \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
       \ 1 and 100, got 250"
-  - ts: '2026-11-03T13:43:00.937Z'
+  - ts: '2026-11-03T15:56:09.515Z'
     level: CRITICAL
     service: worker
     release: 2.2.0
@@ -208,261 +208,175 @@ logs:
       , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
       \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
       \ 1 and 100, got 250"
-  - ts: '2026-11-03T13:42:52.200Z'
-    level: CRITICAL
-    service: worker
-    release: 2.2.0
-    instance: cs-worker-220
-    logger: shop.main
-    msg: service failed to start
-    exc_type: ConfigError
-    exc_message: QUEUE_BATCH_SIZE must be between 1 and 100, got 250
-    stacktrace: "Traceback (most recent call last):\n  File \"/app/common/serve.py\", line 27, in serve\n\
-      \    app = build(identity)\n          ^^^^^^^^^^^^^^^\n  File \"/app/worker/__main__.py\", line\
-      \ 19, in build\n    batch_size = parse_batch_size(os.environ.get(\"QUEUE_BATCH_SIZE\"))\n      \
-      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/worker/jobs.py\"\
-      , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
-      \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
-      \ 1 and 100, got 250"
-  - ts: '2026-11-03T13:42:41.151Z'
+  - ts: '2026-11-03T15:55:49.340Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Finished server process [1]
-  - ts: '2026-11-03T13:42:41.150Z'
+  - ts: '2026-11-03T15:55:49.340Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Application shutdown complete.
-  - ts: '2026-11-03T13:42:41.149Z'
+  - ts: '2026-11-03T15:55:49.339Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: shop.worker
     msg: job loop stopped
-  - ts: '2026-11-03T13:42:41.131Z'
+  - ts: '2026-11-03T15:55:49.269Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Waiting for application shutdown.
-  - ts: '2026-11-03T13:42:41.027Z'
+  - ts: '2026-11-03T15:55:49.168Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Shutting down
-  - ts: '2026-11-03T13:38:25.624Z'
+  - ts: '2026-11-03T15:51:42.289Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-  - ts: '2026-11-03T13:38:25.623Z'
+  - ts: '2026-11-03T15:51:42.288Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Application startup complete.
-  - ts: '2026-11-03T13:38:25.617Z'
+  - ts: '2026-11-03T15:51:42.205Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: shop.jobs
     msg: job loop started (batch size 10)
-  - ts: '2026-11-03T13:38:25.615Z'
+  - ts: '2026-11-03T15:51:42.192Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Waiting for application startup.
-  - ts: '2026-11-03T13:38:25.615Z'
+  - ts: '2026-11-03T15:51:42.190Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Started server process [1]
-  - ts: '2026-11-03T13:38:07.186Z'
+  - ts: '2026-11-03T15:51:29.183Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Finished server process [1]
-  - ts: '2026-11-03T13:38:07.186Z'
+  - ts: '2026-11-03T15:51:29.183Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Application shutdown complete.
-  - ts: '2026-11-03T13:38:07.186Z'
+  - ts: '2026-11-03T15:51:29.182Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: shop.worker
     msg: job loop stopped
-  - ts: '2026-11-03T13:38:07.155Z'
+  - ts: '2026-11-03T15:51:29.167Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Waiting for application shutdown.
-  - ts: '2026-11-03T13:38:07.045Z'
+  - ts: '2026-11-03T15:51:29.066Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Shutting down
-  - ts: '2026-11-03T13:32:06.269Z'
+  - ts: '2026-11-03T15:50:31.348Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-  - ts: '2026-11-03T13:32:06.266Z'
+  - ts: '2026-11-03T15:50:31.347Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Application startup complete.
-  - ts: '2026-11-03T13:32:06.186Z'
+  - ts: '2026-11-03T15:50:31.345Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: shop.jobs
     msg: job loop started (batch size 10)
-  - ts: '2026-11-03T13:32:06.185Z'
+  - ts: '2026-11-03T15:50:31.344Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Waiting for application startup.
-  - ts: '2026-11-03T13:32:06.184Z'
+  - ts: '2026-11-03T15:50:31.343Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Started server process [1]
-  - ts: '2026-11-03T13:31:51.225Z'
+  - ts: '2026-11-03T15:50:19.043Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Finished server process [1]
-  - ts: '2026-11-03T13:31:51.225Z'
+  - ts: '2026-11-03T15:50:19.043Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Application shutdown complete.
-  - ts: '2026-11-03T13:31:51.225Z'
+  - ts: '2026-11-03T15:50:19.043Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: shop.worker
     msg: job loop stopped
-  - ts: '2026-11-03T13:31:51.203Z'
+  - ts: '2026-11-03T15:50:19.029Z'
     level: INFO
     service: worker
     release: 2.1.0
     instance: cs-worker-210
     logger: uvicorn.error
     msg: Waiting for application shutdown.
-  - ts: '2026-11-03T13:31:51.101Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: uvicorn.error
-    msg: Shutting down
-  - ts: '2026-11-03T13:30:54.038Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: uvicorn.error
-    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-  - ts: '2026-11-03T13:30:54.037Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: uvicorn.error
-    msg: Application startup complete.
-  - ts: '2026-11-03T13:30:54.024Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: shop.jobs
-    msg: job loop started (batch size 10)
-  - ts: '2026-11-03T13:30:54.023Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: uvicorn.error
-    msg: Waiting for application startup.
-  - ts: '2026-11-03T13:30:54.022Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: uvicorn.error
-    msg: Started server process [1]
-  - ts: '2026-11-03T13:30:40.596Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: uvicorn.error
-    msg: Finished server process [1]
-  - ts: '2026-11-03T13:30:40.593Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: uvicorn.error
-    msg: Application shutdown complete.
-  - ts: '2026-11-03T13:30:40.592Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: shop.worker
-    msg: job loop stopped
-  - ts: '2026-11-03T13:30:40.575Z'
-    level: INFO
-    service: worker
-    release: 2.1.0
-    instance: cs-worker-210
-    logger: uvicorn.error
-    msg: Waiting for application shutdown.
-  - ts: '2026-11-03T13:30:40.471Z'
+  - ts: '2026-11-03T15:50:18.928Z'
     level: INFO
     service: worker
     release: 2.1.0
@@ -472,295 +386,293 @@ logs:
 metrics:
 - match: (sum(rate(worker_jobs_total{service="worker",result="error"}[1m])) or vector(0)) / sum(rate(worker_jobs_total{service="worker"}[1m]))
   points:
-  - - 1793711285.554
+  - - 1793719289.091
     - 0.0
-  - - 1793711300.554
+  - - 1793719304.091
     - 0.0
-  - - 1793711315.554
+  - - 1793719319.091
     - 0.0
-  - - 1793711330.554
+  - - 1793719334.091
     - 0.0
-  - - 1793711345.554
+  - - 1793719349.091
     - 0.0
-  - - 1793711360.554
+  - - 1793719364.091
     - 0.0
-  - - 1793711375.554
+  - - 1793719379.091
     - 0.0
-  - - 1793711390.554
+  - - 1793719394.091
     - 0.0
-  - - 1793711405.554
+  - - 1793719409.091
     - 0.0
-  - - 1793711420.554
+  - - 1793719424.091
     - 0.0
-  - - 1793711435.554
+  - - 1793719439.091
     - 0.0
-  - - 1793711450.554
+  - - 1793719454.091
     - 0.0
-  - - 1793711465.554
+  - - 1793719469.091
     - 0.0
-  - - 1793711480.554
+  - - 1793719484.091
     - 0.0
-  - - 1793711495.554
+  - - 1793719499.091
     - 0.0
-  - - 1793711510.554
+  - - 1793719514.091
     - 0.0
-  - - 1793711525.554
+  - - 1793719529.091
     - 0.0
-  - - 1793711540.554
+  - - 1793719544.091
     - 0.0
-  - - 1793711555.554
+  - - 1793719559.091
     - 0.0
-  - - 1793711570.554
+  - - 1793719574.091
     - 0.0
-  - - 1793711585.554
+  - - 1793719589.091
     - 0.0
-  - - 1793711600.554
+  - - 1793719604.091
     - 0.0
-  - - 1793711615.554
+  - - 1793719619.091
     - 0.0
-  - - 1793711630.554
+  - - 1793719634.091
     - 0.0
-  - - 1793711645.554
+  - - 1793719649.091
     - 0.0
-  - - 1793711660.554
+  - - 1793719664.091
     - 0.0
-  - - 1793711675.554
+  - - 1793719679.091
     - 0.0
-  - - 1793711690.554
+  - - 1793719694.091
     - 0.0
-  - - 1793711705.554
+  - - 1793719709.091
     - 0.0
-  - - 1793711720.554
+  - - 1793719724.091
     - 0.0
-  - - 1793711735.554
+  - - 1793719739.091
     - 0.0
-  - - 1793711750.554
+  - - 1793719754.091
     - 0.0
-  - - 1793711765.554
+  - - 1793719769.091
     - 0.0
-  - - 1793711780.554
+  - - 1793719784.091
     - 0.0
-  - - 1793711795.554
+  - - 1793719799.091
     - 0.0
-  - - 1793711810.554
+  - - 1793719814.091
     - 0.0
-  - - 1793711825.554
+  - - 1793719829.091
     - 0.0
-  - - 1793711840.554
+  - - 1793719844.091
     - 0.0
-  - - 1793711855.554
+  - - 1793719859.091
     - 0.0
-  - - 1793711870.554
+  - - 1793719874.091
     - 0.0
-  - - 1793711885.554
+  - - 1793719889.091
     - 0.0
-  - - 1793711900.554
+  - - 1793719904.091
     - 0.0
-  - - 1793711915.554
+  - - 1793719919.091
     - 0.0
-  - - 1793711930.554
+  - - 1793719934.091
     - 0.0
-  - - 1793711945.554
+  - - 1793719949.091
     - 0.0
-  - - 1793711960.554
+  - - 1793719964.091
     - 0.0
-  - - 1793711975.554
+  - - 1793719979.091
     - 0.0
-  - - 1793711990.554
+  - - 1793719994.091
     - 0.0
-  - - 1793712005.554
+  - - 1793720009.091
     - 0.0
-  - - 1793712020.554
+  - - 1793720024.091
     - 0.0
-  - - 1793712035.554
+  - - 1793720039.091
     - 0.0
-  - - 1793712050.554
+  - - 1793720054.091
     - 0.0
-  - - 1793712065.554
+  - - 1793720069.091
     - 0.0
-  - - 1793712080.554
+  - - 1793720084.091
     - 0.0
-  - - 1793712095.554
+  - - 1793720099.091
     - 0.0
-  - - 1793712110.554
+  - - 1793720114.091
     - 0.0
-  - - 1793712125.554
+  - - 1793720129.091
     - 0.0
-  - - 1793712140.554
+  - - 1793720144.091
     - 0.0
-  - - 1793712155.554
+  - - 1793720159.091
     - 0.0
-  - - 1793712170.554
+  - - 1793720174.091
     - 0.0
-  - - 1793712185.554
+  - - 1793720189.091
     - 0.0
-  - - 1793712200.554
+  - - 1793720204.091
     - 0.0
-  - - 1793712215.554
+  - - 1793720219.091
     - 0.0
-  - - 1793712230.554
+  - - 1793720234.091
     - 0.0
-  - - 1793712245.554
+  - - 1793720249.091
     - 0.0
-  - - 1793712260.554
+  - - 1793720264.091
     - 0.0
-  - - 1793712275.554
+  - - 1793720279.091
     - 0.0
-  - - 1793712290.554
+  - - 1793720294.091
     - 0.0
-  - - 1793712305.554
+  - - 1793720309.091
     - 0.0
-  - - 1793712320.554
+  - - 1793720324.091
     - 0.0
-  - - 1793712335.554
+  - - 1793720339.091
     - 0.0
-  - - 1793712350.554
+  - - 1793720354.091
     - 0.0
-  - - 1793712365.554
+  - - 1793720369.091
     - 0.0
-  - - 1793712380.554
+  - - 1793720384.091
     - 0.0
-  - - 1793712395.554
+  - - 1793720399.091
     - 0.0
-  - - 1793712410.554
+  - - 1793720414.091
     - 0.0
-  - - 1793712425.554
+  - - 1793720429.091
     - 0.0
-  - - 1793712440.554
+  - - 1793720444.091
     - 0.0
-  - - 1793712455.554
+  - - 1793720459.091
     - 0.0
-  - - 1793712470.554
+  - - 1793720474.091
     - 0.0
-  - - 1793712485.554
+  - - 1793720489.091
     - 0.0
-  - - 1793712500.554
+  - - 1793720504.091
     - 0.0
-  - - 1793712515.554
+  - - 1793720519.091
     - 0.0
-  - - 1793712530.554
+  - - 1793720534.091
     - 0.0
-  - - 1793712545.554
+  - - 1793720549.091
     - 0.0
-  - - 1793712560.554
+  - - 1793720564.091
     - 0.0
-  - - 1793712575.554
+  - - 1793720579.091
     - 0.0
-  - - 1793712590.554
+  - - 1793720594.091
     - 0.0
-  - - 1793712605.554
+  - - 1793720609.091
     - 0.0
-  - - 1793712620.554
+  - - 1793720624.091
     - 0.0
-  - - 1793712635.554
+  - - 1793720639.091
     - 0.0
-  - - 1793712650.554
+  - - 1793720654.091
     - 0.0
-  - - 1793712665.554
+  - - 1793720669.091
     - 0.0
-  - - 1793712680.554
+  - - 1793720684.091
     - 0.0
-  - - 1793712695.554
+  - - 1793720699.091
     - 0.0
-  - - 1793712710.554
+  - - 1793720714.091
     - 0.0
-  - - 1793712725.554
+  - - 1793720729.091
     - 0.0
-  - - 1793712740.554
+  - - 1793720744.091
     - 0.0
-  - - 1793712755.554
+  - - 1793720759.091
     - 0.0
-  - - 1793712770.554
+  - - 1793720774.091
     - 0.0
-  - - 1793712785.554
+  - - 1793720789.091
     - 0.0
-  - - 1793712800.554
+  - - 1793720804.091
     - 0.0
-  - - 1793712815.554
+  - - 1793720819.091
     - 0.0
-  - - 1793712830.554
+  - - 1793720834.091
     - 0.0
-  - - 1793712845.554
+  - - 1793720849.091
     - 0.0
-  - - 1793712860.554
+  - - 1793720864.091
     - 0.0
-  - - 1793712875.554
+  - - 1793720879.091
     - 0.0
-  - - 1793712890.554
+  - - 1793720894.091
     - 0.0
-  - - 1793712905.554
+  - - 1793720909.091
     - 0.0
-  - - 1793712920.554
+  - - 1793720924.091
     - 0.0
-  - - 1793712935.554
+  - - 1793720939.091
     - 0.0
-  - - 1793712950.554
+  - - 1793720954.091
     - 0.0
-  - - 1793712965.554
+  - - 1793720969.091
     - 0.0
-  - - 1793712980.554
+  - - 1793720984.091
     - 0.0
-  - - 1793712995.554
+  - - 1793720999.091
     - 0.0
-  - - 1793713010.554
+  - - 1793721014.091
     - 0.0
-  - - 1793713025.554
+  - - 1793721029.091
     - 0.0
-  - - 1793713040.554
+  - - 1793721044.091
     - 0.0
-  - - 1793713055.554
+  - - 1793721059.091
     - 0.0
-  - - 1793713070.554
+  - - 1793721074.091
     - 0.0
-  - - 1793713085.554
+  - - 1793721089.091
     - 0.0
-  - - 1793713100.554
+  - - 1793721104.091
     - 0.0
-  - - 1793713115.554
+  - - 1793721119.091
     - 0.0
-  - - 1793713130.554
+  - - 1793721134.091
     - 0.0
-  - - 1793713145.554
+  - - 1793721149.091
     - 0.0
-  - - 1793713160.554
+  - - 1793721164.091
     - 0.0
-  - - 1793713175.554
+  - - 1793721179.091
     - 0.0
-  - - 1793713190.554
+  - - 1793721194.091
     - 0.0
-  - - 1793713205.554
+  - - 1793721209.091
     - 0.0
-  - - 1793713220.554
+  - - 1793721224.091
     - 0.0
-  - - 1793713235.554
+  - - 1793721239.091
     - 0.0
-  - - 1793713250.554
+  - - 1793721254.091
     - 0.0
-  - - 1793713265.554
+  - - 1793721269.091
     - 0.0
-  - - 1793713280.554
+  - - 1793721284.091
     - 0.0
-  - - 1793713295.554
+  - - 1793721299.091
     - 0.0
-  - - 1793713310.554
+  - - 1793721314.091
     - 0.0
-  - - 1793713325.554
+  - - 1793721329.091
     - 0.0
-  - - 1793713340.554
+  - - 1793721344.091
     - 0.0
-  - - 1793713355.554
+  - - 1793721359.091
     - 0.0
-  - - 1793713370.554
+  - - 1793721374.091
     - 0.0
-  - - 1793713385.554
-    - 0.0
-  - - 1793713400.554
+  - - 1793721389.091
     - 0.0
 containers:
 - name: cs-worker-220
   service: worker
   release: 2.2.0
-  restarts: 7
+  restarts: 6
   oom_killed: false
   state: running
   exit_code: 0

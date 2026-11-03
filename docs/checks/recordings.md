@@ -27,6 +27,7 @@ Times are from the recorder's "inject" line (after `chaos inject` returned) to i
 | The API answered 500 while the laptop's internet (and Supabase) was briefly gone; the Supabase token expires after 1 h | the recorder retries for 2 minutes and signs in again |
 
 ## Open
-- **Scenario 8:** the planted text is in an INFO line's `msg` and in the ERROR line's `exc_message`. `query_logs` returns only `msg` and `exc_type`, so a query for ERROR logs never sees it; the recorded file expects no flagged evidence (`EXPECT_OVERRIDES` in `record.py`). The synthetic s8 and `tests/security` still cover TEST-003. Whether the testbed should put the text where an ERROR query sees it is Tanzeel's call.
+- **Scenario 8 (resolved 2026-11-03, option A):** the planted text first reached only an INFO line's `msg` and the ERROR line's `exc_message`, which `query_logs` does not return. Since `600f1f8` the api's ERROR line carries the exception text in `msg`, so an ERROR-level query sees it; the re-recorded s8 expects E2 flagged, as the synthetic file does.
+- All 8 were re-recorded after that change (2026-11-03 14:43–16:03 UTC). Runs 6 and 8 failed once while the laptop was busy building the APK and running the Flutter checks (resets over 90 s, a false api `p95_latency` alert that absorbed scenario 8's alert into an open incident); recorded again on an idle laptop.
 - One reset failed once with `cs-worker-210` not healthy after 60 s (the retry passed). The health wait is 60 s; TB-007 allows 90 s for the whole reset.
 - The recorded-model replay (`@pytest.mark.recorded`) needs OpenRouter credit.

@@ -1,19 +1,19 @@
-# Scenario 7, slow-dependency: RECORDED from the live testbed on 2026-11-03 13:49 UTC
+# Scenario 7, slow-dependency: RECORDED from the live testbed on 2026-11-03 15:32 UTC
 # by tests/agent_regression/record.py (B2.6). Model, runner and expect are copied
 # from scenarios/s7_slow_dependency.yaml; the tool outputs are real.
 name: slow-dependency
-now_offset_s: 47
+now_offset_s: 43
 alert:
   service: api
-  observed_at: '2026-11-03T13:49:09.195057Z'
+  observed_at: '2026-11-03T15:32:08.260946Z'
   signals:
   - name: p95_latency
-    value: 3.6099999999999985
-    baseline: 0.09847271010459704
-    zscore: 144.89
-    first_anomalous_at: '2026-11-03T13:48:59.191323Z'
+    value: 3.620000000000001
+    baseline: 0.15462670694800268
+    zscore: 117.49
+    first_anomalous_at: '2026-11-03T15:31:58.259461Z'
 ledger:
-- deploy_id: 8a80792b-7115-448e-b928-dade30219fa8
+- deploy_id: c81bf747-8b60-4301-8289-2759a211b073
   kind: deploy
   service: api
   release: 1.2.0
@@ -25,7 +25,7 @@ ledger:
   deployed_at: '2026-09-14T10:20:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: c666c71b-46fb-4050-a501-cc4dfec813d3
+- deploy_id: 0c7dc1a0-d7e2-4cf8-98e0-8f53ed845714
   kind: deploy
   service: worker
   release: 2.0.0
@@ -37,7 +37,7 @@ ledger:
   deployed_at: '2026-09-21T13:05:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: 95ee7b85-0e4a-4b00-a21a-a3b98a4073e9
+- deploy_id: 2063814e-7190-4318-a2d7-242735587f7d
   kind: deploy
   service: api
   release: 1.3.0
@@ -49,7 +49,7 @@ ledger:
   deployed_at: '2026-09-28T09:40:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: 61f9514a-5ed4-4327-88dc-673c3b296449
+- deploy_id: 3b675b11-483d-4997-a4c6-cc57ab1de1a9
   kind: deploy
   service: worker
   release: 2.1.0
@@ -61,7 +61,7 @@ ledger:
   deployed_at: '2026-10-01T14:40:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: 9abb5c1f-ee2b-494e-a603-606ba07d7b05
+- deploy_id: a6379e19-f139-4d7e-8183-f584d662de46
   kind: deploy
   service: api
   release: 1.4.0
@@ -73,7 +73,7 @@ ledger:
   deployed_at: '2026-10-05T09:05:00Z'
   deployed_by: setup
   reason: scheduled release
-- deploy_id: 93a2bbed-1ac8-4ae7-9be3-ef30e423e479
+- deploy_id: a281d920-7b25-4fbe-a9e6-c4f4c07d5c53
   kind: reset
   service: api
   release: 1.4.0
@@ -82,10 +82,10 @@ ledger:
   image_tag: chaos-shop/api:1.4.0
   config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
   replicas: 1
-  deployed_at: '2026-11-03T13:44:01Z'
+  deployed_at: '2026-11-03T15:26:02Z'
   deployed_by: setup
   reason: environment restored to baseline
-- deploy_id: 04a6481a-4d04-4ceb-abeb-f8bcf5067b16
+- deploy_id: f4829370-ad6f-47f9-bacb-e38b6ad24b75
   kind: reset
   service: worker
   release: 2.1.0
@@ -94,13 +94,57 @@ ledger:
   image_tag: chaos-shop/worker:2.1.0
   config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
   replicas: 1
-  deployed_at: '2026-11-03T13:44:01Z'
+  deployed_at: '2026-11-03T15:26:02Z'
   deployed_by: setup
   reason: environment restored to baseline
 logs:
 - match: service="api"
   lines:
-  - ts: '2026-11-03T13:49:56.619Z'
+  - ts: '2026-11-03T15:32:51.436Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 21.1
+    request_id: fe2332f9360446549d3b1405a20d7761
+    route: /cart
+  - ts: '2026-11-03T15:32:51.218Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 4.1
+    request_id: 5d861c02e95bed10eeb351d5134f9f05
+    route: /orders
+  - ts: '2026-11-03T15:32:51.120Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 108.3
+    request_id: c93826a0de3777060a5b4cd049b590f2
+    route: /cart
+  - ts: '2026-11-03T15:32:50.883Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 73.0
+    request_id: 7ba2b0b3967b1d1cd724f076abb28a50
+    route: /cart
+  - ts: '2026-11-03T15:32:50.622Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -108,10 +152,32 @@ logs:
     logger: shop.access
     msg: GET /products 200
     status: 200
-    duration_ms: 6.2
-    request_id: f62e69232916ff971d23353ff9f5a5ba
+    duration_ms: 12.3
+    request_id: 2f77317378cf84a33d04f6b5615ee52e
     route: /products
-  - ts: '2026-11-03T13:49:56.414Z'
+  - ts: '2026-11-03T15:32:50.497Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2636.3
+    request_id: 638f03b974c5c643395c290a95e428a2
+    route: /checkout
+  - ts: '2026-11-03T15:32:50.468Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 45.7
+    request_id: f9bd2e39c794db536fbd9dd56c42ee17
+    route: /cart
+  - ts: '2026-11-03T15:32:50.214Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -119,10 +185,21 @@ logs:
     logger: shop.access
     msg: GET /products 200
     status: 200
-    duration_ms: 3.7
-    request_id: c193c4bf1f3c9c66eda6416e3df9d2a2
+    duration_ms: 3.0
+    request_id: 9195631374684b9d1b4a31f46aa925ab
     route: /products
-  - ts: '2026-11-03T13:49:56.209Z'
+  - ts: '2026-11-03T15:32:50.012Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.2
+    request_id: 4f59105b70de3f4aad1056a9b6093e40
+    route: /products
+  - ts: '2026-11-03T15:32:49.810Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -131,53 +208,9 @@ logs:
     msg: GET /products 200
     status: 200
     duration_ms: 1.9
-    request_id: d74d3982b1530b00921afa017079ee64
+    request_id: aa730d8da9533b784cb21088de7dd34a
     route: /products
-  - ts: '2026-11-03T13:49:56.007Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 1.0
-    request_id: c4f245b85ceb7c080d8c5b321cf7ea13
-    route: /products
-  - ts: '2026-11-03T13:49:55.992Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /checkout 201
-    status: 201
-    duration_ms: 2586.6
-    request_id: 7d110635c252c07c7eaf0eaf802ad326
-    route: /checkout
-  - ts: '2026-11-03T13:49:55.817Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 4.3
-    request_id: f1d313a42b05d0d95ad449a26a2c4a3f
-    route: /products
-  - ts: '2026-11-03T13:49:55.609Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 1.2
-    request_id: 2298cbf7f7a1c4d2bd927993f1ebab12
-    route: /products
-  - ts: '2026-11-03T13:49:55.416Z'
+  - ts: '2026-11-03T15:32:49.613Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -185,10 +218,10 @@ logs:
     logger: shop.access
     msg: GET /cart 200
     status: 200
-    duration_ms: 4.8
-    request_id: b9fa321240aecd1e88b2088ea8b59e18
+    duration_ms: 3.6
+    request_id: 310e691cf1dacfec4cf3add2b83ec643
     route: /cart
-  - ts: '2026-11-03T13:49:55.216Z'
+  - ts: '2026-11-03T15:32:49.414Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -196,10 +229,10 @@ logs:
     logger: shop.access
     msg: GET /products 200
     status: 200
-    duration_ms: 6.2
-    request_id: be53cefdc7f5a558292deacc58db5b16
+    duration_ms: 2.4
+    request_id: 14e390675fe93055960f9a623a51ba83
     route: /products
-  - ts: '2026-11-03T13:49:55.007Z'
+  - ts: '2026-11-03T15:32:49.211Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -207,21 +240,43 @@ logs:
     logger: shop.access
     msg: GET /products 200
     status: 200
-    duration_ms: 1.0
-    request_id: 8fe6f96c7bb448271189ba7e0321a8a1
+    duration_ms: 1.9
+    request_id: 121b46fe1a9ea031504c2f61356f22a9
     route: /products
-  - ts: '2026-11-03T13:49:54.578Z'
+  - ts: '2026-11-03T15:32:49.010Z'
     level: INFO
     service: api
     release: 1.4.0
     instance: cs-api-140-1
     logger: shop.access
-    msg: POST /checkout 201
-    status: 201
-    duration_ms: 2570.9
-    request_id: 5441fe0c8f3c78d90c7d8b36e1537264
-    route: /checkout
-  - ts: '2026-11-03T13:49:54.419Z'
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.8
+    request_id: 89c2932dc02f6a98dbc890671e2f5af8
+    route: /products
+  - ts: '2026-11-03T15:32:48.810Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.9
+    request_id: 75482e86c145a7d4c92ef0a7e8f27fc0
+    route: /products
+  - ts: '2026-11-03T15:32:48.611Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.0
+    request_id: 70cea14e1e70b7845e35462fe4019320
+    route: /products
+  - ts: '2026-11-03T15:32:48.439Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -229,153 +284,10 @@ logs:
     logger: shop.access
     msg: POST /cart 201
     status: 201
-    duration_ms: 11.3
-    request_id: ad276e6cc7aa1138db761a443e6b5e23
+    duration_ms: 27.5
+    request_id: 019de808d2c9480a43b3f254c21e086e
     route: /cart
-  - ts: '2026-11-03T13:49:54.210Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 1.4
-    request_id: f47c546a6c7e5aae7ef348cc5d0678ed
-    route: /products
-  - ts: '2026-11-03T13:49:54.007Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 0.9
-    request_id: 6c8e6ea140acae9b598d6567d9c98807
-    route: /products
-  - ts: '2026-11-03T13:49:53.818Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /orders 200
-    status: 200
-    duration_ms: 7.1
-    request_id: 11480f090bfa4eb33d59e0363696d64a
-    route: /orders
-  - ts: '2026-11-03T13:49:53.612Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /cart 201
-    status: 201
-    duration_ms: 5.5
-    request_id: 2b0e9010939e3a1db40c0207440164e3
-    route: /cart
-  - ts: '2026-11-03T13:49:53.212Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /orders 200
-    status: 200
-    duration_ms: 3.0
-    request_id: 8ab4122df09fd5ce9cd7cf0a49077a4e
-    route: /orders
-  - ts: '2026-11-03T13:49:53.022Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 7.4
-    request_id: 55cd853d62d825f476822cc0a68b376b
-    route: /products
-  - ts: '2026-11-03T13:49:52.821Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /orders 200
-    status: 200
-    duration_ms: 9.0
-    request_id: c871c7b61585481d947c1b5a894e7bc2
-    route: /orders
-  - ts: '2026-11-03T13:49:52.619Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /orders 200
-    status: 200
-    duration_ms: 7.4
-    request_id: 1835aa0b8902cf24098a8cc9e50cb9c5
-    route: /orders
-  - ts: '2026-11-03T13:49:52.420Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 4.6
-    request_id: 64b42eb094517e7b5c252e43373e5831
-    route: /products
-  - ts: '2026-11-03T13:49:52.214Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 3.3
-    request_id: 35c49eaeaafa10b8ed9b73a33831fc1d
-    route: /products
-  - ts: '2026-11-03T13:49:51.810Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /orders 200
-    status: 200
-    duration_ms: 2.1
-    request_id: 93891fd2c00744a9cff0e06367e152af
-    route: /orders
-  - ts: '2026-11-03T13:49:51.620Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 4.8
-    request_id: fcdcf534a0964301b3a84ab175b74cd0
-    route: /products
-  - ts: '2026-11-03T13:49:51.413Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 3.1
-    request_id: 84f2ad2e6127e4fe1a2431c0a607ba41
-    route: /products
-  - ts: '2026-11-03T13:49:51.232Z'
+  - ts: '2026-11-03T15:32:48.212Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -383,120 +295,10 @@ logs:
     logger: shop.access
     msg: GET /cart 200
     status: 200
-    duration_ms: 14.5
-    request_id: e8ff681daf68a5d61d1f844ea5da7170
+    duration_ms: 3.5
+    request_id: 7290625cb770927bcda559d79315e1e0
     route: /cart
-  - ts: '2026-11-03T13:49:51.231Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /checkout 201
-    status: 201
-    duration_ms: 2617.1
-    request_id: 9079c4685485b5c0b0c2bc9704979b2e
-    route: /checkout
-  - ts: '2026-11-03T13:49:51.013Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /cart 201
-    status: 201
-    duration_ms: 5.2
-    request_id: be8b04f81b582178b0438eb01c5a3ac2
-    route: /cart
-  - ts: '2026-11-03T13:49:50.808Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /cart 200
-    status: 200
-    duration_ms: 2.3
-    request_id: b0f4e8d9710eb59cd9f3ede5653261dd
-    route: /cart
-  - ts: '2026-11-03T13:49:50.631Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /cart 201
-    status: 201
-    duration_ms: 19.9
-    request_id: 92dcddd3955eb416d7262c1b524af1cc
-    route: /cart
-  - ts: '2026-11-03T13:49:50.445Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /healthz 200
-    status: 200
-    duration_ms: 0.4
-    request_id: 38768f47de27483b80e533889c43df96
-    route: /healthz
-  - ts: '2026-11-03T13:49:50.425Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /checkout 201
-    status: 201
-    duration_ms: 2615.5
-    request_id: b760894c51d192dcf3abcac2b52cb87e
-    route: /checkout
-  - ts: '2026-11-03T13:49:50.417Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 1.0
-    request_id: 58212b7a1a74654d1cd2dcf3800a26e3
-    route: /products
-  - ts: '2026-11-03T13:49:50.225Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 8.4
-    request_id: fdc4c4c9d5836250020ca2ba173fcb2c
-    route: /products
-  - ts: '2026-11-03T13:49:49.375Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /checkout 201
-    status: 201
-    duration_ms: 2627.0
-    request_id: 2f4295af62a15d72eaed895c6cd4e3cf
-    route: /checkout
-  - ts: '2026-11-03T13:49:49.367Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /cart 200
-    status: 200
-    duration_ms: 5.0
-    request_id: 8501908de46eb7d15700d87b1eaa4c8e
-    route: /cart
-  - ts: '2026-11-03T13:49:48.645Z'
+  - ts: '2026-11-03T15:32:48.061Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -504,129 +306,63 @@ logs:
     logger: shop.access
     msg: GET /orders 200
     status: 200
-    duration_ms: 10.3
-    request_id: e79aeb70a7eaf3216f67ad6ee8e7b302
+    duration_ms: 53.3
+    request_id: 9eac434fbd975123ea1e4a84729f9acc
     route: /orders
-  - ts: '2026-11-03T13:49:48.452Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /checkout 201
-    status: 201
-    duration_ms: 2601.3
-    request_id: 340bc0ae25c8602d58a0006cd0460e65
-    route: /checkout
-  - ts: '2026-11-03T13:49:48.436Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 1.3
-    request_id: 6e28abae7a83c2fa5c7224f512948922
-    route: /products
-  - ts: '2026-11-03T13:49:48.240Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 3.1
-    request_id: c219491c3c21c2a5f9b3f4ba5f5099cf
-    route: /products
-  - ts: '2026-11-03T13:49:48.047Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 5.4
-    request_id: aa237a303a3a552536c49fb0c54bc488
-    route: /products
-  - ts: '2026-11-03T13:49:47.852Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /orders 200
-    status: 200
-    duration_ms: 10.0
-    request_id: 9478a207a6696748b7450fd3ceef8ce6
-    route: /orders
-  - ts: '2026-11-03T13:49:47.644Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /cart 201
-    status: 201
-    duration_ms: 7.6
-    request_id: b3ae3209715ee923a8b02727bd196075
-    route: /cart
-  - ts: '2026-11-03T13:49:47.452Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /checkout 201
-    status: 201
-    duration_ms: 2612.7
-    request_id: 796841c3540d10947ee62a599a204f7c
-    route: /checkout
-  - ts: '2026-11-03T13:49:47.243Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /products 200
-    status: 200
-    duration_ms: 3.3
-    request_id: 2f5609d6a1838a772d0b32d19c7f7eb8
-    route: /products
-  - ts: '2026-11-03T13:49:47.045Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: POST /cart 201
-    status: 201
-    duration_ms: 9.3
-    request_id: 6e26f109743b1d5d529a7fb671213b30
-    route: /cart
-  - ts: '2026-11-03T13:49:46.858Z'
-    level: INFO
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.access
-    msg: GET /orders 200
-    status: 200
-    duration_ms: 6.1
-    request_id: c16b2ed7fe735c4d62c578dafcc800ae
-    route: /orders
-  - ts: '2026-11-03T13:49:46.648Z'
+  - ts: '2026-11-03T15:32:47.864Z'
     level: INFO
     service: api
     release: 1.4.0
     instance: cs-api-140-1
     logger: shop.checkout
-    msg: checkout with coupon WELCOME-10
-    request_id: b760894c51d192dcf3abcac2b52cb87e
+    msg: checkout with coupon SPRING-15
+    request_id: 638f03b974c5c643395c290a95e428a2
     route: /checkout
-  - ts: '2026-11-03T13:49:46.447Z'
+  - ts: '2026-11-03T15:32:47.797Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2777.7
+    request_id: 31a5ab07de29e69cd97c85b2b0912509
+    route: /checkout
+  - ts: '2026-11-03T15:32:47.763Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 153.6
+    request_id: 2893e546e3bd6e879d93f95ff492ff03
+    route: /cart
+  - ts: '2026-11-03T15:32:47.484Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 64.9
+    request_id: 1a2c7db8118eaed5002edacd29fb312e
+    route: /cart
+  - ts: '2026-11-03T15:32:47.464Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2654.0
+    request_id: f9a0bb2c8924cf4bc282e8413553e34b
+    route: /checkout
+  - ts: '2026-11-03T15:32:47.210Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -634,10 +370,32 @@ logs:
     logger: shop.access
     msg: GET /products 200
     status: 200
-    duration_ms: 5.3
-    request_id: 14605aa8ab4b4169b7e229b1a78e3751
+    duration_ms: 1.7
+    request_id: f7c5b3a4d830ef52452598ef280e5c76
     route: /products
-  - ts: '2026-11-03T13:49:46.039Z'
+  - ts: '2026-11-03T15:32:47.062Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.8
+    request_id: 321316b9c52f7c98b3c2a77b6985b1d9
+    route: /products
+  - ts: '2026-11-03T15:32:46.961Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 100.5
+    request_id: d5b2fcf105e046ef5d932260401da1aa
+    route: /cart
+  - ts: '2026-11-03T15:32:46.661Z'
     level: INFO
     service: api
     release: 1.4.0
@@ -645,10 +403,463 @@ logs:
     logger: shop.access
     msg: GET /orders 200
     status: 200
-    duration_ms: 3.4
-    request_id: 3041a9e29833825eb98e6349f9aa1546
+    duration_ms: 51.1
+    request_id: d6133739fd10b59f0c2e742cdf7b7992
     route: /orders
-  - ts: '2026-11-03T13:38:05.186Z'
+  - ts: '2026-11-03T15:32:46.467Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 58.7
+    request_id: 12bb349893d4144084408f67e297f04e
+    route: /cart
+  - ts: '2026-11-03T15:32:46.261Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 52.3
+    request_id: bf94237874112b0467d253bf038d425e
+    route: /products
+  - ts: '2026-11-03T15:32:46.076Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 56.3
+    request_id: c99dfdb24b058bcaf445d4d9285aaf4e
+    route: /cart
+  - ts: '2026-11-03T15:32:45.938Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 71.8
+    request_id: c280a01088b1e72c7b0210a9e8753ee4
+    route: /cart
+  - ts: '2026-11-03T15:32:45.760Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 151.1
+    request_id: 7e66d5220c33827e840ccfe6137241e6
+    route: /cart
+  - ts: '2026-11-03T15:32:45.461Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 52.0
+    request_id: 0355d25dab86f8f81f2b70cafe24d373
+    route: /products
+  - ts: '2026-11-03T15:32:45.262Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 53.8
+    request_id: 747f47db0c9fec9085dbe1a87fec5aa8
+    route: /orders
+  - ts: '2026-11-03T15:32:44.866Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2618.4
+    request_id: ca88d2cfa8c95d2be5796817db11f935
+    route: /checkout
+  - ts: '2026-11-03T15:32:44.627Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 18.2
+    request_id: c7227c8ac7c9e62a44cdedd66606d227
+    route: /cart
+  - ts: '2026-11-03T15:32:44.411Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.6
+    request_id: b9e38a123d248e711dd40467026f3228
+    route: /products
+  - ts: '2026-11-03T15:32:44.297Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 87.0
+    request_id: d9ea8c0f2dc5c049215b4b9d626e6533
+    route: /cart
+  - ts: '2026-11-03T15:32:44.018Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 8.8
+    request_id: 17a08039bf90861817545a2254e13be1
+    route: /cart
+  - ts: '2026-11-03T15:32:43.858Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2607.4
+    request_id: 5a547a9ce551aa3ab256d6c1f659d619
+    route: /checkout
+  - ts: '2026-11-03T15:32:43.810Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.7
+    request_id: f6f6188d0e1d713eacd6a1baaec15b2e
+    route: /products
+  - ts: '2026-11-03T15:32:43.718Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2682.0
+    request_id: 03aac0aef9b2e5a7e7fd3603598bbb31
+    route: /checkout
+  - ts: '2026-11-03T15:32:43.623Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 14.0
+    request_id: 4f0639ed9a190428117e94dac3401ae0
+    route: /cart
+  - ts: '2026-11-03T15:32:43.411Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.7
+    request_id: 59c255b73a53ab1b98b42bbd52c46b3e
+    route: /products
+  - ts: '2026-11-03T15:32:43.214Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 5.0
+    request_id: ef90b97aa1dfcb2423cae948b97d063f
+    route: /products
+  - ts: '2026-11-03T15:32:43.009Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.7
+    request_id: c8c1b5827766cfae6789f8266dab324d
+    route: /products
+  - ts: '2026-11-03T15:32:42.812Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 3.6
+    request_id: cbf200a043c0bc37a236aa0835864997
+    route: /cart
+  - ts: '2026-11-03T15:32:42.615Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 6.4
+    request_id: 1e0ee9f1a4ecd23250fd7fcf040a55aa
+    route: /products
+  - ts: '2026-11-03T15:32:42.435Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2626.4
+    request_id: f1af8609111f9d25f6d5066ba11b3b15
+    route: /checkout
+  - ts: '2026-11-03T15:22:07.068Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 14367.9
+    request_id: 6bef2054a9af27311e04f50c5d046b3b
+    route: /checkout
+  - ts: '2026-11-03T15:22:07.031Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not mark order 1f0a3359-ce94-40c7-a175-85dab78cc12f as paid
+    request_id: 6bef2054a9af27311e04f50c5d046b3b
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 294, in checkout\n    await store.set_order_status(order.id, \"paid\"\
+      )\n  File \"/app/api/pg.py\", line 171, in set_order_status\n    async with self._connection() as\
+      \ conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\",\
+      \ line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.999Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10128.2
+    request_id: 8af6e6e2896e5baaa121ac50b9ea936b
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.991Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10115.4
+    request_id: a63d4282b27932cdefefb9672e09aefc
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.990Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10118.2
+    request_id: 004e78d7d4c5fd764fc3519c2474c8ac
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.976Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10115.3
+    request_id: 0f2eb97efedf742b7fb006bb5e21d831
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.976Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 15422.5
+    request_id: ee6525319e9d9795865f1c3f256b137c
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.976Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10572.6
+    request_id: c247c965fa3953273e8aecf6bd5facad
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.959Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not create the order
+    request_id: 8af6e6e2896e5baaa121ac50b9ea936b
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 273, in checkout\n    order = await store.create_order(body.cart_id,\
+      \ total)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\",\
+      \ line 157, in create_order\n    async with self._connection() as conn, conn.transaction():\n  \
+      \             ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\", line 210,\
+      \ in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\"\
+      , line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out\
+      \ after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.953Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not create the order
+    request_id: a63d4282b27932cdefefb9672e09aefc
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 273, in checkout\n    order = await store.create_order(body.cart_id,\
+      \ total)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\",\
+      \ line 157, in create_order\n    async with self._connection() as conn, conn.transaction():\n  \
+      \             ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\", line 210,\
+      \ in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\"\
+      , line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out\
+      \ after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.944Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not create the order
+    request_id: 004e78d7d4c5fd764fc3519c2474c8ac
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 273, in checkout\n    order = await store.create_order(body.cart_id,\
+      \ total)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\",\
+      \ line 157, in create_order\n    async with self._connection() as conn, conn.transaction():\n  \
+      \             ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\", line 210,\
+      \ in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\"\
+      , line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out\
+      \ after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.938Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10766.0
+    request_id: 35aeeafa7b59e225fe4f92e85d85338a
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.923Z'
     level: ERROR
     service: api
     release: 1.4.0
@@ -656,1036 +867,516 @@ logs:
     logger: shop.access
     msg: GET /orders 503
     status: 503
-    duration_ms: 5511.2
-    request_id: 8eeb1a0210e9175473a98e97998a06ff
+    duration_ms: 5317.5
+    request_id: 451a28610345258c3ca6aa954212f63a
     route: /orders
-  - ts: '2026-11-03T13:38:05.185Z'
+  - ts: '2026-11-03T15:22:06.914Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not create the order
+    request_id: 0f2eb97efedf742b7fb006bb5e21d831
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 273, in checkout\n    order = await store.create_order(body.cart_id,\
+      \ total)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\",\
+      \ line 157, in create_order\n    async with self._connection() as conn, conn.transaction():\n  \
+      \             ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\", line 210,\
+      \ in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\"\
+      , line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out\
+      \ after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.905Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not mark order 60a994e8-4b74-41a1-a1db-17701e8838fc as paid
+    request_id: ee6525319e9d9795865f1c3f256b137c
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 294, in checkout\n    await store.set_order_status(order.id, \"paid\"\
+      )\n  File \"/app/api/pg.py\", line 171, in set_order_status\n    async with self._connection() as\
+      \ conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\",\
+      \ line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.873Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not mark order 090ebfff-f48c-4155-8708-ab60aaf74323 as paid
+    request_id: c247c965fa3953273e8aecf6bd5facad
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 294, in checkout\n    await store.set_order_status(order.id, \"paid\"\
+      )\n  File \"/app/api/pg.py\", line 171, in set_order_status\n    async with self._connection() as\
+      \ conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\",\
+      \ line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.835Z'
     level: ERROR
     service: api
     release: 1.4.0
     instance: cs-api-140-1
     logger: shop.access
-    msg: GET /orders 503
+    msg: POST /checkout 503
     status: 503
-    duration_ms: 5510.6
-    request_id: a457ecdb1b8231f58a80aff00ddedad1
-    route: /orders
-  - ts: '2026-11-03T13:38:05.177Z'
+    duration_ms: 10466.0
+    request_id: e7ba417b644b642732e5af9b5d47aa37
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.833Z'
     level: ERROR
     service: api
     release: 1.4.0
     instance: cs-api-140-1
     logger: shop.access
-    msg: GET /cart 503
+    msg: POST /checkout 503
     status: 503
-    duration_ms: 5513.2
-    request_id: fa10bf018e2a5a8a6ba325c258eea1f8
-    route: /cart
-  - ts: '2026-11-03T13:38:05.166Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.orders
-    msg: could not list orders
-    request_id: 8eeb1a0210e9175473a98e97998a06ff
-    route: /orders
-    exc_type: DatabasePoolTimeout
-    exc_message: timed out after 5s waiting for a database connection
-    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
-      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
-      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
-      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
-      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
-      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
-      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
-      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/app.py\", line 307, in orders\n    recent = await store.list_orders(limit)\n      \
-      \       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 175, in list_orders\n  \
-      \  async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
-      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
-      \ timed out after 5s waiting for a database connection"
-  - ts: '2026-11-03T13:38:05.163Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.orders
-    msg: could not list orders
-    request_id: a457ecdb1b8231f58a80aff00ddedad1
-    route: /orders
-    exc_type: DatabasePoolTimeout
-    exc_message: timed out after 5s waiting for a database connection
-    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
-      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
-      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
-      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
-      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
-      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
-      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
-      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/app.py\", line 307, in orders\n    recent = await store.list_orders(limit)\n      \
-      \       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 175, in list_orders\n  \
-      \  async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
-      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
-      \ timed out after 5s waiting for a database connection"
-  - ts: '2026-11-03T13:38:05.161Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: could not read the cart
-    request_id: fa10bf018e2a5a8a6ba325c258eea1f8
-    route: /cart
-    exc_type: DatabasePoolTimeout
-    exc_message: timed out after 5s waiting for a database connection
-    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
-      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
-      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
-      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
-      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
-      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
-      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
-      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/app.py\", line 247, in get_cart\n    lines = await store.get_cart(cart_id)\n      \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n    async\
-      \ with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
-      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
-      \ timed out after 5s waiting for a database connection"
-  - ts: '2026-11-03T13:38:05.118Z'
+    duration_ms: 10856.5
+    request_id: 12cc71558b05ed6ecf3bce43e9498649
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.828Z'
     level: ERROR
     service: api
     release: 1.4.0
     instance: cs-api-140-1
     logger: shop.access
-    msg: GET /cart 503
+    msg: POST /checkout 503
     status: 503
-    duration_ms: 5457.1
-    request_id: b3d9b70c389c40c1e388338e7f49dbac
-    route: /cart
-  - ts: '2026-11-03T13:38:05.118Z'
+    duration_ms: 16357.7
+    request_id: 42605c45bd00381ea59a240bdb1f0df8
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.826Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not mark order cde603fb-f393-4144-99cf-f21e3fa22de1 as paid
+    request_id: 35aeeafa7b59e225fe4f92e85d85338a
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 294, in checkout\n    await store.set_order_status(order.id, \"paid\"\
+      )\n  File \"/app/api/pg.py\", line 171, in set_order_status\n    async with self._connection() as\
+      \ conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\",\
+      \ line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.824Z'
     level: ERROR
     service: api
     release: 1.4.0
     instance: cs-api-140-1
     logger: shop.access
-    msg: GET /orders 503
+    msg: POST /cart 503
     status: 503
-    duration_ms: 5456.7
-    request_id: 814abfc69f22a5e190597858a26f6523
-    route: /orders
-  - ts: '2026-11-03T13:38:05.101Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: could not read the cart
-    request_id: b3d9b70c389c40c1e388338e7f49dbac
+    duration_ms: 5638.1
+    request_id: 37b53269d2591d0102281a6b05105fda
     route: /cart
-    exc_type: DatabasePoolTimeout
-    exc_message: timed out after 5s waiting for a database connection
-    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
-      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
-      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
-      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
-      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
-      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
-      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
-      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/app.py\", line 247, in get_cart\n    lines = await store.get_cart(cart_id)\n      \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n    async\
-      \ with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
-      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
-      \ timed out after 5s waiting for a database connection"
-  - ts: '2026-11-03T13:38:05.100Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.orders
-    msg: could not list orders
-    request_id: 814abfc69f22a5e190597858a26f6523
-    route: /orders
-    exc_type: DatabasePoolTimeout
-    exc_message: timed out after 5s waiting for a database connection
-    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
-      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
-      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
-      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
-      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
-      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
-      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
-      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/app.py\", line 307, in orders\n    recent = await store.list_orders(limit)\n      \
-      \       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 175, in list_orders\n  \
-      \  async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
-      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
-      \ timed out after 5s waiting for a database connection"
-  - ts: '2026-11-03T13:38:05.070Z'
+  - ts: '2026-11-03T15:22:06.823Z'
     level: ERROR
     service: api
     release: 1.4.0
     instance: cs-api-140-1
     logger: shop.access
-    msg: GET /cart 503
+    msg: POST /checkout 503
     status: 503
-    duration_ms: 5410.3
-    request_id: 3db1ea2d13f271c199b5521a2d3de7bf
-    route: /cart
-  - ts: '2026-11-03T13:38:05.070Z'
+    duration_ms: 10641.4
+    request_id: 53b3817799b909e481aceeb3e36b7490
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.823Z'
     level: ERROR
     service: api
     release: 1.4.0
     instance: cs-api-140-1
     logger: shop.access
-    msg: GET /cart 503
+    msg: POST /checkout 503
     status: 503
-    duration_ms: 5409.8
-    request_id: d546362c38db295772a3032076297a3c
-    route: /cart
-  - ts: '2026-11-03T13:38:05.023Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: could not read the cart
-    request_id: 3db1ea2d13f271c199b5521a2d3de7bf
-    route: /cart
-    exc_type: DatabasePoolTimeout
-    exc_message: timed out after 5s waiting for a database connection
-    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
-      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
-      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
-      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
-      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
-      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
-      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
-      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/app.py\", line 247, in get_cart\n    lines = await store.get_cart(cart_id)\n      \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n    async\
-      \ with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
-      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
-      \ timed out after 5s waiting for a database connection"
-  - ts: '2026-11-03T13:38:05.007Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: could not read the cart
-    request_id: d546362c38db295772a3032076297a3c
-    route: /cart
-    exc_type: DatabasePoolTimeout
-    exc_message: timed out after 5s waiting for a database connection
-    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
-      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
-      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
-      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
-      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
-      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
-      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
-      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/app.py\", line 247, in get_cart\n    lines = await store.get_cart(cart_id)\n      \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n    async\
-      \ with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
-      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
-      \ timed out after 5s waiting for a database connection"
-  - ts: '2026-11-03T13:38:04.222Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: pricing cache unavailable, reading prices from the database
-    request_id: f848ea7415b0fc5e223b54dee093beca
-    route: /cart
-    exc_type: CacheUnavailable
-    exc_message: cache server unavailable
-    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
-      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
-      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1107, in create_connection\n\
-      \    sock = await self._connect_sock(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
-      , line 1010, in _connect_sock\n    await self.sock_connect(sock, address)\n  File \"/usr/local/lib/python3.12/asyncio/selector_events.py\"\
-      , line 651, in sock_connect\n    return await fut\n           ^^^^^^^^^\nasyncio.exceptions.CancelledError\n\
-      \nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent\
-      \ call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line\
-      \ 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
-      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
-      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
-      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
-      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
-      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
-      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
-      \ (most recent call last):\n  File \"/app/api/app.py\", line 173, in lookup_prices\n    cached =\
-      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
-      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
-      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
-      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
-      \ cache server unavailable"
-  - ts: '2026-11-03T13:38:04.208Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: pricing cache unavailable, reading prices from the database
-    request_id: 341e748f7736343fa15f05bf7fcef7dc
-    route: /cart
-    exc_type: CacheUnavailable
-    exc_message: cache server unavailable
-    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
-      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
-      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1107, in create_connection\n\
-      \    sock = await self._connect_sock(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
-      , line 1010, in _connect_sock\n    await self.sock_connect(sock, address)\n  File \"/usr/local/lib/python3.12/asyncio/selector_events.py\"\
-      , line 651, in sock_connect\n    return await fut\n           ^^^^^^^^^\nasyncio.exceptions.CancelledError\n\
-      \nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent\
-      \ call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line\
-      \ 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
-      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
-      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
-      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
-      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
-      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
-      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
-      \ (most recent call last):\n  File \"/app/api/app.py\", line 173, in lookup_prices\n    cached =\
-      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
-      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
-      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
-      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
-      \ cache server unavailable"
-  - ts: '2026-11-03T13:38:04.204Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: pricing cache unavailable, reading prices from the database
-    request_id: 14f2417c68b3e4a217af4ce58a659cce
-    route: /cart
-    exc_type: CacheUnavailable
-    exc_message: cache server unavailable
-    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
-      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
-      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1107, in create_connection\n\
-      \    sock = await self._connect_sock(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
-      , line 1010, in _connect_sock\n    await self.sock_connect(sock, address)\n  File \"/usr/local/lib/python3.12/asyncio/selector_events.py\"\
-      , line 651, in sock_connect\n    return await fut\n           ^^^^^^^^^\nasyncio.exceptions.CancelledError\n\
-      \nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent\
-      \ call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line\
-      \ 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
-      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
-      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
-      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
-      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
-      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
-      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
-      \ (most recent call last):\n  File \"/app/api/app.py\", line 173, in lookup_prices\n    cached =\
-      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
-      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
-      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
-      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
-      \ cache server unavailable"
-  - ts: '2026-11-03T13:38:04.203Z'
+    duration_ms: 16351.6
+    request_id: 52ddbd4277ad23e2f8b29fe4c17bc7de
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.823Z'
     level: ERROR
     service: api
     release: 1.4.0
     instance: cs-api-140-1
     logger: shop.access
-    msg: GET /orders 503
+    msg: POST /checkout 503
     status: 503
-    duration_ms: 5655.3
-    request_id: 30554fc6e8672a29ee6504e1357b5e8e
-    route: /orders
-  - ts: '2026-11-03T13:38:04.000Z'
+    duration_ms: 16351.6
+    request_id: dda7e67afd9a725c5156cb75ddf00e78
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.822Z'
     level: ERROR
     service: api
     release: 1.4.0
     instance: cs-api-140-1
-    logger: shop.orders
-    msg: could not list orders
-    request_id: 30554fc6e8672a29ee6504e1357b5e8e
-    route: /orders
-    exc_type: DatabasePoolTimeout
-    exc_message: timed out after 5s waiting for a database connection
-    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
-      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
-      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
-      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
-      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
-      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
-      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
-      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
-      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
-      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
-      \ \"/app/api/app.py\", line 307, in orders\n    recent = await store.list_orders(limit)\n      \
-      \       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 175, in list_orders\n  \
-      \  async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
-      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
-      \ timed out after 5s waiting for a database connection"
-  - ts: '2026-11-03T13:38:03.483Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: pricing cache unavailable, reading prices from the database
-    request_id: a2f38cf2c8d50bf266f383a1566fddd1
-    route: /cart
-    exc_type: CacheUnavailable
-    exc_message: cache server unavailable
-    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1286, in read_response\n    response = await self._read_response_from_parser(\n         \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1335, in _read_response_from_parser\n    return await self._parser.read_response(\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\"\
-      , line 185, in read_response\n    response = await self._read_response(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\", line 197, in _read_response\n\
-      \    raw = await self._readline()\n          ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/base.py\"\
-      , line 587, in _readline\n    data = await self._stream.readline()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line 568, in readline\n    line = await\
-      \ self.readuntil(sep)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 660, in readuntil\n    await self._wait_for_data('readuntil')\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 545, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n\nThe\
-      \ above exception was the direct cause of the following exception:\n\nTraceback (most recent call\
-      \ last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1283,\
-      \ in read_response\n    async with timeout_context as active_timeout:\n               ^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError\
-      \ from exc_val\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\
-      \nTraceback (most recent call last):\n  File \"/app/api/rediscache.py\", line 41, in _call\n   \
-      \ return await pending\n           ^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 946, in execute_command\n    result = await conn.retry.call_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line 81, in call_with_retry\n\
-      \    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line\
-      \ 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 871, in _send_command_parse_response\n    return await self.parse_response(conn, command_name,\
-      \ **options)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 993, in parse_response\n    response = await connection.read_response()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1310, in read_response\n\
-      \    raise TimeoutError(f\"Timeout reading from {host_error}\")\nredis.exceptions.TimeoutError:\
-      \ Timeout reading from cs-redis:6379\n\nThe above exception was the direct cause of the following\
-      \ exception:\n\nTraceback (most recent call last):\n  File \"/app/api/app.py\", line 173, in lookup_prices\n\
-      \    cached = await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await\
-      \ self._call(\n                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
-      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
-      \ cache server unavailable"
-  - ts: '2026-11-03T13:38:03.476Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: pricing cache unavailable, reading prices from the database
-    request_id: f1a604df539fdb231cbcc644c1ae1213
-    route: /cart
-    exc_type: CacheUnavailable
-    exc_message: cache server unavailable
-    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1286, in read_response\n    response = await self._read_response_from_parser(\n         \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1335, in _read_response_from_parser\n    return await self._parser.read_response(\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\"\
-      , line 185, in read_response\n    response = await self._read_response(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\", line 197, in _read_response\n\
-      \    raw = await self._readline()\n          ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/base.py\"\
-      , line 587, in _readline\n    data = await self._stream.readline()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line 568, in readline\n    line = await\
-      \ self.readuntil(sep)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 660, in readuntil\n    await self._wait_for_data('readuntil')\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 545, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n\nThe\
-      \ above exception was the direct cause of the following exception:\n\nTraceback (most recent call\
-      \ last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1283,\
-      \ in read_response\n    async with timeout_context as active_timeout:\n               ^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError\
-      \ from exc_val\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\
-      \nTraceback (most recent call last):\n  File \"/app/api/rediscache.py\", line 41, in _call\n   \
-      \ return await pending\n           ^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 946, in execute_command\n    result = await conn.retry.call_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line 81, in call_with_retry\n\
-      \    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line\
-      \ 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 871, in _send_command_parse_response\n    return await self.parse_response(conn, command_name,\
-      \ **options)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 993, in parse_response\n    response = await connection.read_response()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1310, in read_response\n\
-      \    raise TimeoutError(f\"Timeout reading from {host_error}\")\nredis.exceptions.TimeoutError:\
-      \ Timeout reading from cs-redis:6379\n\nThe above exception was the direct cause of the following\
-      \ exception:\n\nTraceback (most recent call last):\n  File \"/app/api/app.py\", line 173, in lookup_prices\n\
-      \    cached = await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await\
-      \ self._call(\n                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
-      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
-      \ cache server unavailable"
-  - ts: '2026-11-03T13:38:03.460Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: pricing cache unavailable, reading prices from the database
-    request_id: 33c43eb54a998b88ea6724db458c258d
-    route: /cart
-    exc_type: CacheUnavailable
-    exc_message: cache server unavailable
-    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1286, in read_response\n    response = await self._read_response_from_parser(\n         \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1335, in _read_response_from_parser\n    return await self._parser.read_response(\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\"\
-      , line 185, in read_response\n    response = await self._read_response(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\", line 197, in _read_response\n\
-      \    raw = await self._readline()\n          ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/base.py\"\
-      , line 587, in _readline\n    data = await self._stream.readline()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line 568, in readline\n    line = await\
-      \ self.readuntil(sep)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 660, in readuntil\n    await self._wait_for_data('readuntil')\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 545, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n\nThe\
-      \ above exception was the direct cause of the following exception:\n\nTraceback (most recent call\
-      \ last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1283,\
-      \ in read_response\n    async with timeout_context as active_timeout:\n               ^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError\
-      \ from exc_val\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\
-      \nTraceback (most recent call last):\n  File \"/app/api/rediscache.py\", line 41, in _call\n   \
-      \ return await pending\n           ^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 946, in execute_command\n    result = await conn.retry.call_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line 81, in call_with_retry\n\
-      \    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line\
-      \ 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 871, in _send_command_parse_response\n    return await self.parse_response(conn, command_name,\
-      \ **options)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 993, in parse_response\n    response = await connection.read_response()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1310, in read_response\n\
-      \    raise TimeoutError(f\"Timeout reading from {host_error}\")\nredis.exceptions.TimeoutError:\
-      \ Timeout reading from cs-redis:6379\n\nThe above exception was the direct cause of the following\
-      \ exception:\n\nTraceback (most recent call last):\n  File \"/app/api/app.py\", line 173, in lookup_prices\n\
-      \    cached = await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await\
-      \ self._call(\n                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
-      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
-      \ cache server unavailable"
-  - ts: '2026-11-03T13:38:03.428Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: pricing cache unavailable, reading prices from the database
-    request_id: b77768bd17e97d0175f54a0c96f37302
-    route: /cart
-    exc_type: CacheUnavailable
-    exc_message: cache server unavailable
-    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1286, in read_response\n    response = await self._read_response_from_parser(\n         \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1335, in _read_response_from_parser\n    return await self._parser.read_response(\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\"\
-      , line 185, in read_response\n    response = await self._read_response(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\", line 197, in _read_response\n\
-      \    raw = await self._readline()\n          ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/base.py\"\
-      , line 587, in _readline\n    data = await self._stream.readline()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line 568, in readline\n    line = await\
-      \ self.readuntil(sep)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 660, in readuntil\n    await self._wait_for_data('readuntil')\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 545, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n\nThe\
-      \ above exception was the direct cause of the following exception:\n\nTraceback (most recent call\
-      \ last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1283,\
-      \ in read_response\n    async with timeout_context as active_timeout:\n               ^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError\
-      \ from exc_val\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\
-      \nTraceback (most recent call last):\n  File \"/app/api/rediscache.py\", line 41, in _call\n   \
-      \ return await pending\n           ^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 946, in execute_command\n    result = await conn.retry.call_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line 81, in call_with_retry\n\
-      \    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line\
-      \ 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 871, in _send_command_parse_response\n    return await self.parse_response(conn, command_name,\
-      \ **options)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 993, in parse_response\n    response = await connection.read_response()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1310, in read_response\n\
-      \    raise TimeoutError(f\"Timeout reading from {host_error}\")\nredis.exceptions.TimeoutError:\
-      \ Timeout reading from cs-redis:6379\n\nThe above exception was the direct cause of the following\
-      \ exception:\n\nTraceback (most recent call last):\n  File \"/app/api/app.py\", line 173, in lookup_prices\n\
-      \    cached = await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await\
-      \ self._call(\n                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
-      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
-      \ cache server unavailable"
-  - ts: '2026-11-03T13:38:03.420Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: pricing cache unavailable, reading prices from the database
-    request_id: bf9a9a2298893559b436adb804dfd540
-    route: /cart
-    exc_type: CacheUnavailable
-    exc_message: cache server unavailable
-    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1286, in read_response\n    response = await self._read_response_from_parser(\n         \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1335, in _read_response_from_parser\n    return await self._parser.read_response(\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\"\
-      , line 185, in read_response\n    response = await self._read_response(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\", line 197, in _read_response\n\
-      \    raw = await self._readline()\n          ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/base.py\"\
-      , line 587, in _readline\n    data = await self._stream.readline()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line 568, in readline\n    line = await\
-      \ self.readuntil(sep)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 660, in readuntil\n    await self._wait_for_data('readuntil')\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 545, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n\nThe\
-      \ above exception was the direct cause of the following exception:\n\nTraceback (most recent call\
-      \ last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1283,\
-      \ in read_response\n    async with timeout_context as active_timeout:\n               ^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError\
-      \ from exc_val\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\
-      \nTraceback (most recent call last):\n  File \"/app/api/rediscache.py\", line 41, in _call\n   \
-      \ return await pending\n           ^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 946, in execute_command\n    result = await conn.retry.call_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line 81, in call_with_retry\n\
-      \    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line\
-      \ 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 871, in _send_command_parse_response\n    return await self.parse_response(conn, command_name,\
-      \ **options)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 993, in parse_response\n    response = await connection.read_response()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1310, in read_response\n\
-      \    raise TimeoutError(f\"Timeout reading from {host_error}\")\nredis.exceptions.TimeoutError:\
-      \ Timeout reading from cs-redis:6379\n\nThe above exception was the direct cause of the following\
-      \ exception:\n\nTraceback (most recent call last):\n  File \"/app/api/app.py\", line 173, in lookup_prices\n\
-      \    cached = await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await\
-      \ self._call(\n                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
-      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
-      \ cache server unavailable"
-  - ts: '2026-11-03T13:38:03.413Z'
-    level: ERROR
-    service: api
-    release: 1.4.0
-    instance: cs-api-140-1
-    logger: shop.cart
-    msg: pricing cache unavailable, reading prices from the database
-    request_id: 4a2522750270f18b6730b1f64c23846d
-    route: /cart
-    exc_type: CacheUnavailable
-    exc_message: cache server unavailable
-    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1286, in read_response\n    response = await self._read_response_from_parser(\n         \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
-      , line 1335, in _read_response_from_parser\n    return await self._parser.read_response(\n     \
-      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\"\
-      , line 185, in read_response\n    response = await self._read_response(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\", line 197, in _read_response\n\
-      \    raw = await self._readline()\n          ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/base.py\"\
-      , line 587, in _readline\n    data = await self._stream.readline()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line 568, in readline\n    line = await\
-      \ self.readuntil(sep)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 660, in readuntil\n    await self._wait_for_data('readuntil')\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
-      , line 545, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n\nThe\
-      \ above exception was the direct cause of the following exception:\n\nTraceback (most recent call\
-      \ last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1283,\
-      \ in read_response\n    async with timeout_context as active_timeout:\n               ^^^^^^^^^^^^^^^\n\
-      \  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError\
-      \ from exc_val\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\
-      \nTraceback (most recent call last):\n  File \"/app/api/rediscache.py\", line 41, in _call\n   \
-      \ return await pending\n           ^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 946, in execute_command\n    result = await conn.retry.call_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line 81, in call_with_retry\n\
-      \    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line\
-      \ 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 871, in _send_command_parse_response\n    return await self.parse_response(conn, command_name,\
-      \ **options)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
-      , line 993, in parse_response\n    response = await connection.read_response()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1310, in read_response\n\
-      \    raise TimeoutError(f\"Timeout reading from {host_error}\")\nredis.exceptions.TimeoutError:\
-      \ Timeout reading from cs-redis:6379\n\nThe above exception was the direct cause of the following\
-      \ exception:\n\nTraceback (most recent call last):\n  File \"/app/api/app.py\", line 173, in lookup_prices\n\
-      \    cached = await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
-      \  File \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await\
-      \ self._call(\n                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
-      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
-      \ cache server unavailable"
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 5841.7
+    request_id: a17c089f5d85e1161b6a0c2a767b57a3
+    route: /checkout
 metrics:
 - match: histogram_quantile(0.95, sum by (le) (rate(upstream_request_duration_seconds_bucket{service="api",upstream="payments"}[1m])))
   points:
-  - - 1793711649.195
-    - 0.676667
-  - - 1793711664.195
-    - 0.46875
-  - - 1793711679.195
-    - 0.390625
-  - - 1793711694.195
-    - 0.410135
-  - - 1793711709.195
-    - 0.40708
-  - - 1793711724.195
-    - 0.095644
-  - - 1793711739.195
-    - 0.095395
-  - - 1793711754.195
-    - 0.095694
-  - - 1793711769.195
-    - 0.0964
-  - - 1793711784.195
-    - 0.096724
-  - - 1793711799.195
-    - 0.0962
-  - - 1793711814.195
-    - 0.096167
-  - - 1793711829.195
-    - 0.095962
-  - - 1793711844.195
-    - 0.0959
-  - - 1793711859.195
-    - 0.0959
-  - - 1793711874.195
-    - 0.095875
-  - - 1793711889.195
-    - 0.095658
-  - - 1793711904.195
-    - 0.202
-  - - 1793711919.195
-    - 0.233333
-  - - 1793711934.195
-    - 0.2335
-  - - 1793711949.195
-    - 0.229643
-  - - 1793711964.195
-    - 0.2125
-  - - 1793711979.195
-    - 0.13
-  - - 1793711994.195
-    - 0.185
-  - - 1793712009.195
-    - 0.175
-  - - 1793712024.195
-    - 0.17
-  - - 1793712039.195
-    - 0.1075
-  - - 1793712054.195
-    - 0.096932
-  - - 1793712069.195
-    - 0.095
-  - - 1793712084.195
-    - 0.097917
-  - - 1793712099.195
-    - 0.098375
-  - - 1793712114.195
-    - 0.1075
-  - - 1793712129.195
-    - 0.205
-  - - 1793712144.195
-    - 0.1975
-  - - 1793712159.195
-    - 0.185984
-  - - 1793712174.195
-    - 0.156435
-  - - 1793712189.195
-    - 0.095125
-  - - 1793712204.195
-    - 0.095278
-  - - 1793712219.195
-    - 0.095952
-  - - 1793712234.195
-    - 0.095469
-  - - 1793712249.195
-    - 0.094667
-  - - 1793712264.195
-    - 0.095
-  - - 1793712279.195
-    - 0.098167
-  - - 1793712294.195
-    - 0.098125
-  - - 1793712309.195
-    - 0.097794
-  - - 1793712324.195
-    - 0.099773
-  - - 1793712339.195
-    - 0.09713
-  - - 1793712354.195
-    - 0.1025
-  - - 1793712369.195
-    - 0.099857
-  - - 1793712384.195
-    - 0.135625
-  - - 1793712399.195
-    - 0.15625
-  - - 1793712414.195
-    - 0.1
-  - - 1793712429.195
-    - 0.1
-  - - 1793712444.195
-    - 0.095921
-  - - 1793712459.195
-    - 0.098438
-  - - 1793712474.195
-    - 0.098594
-  - - 1793712489.195
-    - 0.098026
-  - - 1793712504.195
-    - 0.097596
-  - - 1793712519.195
-    - 0.095761
-  - - 1793712534.195
-    - 0.095625
-  - - 1793712549.195
-    - 0.098158
-  - - 1793712564.195
-    - 0.366667
-  - - 1793712579.195
-    - 0.329167
-  - - 1793712594.195
-    - 0.345833
-  - - 1793712609.195
-    - 0.26875
-  - - 1793712624.195
-    - 0.199375
-  - - 1793712639.195
-    - 0.19375
-  - - 1793712654.195
-    - 0.21125
-  - - 1793712669.195
-    - 0.75
-  - - 1793712684.195
-    - 0.78125
-  - - 1793712699.195
-    - 0.81875
-  - - 1793712714.195
-    - 0.733555
-  - - 1793712729.195
-    - 0.211
-  - - 1793712744.195
-    - 0.214
-  - - 1793712759.195
+  - - 1793717828.261
+    - 0.099028
+  - - 1793717843.261
     - 0.1775
-  - - 1793712774.195
-    - 0.133906
-  - - 1793712789.195
-    - 0.099102
-  - - 1793712804.195
-    - 0.099405
-  - - 1793712819.195
-    - 0.165625
-  - - 1793712834.195
-    - 0.20625
-  - - 1793712849.195
-    - 0.205
-  - - 1793712864.195
-    - 0.1975
-  - - 1793712879.195
-    - 0.14875
-  - - 1793712894.195
-    - 0.1225
-  - - 1793712909.195
-    - 0.1725
-  - - 1793712924.195
-    - 0.097935
-  - - 1793712939.195
-    - 0.0982
-  - - 1793712954.195
-    - 0.096019
-  - - 1793712969.195
-    - 0.096339
-  - - 1793712984.195
-    - 0.098478
-  - - 1793712999.195
-    - 0.14125
-  - - 1793713014.195
-    - 0.4375
-  - - 1793713029.195
-    - 0.775
-  - - 1793713044.195
-    - 0.8
-  - - 1793713059.195
-    - 0.9
-  - - 1793713074.195
-    - 18.0
-  - - 1793713089.195
-    - 9.25
-  - - 1793713104.195
-    - 9.25
-  - - 1793713119.195
-    - 0.23875
-  - - 1793713134.195
-    - 0.18625
-  - - 1793713149.195
-    - 0.098667
-  - - 1793713164.195
-    - 0.097489
-  - - 1793713179.195
-    - 0.0953
-  - - 1793713194.195
-    - 0.097
-  - - 1793713209.195
-    - 0.096979
-  - - 1793713224.195
-    - 0.097404
-  - - 1793713239.195
-    - 0.097667
-  - - 1793713254.195
-    - 0.095395
-  - - 1793713269.195
-    - 0.095833
-  - - 1793713284.195
-    - 0.096111
-  - - 1793713299.195
-    - 0.095887
-  - - 1793713314.195
-    - 0.097419
-  - - 1793713329.195
-    - 0.097593
-  - - 1793713344.195
-    - 0.0974
-  - - 1793713359.195
-    - 0.096121
-  - - 1793713374.195
-    - 0.095833
-  - - 1793713389.195
-    - 0.095962
-  - - 1793713404.195
-    - 0.096339
-  - - 1793713419.195
-    - 0.096481
-  - - 1793713434.195
-    - 0.09819
-  - - 1793713449.195
-    - 0.098043
-  - - 1793713464.195
-    - 0.13375
-  - - 1793713479.195
+  - - 1793717858.261
+    - 0.16
+  - - 1793717873.261
+    - 0.1375
+  - - 1793717888.261
     - 0.1675
-  - - 1793713494.195
-    - 0.180625
-  - - 1793713509.195
-    - 0.158125
-  - - 1793713524.195
-    - 0.099257
-  - - 1793713539.195
-    - 0.0993
-  - - 1793713554.195
-    - 0.095556
-  - - 1793713569.195
-    - 0.094643
-  - - 1793713584.195
-    - 0.095729
-  - - 1793713599.195
-    - 0.096161
-  - - 1793713614.195
-    - 0.098229
-  - - 1793713629.195
-    - 0.097885
-  - - 1793713644.195
-    - 0.097875
-  - - 1793713659.195
-    - 0.098158
-  - - 1793713674.195
-    - 0.098095
-  - - 1793713689.195
+  - - 1793717903.261
+    - 0.14
+  - - 1793717918.261
+    - 0.14
+  - - 1793717933.261
+    - 0.1475
+  - - 1793717948.261
+    - 0.098
+  - - 1793717963.261
+    - 0.098421
+  - - 1793717978.261
     - 0.098333
-  - - 1793713704.195
-    - 0.12625
-  - - 1793713719.195
+  - - 1793717993.261
+    - 0.1075
+  - - 1793718008.261
+    - 0.098333
+  - - 1793718023.261
+    - 0.099514
+  - - 1793718038.261
+    - 0.097656
+  - - 1793718053.261
+    - 0.0976
+  - - 1793718068.261
+    - 0.09775
+  - - 1793718083.261
+    - 0.098125
+  - - 1793718098.261
     - 0.1525
-  - - 1793713734.195
-    - 4.670455
-  - - 1793713749.195
-    - 4.81
-  - - 1793713764.195
-    - 4.864583
-  - - 1793713779.195
+  - - 1793718113.261
+    - 0.163271
+  - - 1793718128.261
+    - 0.179619
+  - - 1793718143.261
+    - 0.094534
+  - - 1793718158.261
+    - 0.095664
+  - - 1793718173.261
+    - 0.095455
+  - - 1793718188.261
+    - 0.095909
+  - - 1793718203.261
+    - 0.096272
+  - - 1793718218.261
+    - 0.139552
+  - - 1793718233.261
+    - 0.145
+  - - 1793718248.261
+    - 0.16982
+  - - 1793718263.261
+    - 0.1
+  - - 1793718278.261
+    - 0.11875
+  - - 1793718293.261
+    - 0.0999
+  - - 1793718308.261
+    - 0.1
+  - - 1793718323.261
+    - 0.097632
+  - - 1793718338.261
+    - 0.099844
+  - - 1793718353.261
+    - 0.099868
+  - - 1793718368.261
+    - 0.097614
+  - - 1793718383.261
+    - 0.165625
+  - - 1793718398.261
+    - 0.14
+  - - 1793718413.261
+    - 0.158125
+  - - 1793718428.261
+    - 0.14
+  - - 1793718443.261
+    - 0.169375
+  - - 1793718458.261
+    - 0.199
+  - - 1793718473.261
+    - 0.203125
+  - - 1793718488.261
+    - 0.1075
+  - - 1793718503.261
+    - 0.145
+  - - 1793718518.261
+    - 0.1525
+  - - 1793718533.261
+    - 0.205
+  - - 1793718548.261
+    - 0.2125
+  - - 1793718563.261
+    - 0.225625
+  - - 1793718578.261
+    - 0.225
+  - - 1793718593.261
+    - 0.35
+  - - 1793718608.261
+    - 0.375
+  - - 1793718623.261
+    - 0.4375
+  - - 1793718638.261
+    - 0.3375
+  - - 1793718653.261
+    - 0.099444
+  - - 1793718668.261
+    - 0.203125
+  - - 1793718683.261
+    - 0.199
+  - - 1793718698.261
+    - 0.236875
+  - - 1793718713.261
+    - 0.236875
+  - - 1793718728.261
+    - 0.25
+  - - 1793718743.261
+    - 0.2485
+  - - 1793718758.261
+    - 0.19
+  - - 1793718773.261
+    - 0.145
+  - - 1793718788.261
+    - 0.097738
+  - - 1793718803.261
+    - 0.097857
+  - - 1793718818.261
+    - 0.098214
+  - - 1793718833.261
+    - 0.098269
+  - - 1793718848.261
+    - 0.097941
+  - - 1793718863.261
+    - 0.0975
+  - - 1793718878.261
+    - 0.0954
+  - - 1793718893.261
+    - 0.093824
+  - - 1793718908.261
+    - 0.094559
+  - - 1793718923.261
+    - 0.095217
+  - - 1793718938.261
+    - 0.096204
+  - - 1793718953.261
+    - 0.096645
+  - - 1793718968.261
+    - 0.096466
+  - - 1793718983.261
+    - 0.096771
+  - - 1793718998.261
+    - 0.099265
+  - - 1793719013.261
+    - 0.1075
+  - - 1793719028.261
+    - 0.095111
+  - - 1793719043.261
+    - 0.095087
+  - - 1793719058.261
+    - 0.095104
+  - - 1793719073.261
+    - 0.094773
+  - - 1793719088.261
+    - 0.093947
+  - - 1793719103.261
+    - 0.093929
+  - - 1793719118.261
+    - 0.094687
+  - - 1793719133.261
+    - 0.097381
+  - - 1793719148.261
+    - 0.0978
+  - - 1793719163.261
+    - 0.099352
+  - - 1793719178.261
+    - 0.099423
+  - - 1793719193.261
+    - 0.099231
+  - - 1793719208.261
+    - 0.099318
+  - - 1793719223.261
+    - 0.1
+  - - 1793719238.261
+    - 0.097742
+  - - 1793719253.261
+    - 0.20875
+  - - 1793719268.261
+    - 0.285417
+  - - 1793719283.261
+    - 0.39
+  - - 1793719298.261
+    - 0.455921
+  - - 1793719313.261
+    - 0.493452
+  - - 1793719328.261
+    - 0.8
+  - - 1793719343.261
+    - 1.0
+  - - 1793719358.261
+    - 0.491667
+  - - 1793719373.261
+    - 0.3825
+  - - 1793719388.261
+    - 0.16
+  - - 1793719403.261
+    - 0.099286
+  - - 1793719418.261
+    - 0.2005
+  - - 1793719433.261
+    - 0.220937
+  - - 1793719448.261
+    - 0.216667
+  - - 1793719463.261
+    - 0.214375
+  - - 1793719478.261
+    - 0.180625
+  - - 1793719493.261
+    - 0.09875
+  - - 1793719508.261
+    - 0.13
+  - - 1793719523.261
+    - 0.758333
+  - - 1793719538.261
+    - 0.222463
+  - - 1793719553.261
+    - 0.235322
+  - - 1793719568.261
+    - 0.233528
+  - - 1793719583.261
+    - 0.275
+  - - 1793719598.261
+    - 0.233929
+  - - 1793719613.261
+    - 0.245714
+  - - 1793719628.261
+    - 0.18625
+  - - 1793719643.261
+    - 0.20125
+  - - 1793719658.261
+    - 0.175
+  - - 1793719673.261
+    - 0.1375
+  - - 1793719688.261
+    - 0.1225
+  - - 1793719703.261
+    - 0.1075
+  - - 1793719718.261
+    - 0.2075
+  - - 1793719733.261
+    - 0.203125
+  - - 1793719748.261
+    - 0.214
+  - - 1793719763.261
+    - 0.20125
+  - - 1793719778.261
+    - 0.205
+  - - 1793719793.261
+    - 0.203125
+  - - 1793719808.261
+    - 0.178
+  - - 1793719823.261
+    - 0.11875
+  - - 1793719838.261
+    - 0.09663
+  - - 1793719853.261
+    - 0.165
+  - - 1793719868.261
+    - 0.16
+  - - 1793719883.261
+    - 0.1375
+  - - 1793719898.261
+    - 0.0956
+  - - 1793719913.261
+    - 4.402778
+  - - 1793719928.261
+    - 4.75
+  - - 1793719943.261
+    - 4.860294
+  - - 1793719958.261
     - 4.875
-  - - 1793713794.195
+  - - 1793719973.261
     - 4.875
-  - - 1793713809.195
+  - - 1793719988.261
     - 4.875
-  - - 1793713824.195
+  - - 1793720003.261
     - 4.875
-  - - 1793713839.195
+  - - 1793720018.261
+    - 4.875
+  - - 1793720033.261
     - 4.875
 containers:
 - name: cs-api-150-1
