@@ -26,7 +26,9 @@ the alerts to send and the services that recovered. No I/O, no clock.
   before it restores the testbed, and the 1-minute query windows still show
   the old fault, so those samples describe the fault, not the normal state.
 - **Recovery**: a service whose triggered signals have all been normal for
-  ``recovery_minutes`` is reported once as recovered (FR-011).
+  ``recovery_minutes`` is reported once as recovered (FR-011). A reset starts
+  that clock for every triggered signal (ADR-25), so a run that follows a run
+  on the same signal is not silenced by it.
 """
 
 from __future__ import annotations
@@ -138,9 +140,17 @@ class Detector:
         """A ``kind=reset`` ledger record: warm up again (FR-003).
 
         Exception types seen during the new warm-up become the known ones.
+        A signal that triggered before the reset counts as normal from the reset
+        on (ADR-25): the reset restores the testbed, and the breaches of the
+        settle period are not observed. A fault that still breaches after the
+        settle stops that clock as usual; otherwise the service recovers
+        ``recovery_minutes`` after the reset and the next fault alerts again.
         """
         for state in self._services.values():
             state.warmup_exceptions.clear()
+            for signal in state.signals.values():
+                if signal.triggered:
+                    signal.normal_since = at
         self._warm_until = at + timedelta(seconds=self.config.warmup_seconds)
         self._learn_from = at + timedelta(seconds=self.config.warmup_settle_seconds)
 

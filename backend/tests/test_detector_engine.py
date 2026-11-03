@@ -253,6 +253,55 @@ def test_a_fault_still_running_when_the_reset_starts_is_not_learnt(
     assert detector.step(at, {"api": Samples(stack_traces=healthy)}).alerts == []
 
 
+def test_a_fault_that_triggered_before_a_reset_fires_again_after_it(
+    config: DetectorConfig,
+) -> None:
+    """ADR-25: two runs in a row with the same signal (p95 in scenarios 3 and 5,
+    found by the B2.6 recorder). The first run's signal must not stay triggered
+    across the reset, or the second injection raises no alert."""
+    rng = random.Random(23)
+    detector, at = warm_detector(config)
+    at = feed_baseline(detector, at, 60, rng, p95_latency=(0.08, 0.005))
+    fired = []
+    for _ in range(3):  # run 1: its fault triggers
+        fired += detector.step(at, {"api": Samples(p95_latency=9.6)}).alerts
+        at += STEP
+    assert len(fired) == 1
+    reset_at = at
+    detector.reset(reset_at)
+    settled = reset_at + timedelta(seconds=config.warmup_settle_seconds)
+    recovered_at = None
+    while at < reset_at + timedelta(seconds=240):  # the run waits 240 s after the reset
+        value = 9.6 if at < settled - timedelta(seconds=60) else noisy(rng, 0.08, 0.005)
+        cycle = detector.step(at, {"api": Samples(p95_latency=value)})
+        assert cycle.alerts == []
+        if cycle.recovered:
+            recovered_at = at
+        at += STEP
+    assert recovered_at == reset_at + timedelta(minutes=config.recovery_minutes)
+    fired = []
+    for _ in range(12):  # run 2: the same fault, within 60 s
+        fired += detector.step(at, {"api": Samples(p95_latency=9.6)}).alerts
+        at += STEP
+    assert len(fired) == 1
+
+
+def test_a_fault_that_outlasts_the_settle_is_not_recovered_by_the_reset(
+    config: DetectorConfig,
+) -> None:
+    rng = random.Random(29)
+    detector, at = warm_detector(config)
+    at = feed_baseline(detector, at, 60, rng, p95_latency=(0.08, 0.005))
+    for _ in range(3):
+        detector.step(at, {"api": Samples(p95_latency=9.6)})
+        at += STEP
+    detector.reset(at)
+    for _ in range(60):  # 300 s: the fault never ends
+        cycle = detector.step(at, {"api": Samples(p95_latency=9.6)})
+        assert cycle.alerts == [] and cycle.recovered == []
+        at += STEP
+
+
 def test_the_settle_period_must_end_inside_the_warm_up() -> None:
     raw = read_config(CONFIG).replace(b"warmup_settle_seconds: 150", b"warmup_settle_seconds: 180")
     with pytest.raises(ValueError, match="shorter than warmup_seconds"):
