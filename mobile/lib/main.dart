@@ -84,7 +84,9 @@ Future<List<Override>> _dataLayer(Env env) async {
     ),
     if (push != null)
       pushServiceProvider.overrideWith((ref) => _followSignIn(ref, push)),
-    wsClientProvider.overrideWith((ref) => _liveSocket(ref, env, tokens)),
+    wsClientProvider.overrideWith(
+      (ref) => liveSocket(ref, Uri.parse(env.wsUrl), tokens),
+    ),
     incidentRepositoryProvider.overrideWith(
       (ref) => LiveIncidentRepository(rest, ref.watch(wsClientProvider)!),
     ),
@@ -123,17 +125,27 @@ PushService _followSignIn(Ref ref, PushService push) {
 /// The socket of a live build (A3.1): connected while signed in; a first
 /// connect or `resync_required` refetches the feed and every open incident;
 /// `hello` sets the server clock; a refused session refresh signs out.
-WsClient _liveSocket(Ref ref, Env env, TokenSource tokens) {
+@visibleForTesting
+WsClient liveSocket(
+  Ref ref,
+  Uri url,
+  TokenSource tokens, {
+  WsConnector connect = connectWebSocket,
+}) {
   final session = ref.watch(authStateProvider);
   final client = WsClient(
-    url: Uri.parse(env.wsUrl),
-    connect: connectWebSocket,
+    url: url,
+    connect: connect,
     tokens: tokens,
     refetch: () async {
-      ref
+      // Through the container, not this provider's ref: the feed depends on
+      // the repository, which depends on this socket, so `ref.read` here is a
+      // circular dependency (a debug-build error that left the app
+      // "Reconnecting" for good).
+      ref.container
         ..invalidate(incidentListProvider)
         ..invalidate(incidentDetailProvider);
-      await ref.read(incidentListProvider.future);
+      await ref.container.read(incidentListProvider.future);
     },
     onHello: (serverTime) =>
         ref.read(serverClockOffsetProvider.notifier).sync(serverTime),
