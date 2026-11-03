@@ -2,6 +2,29 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-03 — Overnight local session (unattended, Tanzeel's go): contracts 0.2.0, ADR-24, smoke runs
+
+### Done
+- Stack restarted with the right clock; CI green on every push that finished (last full check `908f495`, 6/6).
+- **Contracts 0.2.0** (`0936486`, `603bd7c`): signed `RunnerRequest.proposal_kind` (closes contract-review-a issue 12); escalation reason `action_failed_no_rollback`; `AgentMeta.provider` allows `openrouter` (its absence made `GET /incidents/{id}` return 500 with the OpenRouter worker). Relocks: backend, chaos CLI, benchmark (`987cd36`, `0cc937a`; benchmark was missed first and broke the bench CI job).
+- **Runner** (`fb68e21`): rollback proposals skip the cooldown, never the rate limit; a marker changed after signing fails `BAD_SIGNATURE`. **Backend** (`b536e7d`): execute and dry runs carry the kind; a failed action without a rollback step escalates `action_failed_no_rollback` (FR-015). **App** (`87182dd`): the new reason, plus a test that every C1 reason has a Dart value. Tests no longer hardcode the contracts version (`3c3ca8e`).
+- **ADR-24 / detector fix** (`908f495`): nothing is learnt in the first 150 s of a warm-up. `chaos reset` writes its record before restoring the testbed and the queries look back 1 minute, so the previous fault was being learnt as normal and the next injection raised no incident.
+- `597c887`: the OpenRouter adapter logs why a call was refused (status, code, clipped message).
+- **`ocp smoke`**: 6 live runs, each stopped by a real problem, all fixed except the last: `docs/checks/smoke.md`. Detection works (11–31 s), the agent gathers evidence with the real tools.
+
+### Blocked
+- **OpenRouter credit**: the last run stopped on HTTP 402 ("requires more credits … can only afford 7396 tokens"). The key is free tier with $0 credit and $0.057 used. Every live agent task (smoke, B2.6 replay, B3.3, B3.4, Gate G2) waits for this.
+
+### Next
+1. After credit: `ocp smoke` → record timings in `docs/checks/smoke.md`.
+2. B2.6 tool recordings (no LLM needed for the tool outputs; the recorded-model replay needs credit).
+3. Gate G2 run (8 scenarios with the real model), B2.13 pin the model.
+
+### Waiting on Tanzeel
+- **Add OpenRouter credit** (a few dollars covers smoke runs, Gate G2 and the benchmark; the probes so far cost $0.06).
+- `mobile/pubspec.lock` / `mobile/analysis_options.yaml` local changes: keep or reset?
+- Firebase and the phone; runbook review; device DELETE vs DB-011.
+
 ## 2026-11-02 (evening) — Local session: first real stack with Supabase, runner service, ocp smoke
 
 ### Done

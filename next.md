@@ -19,7 +19,9 @@
 
 ## 2. Next tasks, in order
 **Since 2026-11-02 (local sessions on the laptop; cloud sessions are no longer used):** Supabase `ocp-dev` is migrated and `DATABASE_URL`, `SUPABASE_URL` are in `.env` (`SUPABASE_ANON_KEY`, `OCP_TEST_*`, `SUPABASE_DB_ADMIN_URL` in `.env.local`). The LLM is `LLM_PROVIDER=openrouter` (ADR-23).
-A. **Restart the stack** (`ocp down`, `ocp up`): processes started while the Docker VM clock was 13 h ahead keep stale time-based caches (cs-lb's nginx DNS). Check that `cs-loadgen` reports `ok` again and Prometheus has `up` series.
+**State 2026-11-03:** contracts 0.2.0 done (issue 12 and the escalation reason); ADR-24 detector fix; the stack runs on the laptop. **Blocked on OpenRouter credit** (HTTP 402): see `docs/checks/smoke.md`.
+0. After credit: `uv run --project tools/ocp ocp smoke` (the stack must have had a healthy warm-up; `ocp smoke` resets first).
+A. (done 2026-11-03) **Restart the stack** (`ocp down`, `ocp up`): processes started while the Docker VM clock was 13 h ahead keep stale time-based caches (cs-lb's nginx DNS). Check that `cs-loadgen` reports `ok` again and Prometheus has `up` series.
 B. **Proxy security test** (`bash runner/tests/security/run_proxy_test.sh`) and CI on the last push (the runner service and `required: false` fix).
 B2. **`ocp smoke` live** (scenario 2, real model through OpenRouter); record the result in `docs/checks/`. The backend profile is in `ocp up` now; the runner service is in `runner.yml`.
    Test containers for the backend suites: `ocp-test-pg` (127.0.0.1:54329) and `ocp-test-redis` (127.0.0.1:63799); start them with `docker start ocp-test-pg ocp-test-redis`.
