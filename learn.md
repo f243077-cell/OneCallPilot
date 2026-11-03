@@ -215,3 +215,17 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Time zone vs clock*: the clock shows local time; the time zone tells the computer how far that is from world time (UTC). A wrong zone with a "right-looking" clock makes world time wrong.
 - *DNS cache*: a remembered "name → address" answer, kept until it expires.
 - *Smoke test*: one quick run through the whole system to see that nothing is badly broken.
+
+### 2026-11-03 — Recording the real shop, and an alarm that would not ring twice
+
+**What we did.** The agent's regression tests used made-up tool answers. A new script now breaks the real shop in each of the 8 ways, waits for the copilot to notice, and saves what the logs, metrics, deploy history and containers really said. The tests replay those saved answers, so they check the agent against real data without needing the shop running.
+
+**What the recording found.**
+1. **The alarm stayed "on" after a reset.** Once a signal (say, slow api responses) raised an alarm, the detector waited for 3 calm minutes before it would raise that alarm again. After a reset, the first 150 s are ignored, so the 3 minutes could not finish before the next fault was injected at 240 s. Two runs in a row that break the api the same way got only one alarm. Now a reset starts the 3-minute count at once (ADR-25).
+2. **The reset could not get past a traffic flood.** After the "traffic spike" scenario, the reset restarted the api while the fake customers were still flooding it, so the api never looked healthy in time and the reset gave up before it could tell the fake customers to calm down. Now it calms them first.
+3. **The planted message in scenario 8 is hidden from an error-only search.** The fake attacker's text lands in a normal (INFO) log line and in a detail field that the log tool does not return. If the agent only reads errors, it never sees the trap.
+
+**Words.**
+- *Recording / fixture*: saved real answers that a test replays instead of asking the live system.
+- *Recovery*: the detector deciding a problem is over, after its signals stay normal for 3 minutes.
+- *Line endings*: Windows ends text lines with two characters (CRLF), Linux with one (LF); the repo uses LF, so files written on Windows must be written as LF.

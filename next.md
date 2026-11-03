@@ -20,12 +20,14 @@
 ## 2. Next tasks, in order
 **Since 2026-11-02 (local sessions on the laptop; cloud sessions are no longer used):** Supabase `ocp-dev` is migrated and `DATABASE_URL`, `SUPABASE_URL` are in `.env` (`SUPABASE_ANON_KEY`, `OCP_TEST_*`, `SUPABASE_DB_ADMIN_URL` in `.env.local`). The LLM is `LLM_PROVIDER=openrouter` (ADR-23).
 **State 2026-11-03:** contracts 0.2.0 done (issue 12 and the escalation reason); ADR-24 detector fix; the stack runs on the laptop. **Blocked on OpenRouter credit** (HTTP 402): see `docs/checks/smoke.md`.
+**State 2026-11-03 (day):** B2.6 tool outputs recorded for all 8 scenarios (`tests/agent_regression/scenarios/recorded/`, 16 regression cases pass). ADR-25 detector fix (a reset starts the recovery clock) and a `chaos reset` fix (load off before the restarts) found by the recorder. Still blocked on credit for every live-model task.
 0. After credit: `uv run --project tools/ocp ocp smoke` (the stack must have had a healthy warm-up; `ocp smoke` resets first).
 A. (done 2026-11-03) **Restart the stack** (`ocp down`, `ocp up`): processes started while the Docker VM clock was 13 h ahead keep stale time-based caches (cs-lb's nginx DNS). Check that `cs-loadgen` reports `ok` again and Prometheus has `up` series.
 B. **Proxy security test** (`bash runner/tests/security/run_proxy_test.sh`) and CI on the last push (the runner service and `required: false` fix).
 B2. **`ocp smoke` live** (scenario 2, real model through OpenRouter); record the result in `docs/checks/`. The backend profile is in `ocp up` now; the runner service is in `runner.yml`.
    Test containers for the backend suites: `ocp-test-pg` (127.0.0.1:54329) and `ocp-test-redis` (127.0.0.1:63799); start them with `docker start ocp-test-pg ocp-test-redis`.
-C. **B2.6 recordings and the recorded-model replay** with OpenRouter (`@pytest.mark.recorded`), then B3.3/B3.4/B3.9.
+C. (tool recordings done 2026-11-03; re-record with `uv run python ../tests/agent_regression/record.py all` from `backend/`, about 50 min, stack up) **Recorded-model replay** with OpenRouter (`@pytest.mark.recorded`, needs credit), then B3.3/B3.4/B3.9.
+   Open question for Tanzeel: scenario 8's planted text reaches the model only through INFO or ANY log queries (the ERROR line carries it in `exc_message`, which `query_logs` drops). See the recorded s8 file and `EXPECT_OVERRIDES` in `record.py`.
 D. **Issue 12** (contracts 0.2.0): signed `proposal_kind` in `RunnerRequest`; the runner exempts rollbacks from its cooldown. Plus the escalation reason for a failed action without a rollback step.
 
 Older list (cloud sessions):

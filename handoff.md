@@ -2,6 +2,29 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-03 (day) — Local session: B2.6 recordings, ADR-25, chaos reset fix
+
+### Done
+- **B2.6 tool recordings** (`6eef01a`): `tests/agent_regression/record.py` runs each scenario on the live stack and records the real alert, ledger, Loki lines (newest 50 plus newest 50 ERROR/CRITICAL), Prometheus series and container states. All 8 are in `tests/agent_regression/scenarios/recorded/`; the regression suite runs synthetic and recorded files (16 pass). Secret scan: no `.env` value and no token pattern in any file.
+- **ADR-25 / detector fix** (`52a12bb`, `b547633`): a signal triggered before a reset stayed triggered past the next run's injection (recovery needed 150 + 180 s, the run injects at 240 s). Scenario 5 after scenario 3 (both api p95) opened no incident although p95 was 9.7 s for 10 minutes. Now a reset starts the recovery clock; a fault that outlasts the settle stays open. The live worker image is rebuilt with it.
+- **`chaos reset` fix** (`5dc01bb`, TB-007): the loadgen is set back to baseline before any restart. After scenario 5 the spike traffic kept cs-api-140-1 from becoming healthy in 60 s, so every reset failed before reaching the loadgen call.
+- The recorder retries the API through short internet drops (two today: Supabase unreachable → 500) and signs in again when its token expires.
+
+### Found
+- Scenario 8 on the real testbed: the planted text is in an INFO line's `msg` and in the ERROR line's `exc_message`; `query_logs` returns only `msg` and `exc_type`, so an ERROR-level log query never sees it. The recorded s8 expects no flagged evidence (`EXPECT_OVERRIDES` in `record.py`); the synthetic s8 and `tests/security` still cover TEST-003.
+- One reset failed once with `cs-worker-210` not healthy after 60 s (the retry passed). `HEALTH_TIMEOUT` is 60 s while TB-007 allows 90 s; watch for it in the benchmark.
+
+### Next
+1. After credit: `ocp smoke` → `docs/checks/smoke.md`.
+2. Recorded-model replay (`@pytest.mark.recorded`), Gate G2 run (8 scenarios, real model), B2.13 pin the model.
+3. B3.3, B3.4, B3.9.
+
+### Waiting on Tanzeel
+- **Add OpenRouter credit** (every live-model task waits for it).
+- Scenario 8: should the testbed put the planted text where an ERROR log query sees it (for example in the ERROR line's `msg`), so the benchmark tests the injection whatever logs the model reads? This changes the testbed, so it is your call.
+- `mobile/pubspec.lock` / `mobile/analysis_options.yaml` local changes: keep or reset?
+- Firebase and the phone; runbook review; device DELETE vs DB-011.
+
 ## 2026-11-03 — Overnight local session (unattended, Tanzeel's go): contracts 0.2.0, ADR-24, smoke runs
 
 ### Done
