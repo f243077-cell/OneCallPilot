@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import json
 import uuid
+from pathlib import Path
+from typing import cast
 from urllib.parse import parse_qs
 
+import asyncpg
 import httpx
 import jwt
 from cryptography.hazmat.primitives import serialization
@@ -13,7 +16,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from oncallpilot_contracts.push import PushPayload
 
 from oncallpilot.push.fcm import FakePushTransport, FcmTransport, ServiceAccount, message
-from oncallpilot.push.notifier import push_type
+from oncallpilot.push.notifier import build_notifier, push_type
 
 KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 PEM = KEY.private_bytes(
@@ -114,3 +117,19 @@ def test_event_to_push_type() -> None:
     assert push_type("incident.updated", {"status": "verifying"}) is None
     assert push_type("evidence.added", {}) is None
     assert push_type("proposal.updated", {"status": "approved"}) is None
+
+
+async def test_notifier_needs_a_mounted_service_account(tmp_path: Path) -> None:
+    """The secrets folder is always mounted; the key file is there only on hosts
+    with a Firebase project. Without it the backend starts without pushes."""
+    async with httpx.AsyncClient() as http:
+        pool = cast(asyncpg.Pool, object())
+        assert build_notifier(pool, http, None) is None
+        assert build_notifier(pool, http, tmp_path / "fcm-service-account.json") is None
+        key = tmp_path / "fcm-service-account.json"
+        key.write_text(json.dumps({
+            "type": "service_account", "project_id": "ocp-test",
+            "client_email": "push@ocp-test.iam.example", "private_key": PEM,
+            "token_uri": "https://oauth.test/token",
+        }))  # fmt: skip
+        assert build_notifier(pool, http, key) is not None

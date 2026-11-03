@@ -74,6 +74,11 @@ services:
       AGENT_ENABLED: ${AGENT_ENABLED:-true}
       BENCHMARK_LOCK: ${BENCHMARK_LOCK:-false}
       LOKI_URL: http://loki:3100
+      FCM_CREDENTIALS_PATH: /run/secrets/fcm-service-account.json
+    # FCM service account (FR-018): the git-ignored secrets folder, read-only. Without
+    # the key file in it the backend runs without pushes (logged).
+    volumes:
+      - ../secrets:/run/secrets:ro
     ports:
       - "0.0.0.0:8000:8000"
     # copilot_net: Redis; obs_net: Loki (/log-tail); default: Supabase (JWKS, pooler).
@@ -117,8 +122,10 @@ services:
       LOKI_URL: http://loki:3100
       DOCKER_HOST: tcp://socket-proxy-ro:2375
       LEDGER_PATH: /ledger/deploys.jsonl
+      FCM_CREDENTIALS_PATH: /run/secrets/fcm-service-account.json
     volumes:
       - deploy_ledger:/ledger:ro
+      - ../secrets:/run/secrets:ro  # FCM service account, as for backend-api
     # copilot_net: Redis; obs_net: Prometheus, Loki, and scraping of :9464;
     # ro_proxy_net: socket-proxy-ro; chaos_net: /healthz probes; default: Supabase, LLM.
     networks: [copilot_net, obs_net, ro_proxy_net, chaos_net, default]

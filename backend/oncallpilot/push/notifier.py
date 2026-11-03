@@ -108,4 +108,9 @@ def build_notifier(
     if credentials is None:
         log.warning("FCM_CREDENTIALS_PATH is not set: no push notifications")
         return None
+    if not credentials.is_file():
+        # infrastructure/secrets/ is always mounted; the key file only exists on a
+        # host with a Firebase project (architecture §2.12).
+        log.warning("no FCM service account at FCM_CREDENTIALS_PATH: no push notifications")
+        return None
     return Notifier(pool, FcmTransport(http, ServiceAccount.load(credentials)))
