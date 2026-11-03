@@ -229,3 +229,18 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Recording / fixture*: saved real answers that a test replays instead of asking the live system.
 - *Recovery*: the detector deciding a problem is over, after its signals stay normal for 3 minutes.
 - *Line endings*: Windows ends text lines with two characters (CRLF), Linux with one (LF); the repo uses LF, so files written on Windows must be written as LF.
+
+### 2026-11-03 (evening) — The first push on a real phone
+
+**What we did.** The phone app now asks for permission to show notifications, tells the backend its "address" for notifications (a token from Firebase), and opens the right incident when a notification is tapped. The backend got the Firebase key as a read-only file. Then we broke the shop on purpose: 24 seconds later the phone buzzed with "New incident", and a tap opened it.
+
+**What went wrong on the way.**
+1. **The laptop's address changed overnight.** The router hands out addresses and gave the laptop a new one, so the app was knocking on the old door. A reservation on the router keeps the address fixed.
+2. **"Reconnecting" forever.** The connection was fine, but right after connecting the app reloads its list, and that reload asked for something that depended on the connection itself: a loop the app's toolkit refuses in test builds. The app never counted itself as "caught up". Now the reload asks in a way that does not create the loop.
+3. **A security test caught a change I forgot to test.** The backend's mounted folders are pinned by a test; adding the key folder broke it for one push. The test now also checks that no other service can see that folder.
+
+**Words.**
+- *Push token*: the address Firebase gives one app on one phone; the backend sends notifications to it.
+- *DHCP reservation*: telling the router to always give one device the same address.
+- *Circular dependency*: A needs B and B needs A, so neither can be built first.
+

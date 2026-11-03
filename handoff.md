@@ -2,6 +2,26 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-03 (evening) — Local session: scenario 8 fix, push on the real phone
+
+### Done
+- **Scenario 8, option A** (`600f1f8`): the api's ERROR line carries the exception text in `msg`, so an error-only log query sees the planted text. All 8 scenarios re-recorded (`3dc60fb`); the recorder's expectation override is gone.
+- **Push, backend** (`df14a82`, `ba5a73c`): `infrastructure/secrets/` is mounted read-only into backend-api and backend-worker; without the key file the backend runs without pushes. The compose security test now pins those mounts and forbids the secrets folder to every other service (it was red on `df14a82` for one push: `tests/security` had not been run).
+- **Push, app (A3.2)** (`165acd4`): permission, token registration on sign-in and refresh, device row deleted before sign-out, `incidents_critical` channel, tap → `/incidents/{id}`. New dependencies `firebase_core`, `firebase_messaging`; `pubspec.lock` generated with Flutter 3.44.2 (CI's version) from `D:lutter-sdks.44.2`.
+- **Live app fix** (`c0d7f48`): "Reconnecting — approval is paused" for good with a healthy socket (a Riverpod circular dependency in the refetch, thrown as an `Error` in debug builds).
+- **Device test passed** (`docs/checks/push.md`): incident +24 s after the injection, both pushes received, tap opened the incident.
+- Your `analysis_options.yaml` change committed (`ddbbb45`); the `pubspec.lock` changes from your local Flutter 3.47.7 were replaced by the 3.44.2 lock (backup: the scratchpad diff of this session).
+
+### Next
+1. MOB-016 acceptance once more with the app **killed**; then A3.3 (live biometric approval) needs a proposal, so OpenRouter credit.
+2. After credit: `ocp smoke`, recorded-model replay, Gate G2, B2.13, B3.3/B3.4.
+
+### Waiting on Tanzeel
+- **OpenRouter credit** (when the project is complete, as you said).
+- **DHCP reservation** for the laptop (192.168.0.105) on the router, so the app's build address stays valid.
+- Optional: rotate `INGEST_TOKEN` and the Redis password; both were printed once into a tool output on the laptop (never committed).
+- Runbook review; device DELETE vs DB-011.
+
 ## 2026-11-03 (day) — Local session: B2.6 recordings, ADR-25, chaos reset fix
 
 ### Done
