@@ -257,7 +257,15 @@ class Testbed:
         # The reset records go first: backend-worker's detector starts its warm-up
         # when it sees them, so the stops and restarts below never raise an alert.
         records = ledger.seeded_ledger(self.releases)
-        self.helper([{"op": "ledger_replace", "lines": [ledger.to_line(r) for r in records]}])
+        # The extra load stops next, before any restart: spike traffic kept the one
+        # restarted api slot from becoming healthy in time (scenario 5). A loadgen
+        # that is not running answers nothing here and starts in baseline mode.
+        self.helper(
+            [
+                {"op": "ledger_replace", "lines": [ledger.to_line(r) for r in records]},
+                *self._load_off(),
+            ]
+        )
         if not all(s.exists for s in self.docker.states((*API_SLOTS, *WORKER_SLOTS)).values()):
             self.docker.compose_create_slots()
         # Slots that are not part of the baseline stop gracefully.
@@ -281,23 +289,29 @@ class Testbed:
                     "json": {"delay_ms": 0},
                     "auth": True,
                 },
-                {
-                    "op": "http",
-                    "method": "PUT",
-                    "url": f"{LOADGEN_URL}/internal/mode",
-                    "json": {"mode": "baseline"},
-                    "auth": True,
-                },
-                {
-                    "op": "http",
-                    "method": "PUT",
-                    "url": f"{LOADGEN_URL}/internal/coupon-stream",
-                    "json": {"enabled": False},
-                    "auth": True,
-                },
+                *self._load_off(),
             ]
         )
         return {"seconds": round(time.monotonic() - started, 1), "ledger_records": len(records)}
+
+    @staticmethod
+    def _load_off() -> list[dict[str, Any]]:
+        return [
+            {
+                "op": "http",
+                "method": "PUT",
+                "url": f"{LOADGEN_URL}/internal/mode",
+                "json": {"mode": "baseline"},
+                "auth": True,
+            },
+            {
+                "op": "http",
+                "method": "PUT",
+                "url": f"{LOADGEN_URL}/internal/coupon-stream",
+                "json": {"enabled": False},
+                "auth": True,
+            },
+        ]
 
     @staticmethod
     def _worker_leak(container: str, enabled: bool) -> dict[str, Any]:

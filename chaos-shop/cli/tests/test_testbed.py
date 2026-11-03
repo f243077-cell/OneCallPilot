@@ -91,6 +91,23 @@ def test_reset_writes_the_reset_records_before_touching_containers(
     assert docker.timeline.index("helper ledger_replace") < first_container
 
 
+def test_reset_calls_off_the_load_before_touching_containers(
+    testbed: Testbed, docker: FakeDocker
+) -> None:
+    """After scenario 5 the spike traffic kept the one restarted api slot from
+    becoming healthy within 60 s, so every reset failed before it reached the
+    loadgen call (found by the B2.6 recorder)."""
+    docker.start(["cs-api-150-1"])
+    docker.timeline.clear()
+    docker.plans.clear()
+    testbed.reset()
+    first_container = next(i for i, t in enumerate(docker.timeline) if not t.startswith("helper"))
+    early = {(s["url"], str(s["json"])) for s in docker.plans[0] if s["op"] == "http"}
+    assert docker.timeline.index("helper http") < first_container
+    assert ("http://cs-loadgen:8003/internal/mode", "{'mode': 'baseline'}") in early
+    assert ("http://cs-loadgen:8003/internal/coupon-stream", "{'enabled': False}") in early
+
+
 def test_reset_creates_missing_slots(testbed: Testbed, docker: FakeDocker) -> None:
     del docker.containers["cs-api-150-5"]
     testbed.reset()
