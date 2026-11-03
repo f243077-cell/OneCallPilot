@@ -3,7 +3,8 @@
 Renders the whole stack with the dummy ``.env.example`` values and checks:
 backend-worker never receives ACTION_SIGNING_KEY; only backend-api publishes a
 port on 0.0.0.0; only the two socket proxies mount the Docker socket; the
-backend services drop all capabilities and run read-only.
+backend services drop all capabilities and run read-only; only they mount the
+secrets folder, read-only.
 """
 
 from __future__ import annotations
@@ -69,5 +70,21 @@ def test_backend_services_are_locked_down(services: dict[str, Any]) -> None:
         service = services[name]
         assert service["read_only"] is True and service["cap_drop"] == ["ALL"], name
         assert "no-new-privileges:true" in service["security_opt"], name
-    ledger = services["backend-worker"]["volumes"]
-    assert [(v["target"], v.get("read_only")) for v in ledger] == [("/ledger", True)]
+    worker = services["backend-worker"]["volumes"]
+    assert [(v["target"], v.get("read_only")) for v in worker] == [
+        ("/ledger", True),
+        ("/run/secrets", True),
+    ]
+    api = services["backend-api"]["volumes"]
+    assert [(v["target"], v.get("read_only")) for v in api] == [("/run/secrets", True)]
+
+
+def test_only_the_backend_mounts_the_secrets_folder(services: dict[str, Any]) -> None:
+    """The FCM service account lives there (FR-018); the runner and every other
+    service must never see it (CLAUDE.md §6.6)."""
+    secrets = ROOT / "infrastructure" / "secrets"
+    for name, service in services.items():
+        for volume in service.get("volumes") or []:
+            if Path(volume.get("source", "")) == secrets:
+                assert name in ("backend-api", "backend-worker"), name
+                assert volume.get("read_only") is True, name
