@@ -36,6 +36,7 @@ The original specification leaves some engineering details open. Each gap is res
 | ADR-22 | **Detector warm-up keeps learning normal samples** instead of relearning from scratch (`docs/adr/ADR-22-detector-warm-up-keeps-learning.md`). | Relearning from scratch makes FR-003's own acceptance impossible: a fault injected right after a reset would become the baseline. | Accepted 2026-10-21 |
 | ADR-23 | **LLM and embeddings through OpenRouter** (`docs/adr/ADR-23-llm-and-embeddings-through-openrouter.md`). `LLM_PROVIDER=openrouter` reaches the ADR-13 primary (`google/gemini-3.8-flash`) and `gemini-embedding-001` (768 dimensions, normalised in code) with one `OPENROUTER_API_KEY`; strict `json_schema` replies, reasoning details replayed unchanged, `data_collection: deny`. The direct Gemini and Claude adapters stay. | The project has an OpenRouter key, not a Gemini key; the live API was checked with the agent's real schemas and tools. Task types do not reach the embedding model. | Accepted 2026-11-02 |
 | ADR-24 | **The detector learns nothing while a reset settles** (`docs/adr/ADR-24-detector-learns-nothing-while-a-reset-settles.md`). For the first `warmup_settle_seconds` (150 s) of a warm-up, no baseline update and no known exception types. | `chaos reset` writes its record before restoring the testbed and the queries look back 1 minute, so the old fault was learnt as normal (found by `ocp smoke`). | Accepted 2026-11-02 |
+| ADR-25 | **A reset starts the recovery clock** (`docs/adr/ADR-25-a-reset-starts-the-recovery-clock.md`). A signal that triggered before a `chaos reset` counts as normal from the reset on; it recovers 3 minutes later unless it still breaches after the settle period. | Otherwise the signal stayed triggered past the next run's injection, and a run on the same signal and service raised no incident (found by the B2.6 recorder: scenario 5 after 3). | Accepted 2026-11-03 |
 
 ---
 
@@ -634,7 +635,7 @@ class LLMProvider(Protocol):
   - `sev1`: a service has no running container, or error rate ≥ 25 %;
   - `sev2`: error rate ≥ 5 %, p95 ≥ 3× baseline, or restarts;
   - `sev3`: anything else.
-- **Recovery:** every triggering signal stays below its rule for 3 consecutive minutes.
+- **Recovery:** every triggering signal stays below its rule for 3 consecutive minutes. A `chaos reset` starts that clock for every triggered signal; breaches during the settle period are not observed (ADR-25).
 - `detector_config_version` is the SHA-256 of the effective config file plus any overrides from `monitor_settings`.
 
 ---
