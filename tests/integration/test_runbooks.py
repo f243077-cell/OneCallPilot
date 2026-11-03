@@ -82,3 +82,23 @@ async def test_ingest_works_as_the_backend_role(pool: asyncpg.Pool, books: Path)
         await conn.execute("set local role ocp_backend")
         counts = await ingest_dir(conn, CountingEmbedder(), books)
     assert counts["embedded"] == 3
+
+
+async def test_chunks_from_another_embedding_model_are_embedded_again(
+    pool: asyncpg.Pool, books: Path
+) -> None:
+    """Switching provider (fake → real, or Gemini → OpenRouter) re-embeds
+    every chunk, so one search never compares vectors of two models (ADR-23)."""
+
+    class OtherModel(CountingEmbedder):
+        model = "other-embedding"
+
+    async with pool.acquire() as conn:
+        await ingest_dir(conn, CountingEmbedder(), books)
+        other = OtherModel()
+        counts = await ingest_dir(conn, other, books)
+        again = await ingest_dir(conn, other, books)
+        models = await conn.fetch("select distinct embedding_model from ocp.runbook_chunks")
+    assert counts == {"embedded": 3, "unchanged": 0} and other.embedded == 3
+    assert again == {"embedded": 0, "unchanged": 3}
+    assert [r["embedding_model"] for r in models] == ["other-embedding"]

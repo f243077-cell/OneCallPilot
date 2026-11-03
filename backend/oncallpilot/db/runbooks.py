@@ -27,9 +27,14 @@ class ChunkRow:
     content_hash: str
 
 
-async def existing_hashes(conn: DbConn, source: str) -> dict[int, str]:
+async def existing_hashes(conn: DbConn, source: str, embedding_model: str) -> dict[int, str]:
+    """Content hashes of the chunks embedded with ``embedding_model``; a chunk
+    embedded with another model counts as missing, so it is embedded again."""
     rows = await conn.fetch(
-        "select chunk_index, content_hash from ocp.runbook_chunks where source = $1", source
+        "select chunk_index, content_hash from ocp.runbook_chunks"
+        " where source = $1 and embedding_model = $2",
+        source,
+        embedding_model,
     )
     return {r["chunk_index"]: r["content_hash"] for r in rows}
 

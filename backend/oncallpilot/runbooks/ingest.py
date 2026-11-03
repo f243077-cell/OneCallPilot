@@ -3,7 +3,9 @@
 Each file is split at its ``#``/``##``/``###`` headings, and long sections
 again at paragraph breaks, into chunks of at most ~2,000 characters (about
 500 tokens). Each chunk keeps its nearest heading. A chunk whose text did not
-change (same ``content_hash``) is not re-embedded. Chunks are embedded with
+change (same ``content_hash``) and was embedded with the current model is not
+re-embedded; a chunk from another model is embedded again, so one search never
+mixes vectors of two models (ADR-23). Chunks are embedded with
 ``RETRIEVAL_DOCUMENT``.
 
 The worker calls ``ingest_dir`` at start-up (B2.4) with the real embedding
@@ -74,7 +76,7 @@ async def ingest_file(
 ) -> tuple[int, int]:
     """Returns (chunks embedded, chunks unchanged)."""
     chunks = split_markdown(source, path.read_text(encoding="utf-8"))
-    known = await existing_hashes(conn, source)
+    known = await existing_hashes(conn, source, embedder.model)
     changed = [c for c in chunks if known.get(c.chunk_index) != c.content_hash]
     if changed:
         vectors = await embedder.embed([c.content for c in changed], "RETRIEVAL_DOCUMENT")
