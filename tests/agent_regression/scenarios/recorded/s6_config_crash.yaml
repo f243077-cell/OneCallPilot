@@ -1,0 +1,831 @@
+# Scenario 6, config-crash: RECORDED from the live testbed on 2026-11-03 13:43 UTC
+# by tests/agent_regression/record.py (B2.6). Model, runner and expect are copied
+# from scenarios/s6_config_crash.yaml; the tool outputs are real.
+name: config-crash
+now_offset_s: 46
+alert:
+  service: worker
+  observed_at: '2026-11-03T13:43:05.553692Z'
+  signals:
+  - name: restarts
+    value: 2.0
+    baseline: null
+    zscore: null
+    first_anomalous_at: '2026-11-03T13:43:05.553692Z'
+ledger:
+- deploy_id: 4a4057c3-c008-4a69-b792-1d75b20d732b
+  kind: deploy
+  service: api
+  release: 1.2.0
+  commit_sha: ad7fe550f520d3422c3b0876a964f60973a88e9e
+  commit_message: 'orders: add pagination to order history'
+  image_tag: chaos-shop/api:1.2.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-14T10:20:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 7b72a3f4-5c99-4f3b-8351-98bb7e2f625a
+  kind: deploy
+  service: worker
+  release: 2.0.0
+  commit_sha: 10a2829e09250668d2ef5d99256c74a95564fee3
+  commit_message: 'jobs: move receipts to the job queue'
+  image_tag: chaos-shop/worker:2.0.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-09-21T13:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: e614f02d-002f-4c4e-8367-144d1694cfee
+  kind: deploy
+  service: api
+  release: 1.3.0
+  commit_sha: 3e0cc25e2fbaaca6def8ac985a3dee8d0e161ce5
+  commit_message: 'catalog: paginate product listing'
+  image_tag: chaos-shop/api:1.3.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-28T09:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: d9cbb122-522c-4dc0-b358-87446817e653
+  kind: deploy
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-10-01T14:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 17dbf4c1-8dd7-4fda-b9a0-95b0188e4c45
+  kind: deploy
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-10-05T09:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 11926e2a-1fd1-4b6a-b40d-a6cb67ce8c3a
+  kind: reset
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-11-03T13:38:00Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+- deploy_id: 6fb3bf6f-d3d2-4a18-a6cb-6842578e4e04
+  kind: reset
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-11-03T13:38:00Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+- deploy_id: 4607fdca-af34-4ff0-bf75-53d10fe52b03
+  kind: deploy
+  service: worker
+  release: 2.2.0
+  commit_sha: 16cbd593f8ac567df18cb3d2a3b884c3dc7b455b
+  commit_message: 'jobs: read queue batch size from deploy config'
+  image_tag: chaos-shop/worker:2.2.0
+  config_hash: 83e1e64ab947fe7efe4be6ef9d438fe6009e50f32b8d610f93ec3fe7fee8584d
+  replicas: 1
+  deployed_at: '2026-11-03T13:42:43Z'
+  deployed_by: ci
+  reason: scheduled release
+logs:
+- match: service="worker"
+  lines:
+  - ts: '2026-11-03T13:43:48.227Z'
+    level: CRITICAL
+    service: worker
+    release: 2.2.0
+    instance: cs-worker-220
+    logger: shop.main
+    msg: service failed to start
+    exc_type: ConfigError
+    exc_message: QUEUE_BATCH_SIZE must be between 1 and 100, got 250
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/common/serve.py\", line 27, in serve\n\
+      \    app = build(identity)\n          ^^^^^^^^^^^^^^^\n  File \"/app/worker/__main__.py\", line\
+      \ 19, in build\n    batch_size = parse_batch_size(os.environ.get(\"QUEUE_BATCH_SIZE\"))\n      \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/worker/jobs.py\"\
+      , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
+      \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
+      \ 1 and 100, got 250"
+  - ts: '2026-11-03T13:43:40.711Z'
+    level: CRITICAL
+    service: worker
+    release: 2.2.0
+    instance: cs-worker-220
+    logger: shop.main
+    msg: service failed to start
+    exc_type: ConfigError
+    exc_message: QUEUE_BATCH_SIZE must be between 1 and 100, got 250
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/common/serve.py\", line 27, in serve\n\
+      \    app = build(identity)\n          ^^^^^^^^^^^^^^^\n  File \"/app/worker/__main__.py\", line\
+      \ 19, in build\n    batch_size = parse_batch_size(os.environ.get(\"QUEUE_BATCH_SIZE\"))\n      \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/worker/jobs.py\"\
+      , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
+      \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
+      \ 1 and 100, got 250"
+  - ts: '2026-11-03T13:43:31.597Z'
+    level: CRITICAL
+    service: worker
+    release: 2.2.0
+    instance: cs-worker-220
+    logger: shop.main
+    msg: service failed to start
+    exc_type: ConfigError
+    exc_message: QUEUE_BATCH_SIZE must be between 1 and 100, got 250
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/common/serve.py\", line 27, in serve\n\
+      \    app = build(identity)\n          ^^^^^^^^^^^^^^^\n  File \"/app/worker/__main__.py\", line\
+      \ 19, in build\n    batch_size = parse_batch_size(os.environ.get(\"QUEUE_BATCH_SIZE\"))\n      \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/worker/jobs.py\"\
+      , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
+      \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
+      \ 1 and 100, got 250"
+  - ts: '2026-11-03T13:43:19.560Z'
+    level: CRITICAL
+    service: worker
+    release: 2.2.0
+    instance: cs-worker-220
+    logger: shop.main
+    msg: service failed to start
+    exc_type: ConfigError
+    exc_message: QUEUE_BATCH_SIZE must be between 1 and 100, got 250
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/common/serve.py\", line 27, in serve\n\
+      \    app = build(identity)\n          ^^^^^^^^^^^^^^^\n  File \"/app/worker/__main__.py\", line\
+      \ 19, in build\n    batch_size = parse_batch_size(os.environ.get(\"QUEUE_BATCH_SIZE\"))\n      \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/worker/jobs.py\"\
+      , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
+      \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
+      \ 1 and 100, got 250"
+  - ts: '2026-11-03T13:43:10.907Z'
+    level: CRITICAL
+    service: worker
+    release: 2.2.0
+    instance: cs-worker-220
+    logger: shop.main
+    msg: service failed to start
+    exc_type: ConfigError
+    exc_message: QUEUE_BATCH_SIZE must be between 1 and 100, got 250
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/common/serve.py\", line 27, in serve\n\
+      \    app = build(identity)\n          ^^^^^^^^^^^^^^^\n  File \"/app/worker/__main__.py\", line\
+      \ 19, in build\n    batch_size = parse_batch_size(os.environ.get(\"QUEUE_BATCH_SIZE\"))\n      \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/worker/jobs.py\"\
+      , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
+      \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
+      \ 1 and 100, got 250"
+  - ts: '2026-11-03T13:43:00.937Z'
+    level: CRITICAL
+    service: worker
+    release: 2.2.0
+    instance: cs-worker-220
+    logger: shop.main
+    msg: service failed to start
+    exc_type: ConfigError
+    exc_message: QUEUE_BATCH_SIZE must be between 1 and 100, got 250
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/common/serve.py\", line 27, in serve\n\
+      \    app = build(identity)\n          ^^^^^^^^^^^^^^^\n  File \"/app/worker/__main__.py\", line\
+      \ 19, in build\n    batch_size = parse_batch_size(os.environ.get(\"QUEUE_BATCH_SIZE\"))\n      \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/worker/jobs.py\"\
+      , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
+      \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
+      \ 1 and 100, got 250"
+  - ts: '2026-11-03T13:42:52.200Z'
+    level: CRITICAL
+    service: worker
+    release: 2.2.0
+    instance: cs-worker-220
+    logger: shop.main
+    msg: service failed to start
+    exc_type: ConfigError
+    exc_message: QUEUE_BATCH_SIZE must be between 1 and 100, got 250
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/common/serve.py\", line 27, in serve\n\
+      \    app = build(identity)\n          ^^^^^^^^^^^^^^^\n  File \"/app/worker/__main__.py\", line\
+      \ 19, in build\n    batch_size = parse_batch_size(os.environ.get(\"QUEUE_BATCH_SIZE\"))\n      \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/worker/jobs.py\"\
+      , line 59, in parse_batch_size\n    raise ConfigError(f\"QUEUE_BATCH_SIZE must be between 1 and\
+      \ {MAX_BATCH_SIZE}, got {value}\")\ncommon.identity.ConfigError: QUEUE_BATCH_SIZE must be between\
+      \ 1 and 100, got 250"
+  - ts: '2026-11-03T13:42:41.151Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Finished server process [1]
+  - ts: '2026-11-03T13:42:41.150Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application shutdown complete.
+  - ts: '2026-11-03T13:42:41.149Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.worker
+    msg: job loop stopped
+  - ts: '2026-11-03T13:42:41.131Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application shutdown.
+  - ts: '2026-11-03T13:42:41.027Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Shutting down
+  - ts: '2026-11-03T13:38:25.624Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T13:38:25.623Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T13:38:25.617Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T13:38:25.615Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T13:38:25.615Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T13:38:07.186Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Finished server process [1]
+  - ts: '2026-11-03T13:38:07.186Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application shutdown complete.
+  - ts: '2026-11-03T13:38:07.186Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.worker
+    msg: job loop stopped
+  - ts: '2026-11-03T13:38:07.155Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application shutdown.
+  - ts: '2026-11-03T13:38:07.045Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Shutting down
+  - ts: '2026-11-03T13:32:06.269Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T13:32:06.266Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T13:32:06.186Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T13:32:06.185Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T13:32:06.184Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T13:31:51.225Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Finished server process [1]
+  - ts: '2026-11-03T13:31:51.225Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application shutdown complete.
+  - ts: '2026-11-03T13:31:51.225Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.worker
+    msg: job loop stopped
+  - ts: '2026-11-03T13:31:51.203Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application shutdown.
+  - ts: '2026-11-03T13:31:51.101Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Shutting down
+  - ts: '2026-11-03T13:30:54.038Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T13:30:54.037Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T13:30:54.024Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T13:30:54.023Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T13:30:54.022Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T13:30:40.596Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Finished server process [1]
+  - ts: '2026-11-03T13:30:40.593Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application shutdown complete.
+  - ts: '2026-11-03T13:30:40.592Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.worker
+    msg: job loop stopped
+  - ts: '2026-11-03T13:30:40.575Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application shutdown.
+  - ts: '2026-11-03T13:30:40.471Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Shutting down
+metrics:
+- match: (sum(rate(worker_jobs_total{service="worker",result="error"}[1m])) or vector(0)) / sum(rate(worker_jobs_total{service="worker"}[1m]))
+  points:
+  - - 1793711285.554
+    - 0.0
+  - - 1793711300.554
+    - 0.0
+  - - 1793711315.554
+    - 0.0
+  - - 1793711330.554
+    - 0.0
+  - - 1793711345.554
+    - 0.0
+  - - 1793711360.554
+    - 0.0
+  - - 1793711375.554
+    - 0.0
+  - - 1793711390.554
+    - 0.0
+  - - 1793711405.554
+    - 0.0
+  - - 1793711420.554
+    - 0.0
+  - - 1793711435.554
+    - 0.0
+  - - 1793711450.554
+    - 0.0
+  - - 1793711465.554
+    - 0.0
+  - - 1793711480.554
+    - 0.0
+  - - 1793711495.554
+    - 0.0
+  - - 1793711510.554
+    - 0.0
+  - - 1793711525.554
+    - 0.0
+  - - 1793711540.554
+    - 0.0
+  - - 1793711555.554
+    - 0.0
+  - - 1793711570.554
+    - 0.0
+  - - 1793711585.554
+    - 0.0
+  - - 1793711600.554
+    - 0.0
+  - - 1793711615.554
+    - 0.0
+  - - 1793711630.554
+    - 0.0
+  - - 1793711645.554
+    - 0.0
+  - - 1793711660.554
+    - 0.0
+  - - 1793711675.554
+    - 0.0
+  - - 1793711690.554
+    - 0.0
+  - - 1793711705.554
+    - 0.0
+  - - 1793711720.554
+    - 0.0
+  - - 1793711735.554
+    - 0.0
+  - - 1793711750.554
+    - 0.0
+  - - 1793711765.554
+    - 0.0
+  - - 1793711780.554
+    - 0.0
+  - - 1793711795.554
+    - 0.0
+  - - 1793711810.554
+    - 0.0
+  - - 1793711825.554
+    - 0.0
+  - - 1793711840.554
+    - 0.0
+  - - 1793711855.554
+    - 0.0
+  - - 1793711870.554
+    - 0.0
+  - - 1793711885.554
+    - 0.0
+  - - 1793711900.554
+    - 0.0
+  - - 1793711915.554
+    - 0.0
+  - - 1793711930.554
+    - 0.0
+  - - 1793711945.554
+    - 0.0
+  - - 1793711960.554
+    - 0.0
+  - - 1793711975.554
+    - 0.0
+  - - 1793711990.554
+    - 0.0
+  - - 1793712005.554
+    - 0.0
+  - - 1793712020.554
+    - 0.0
+  - - 1793712035.554
+    - 0.0
+  - - 1793712050.554
+    - 0.0
+  - - 1793712065.554
+    - 0.0
+  - - 1793712080.554
+    - 0.0
+  - - 1793712095.554
+    - 0.0
+  - - 1793712110.554
+    - 0.0
+  - - 1793712125.554
+    - 0.0
+  - - 1793712140.554
+    - 0.0
+  - - 1793712155.554
+    - 0.0
+  - - 1793712170.554
+    - 0.0
+  - - 1793712185.554
+    - 0.0
+  - - 1793712200.554
+    - 0.0
+  - - 1793712215.554
+    - 0.0
+  - - 1793712230.554
+    - 0.0
+  - - 1793712245.554
+    - 0.0
+  - - 1793712260.554
+    - 0.0
+  - - 1793712275.554
+    - 0.0
+  - - 1793712290.554
+    - 0.0
+  - - 1793712305.554
+    - 0.0
+  - - 1793712320.554
+    - 0.0
+  - - 1793712335.554
+    - 0.0
+  - - 1793712350.554
+    - 0.0
+  - - 1793712365.554
+    - 0.0
+  - - 1793712380.554
+    - 0.0
+  - - 1793712395.554
+    - 0.0
+  - - 1793712410.554
+    - 0.0
+  - - 1793712425.554
+    - 0.0
+  - - 1793712440.554
+    - 0.0
+  - - 1793712455.554
+    - 0.0
+  - - 1793712470.554
+    - 0.0
+  - - 1793712485.554
+    - 0.0
+  - - 1793712500.554
+    - 0.0
+  - - 1793712515.554
+    - 0.0
+  - - 1793712530.554
+    - 0.0
+  - - 1793712545.554
+    - 0.0
+  - - 1793712560.554
+    - 0.0
+  - - 1793712575.554
+    - 0.0
+  - - 1793712590.554
+    - 0.0
+  - - 1793712605.554
+    - 0.0
+  - - 1793712620.554
+    - 0.0
+  - - 1793712635.554
+    - 0.0
+  - - 1793712650.554
+    - 0.0
+  - - 1793712665.554
+    - 0.0
+  - - 1793712680.554
+    - 0.0
+  - - 1793712695.554
+    - 0.0
+  - - 1793712710.554
+    - 0.0
+  - - 1793712725.554
+    - 0.0
+  - - 1793712740.554
+    - 0.0
+  - - 1793712755.554
+    - 0.0
+  - - 1793712770.554
+    - 0.0
+  - - 1793712785.554
+    - 0.0
+  - - 1793712800.554
+    - 0.0
+  - - 1793712815.554
+    - 0.0
+  - - 1793712830.554
+    - 0.0
+  - - 1793712845.554
+    - 0.0
+  - - 1793712860.554
+    - 0.0
+  - - 1793712875.554
+    - 0.0
+  - - 1793712890.554
+    - 0.0
+  - - 1793712905.554
+    - 0.0
+  - - 1793712920.554
+    - 0.0
+  - - 1793712935.554
+    - 0.0
+  - - 1793712950.554
+    - 0.0
+  - - 1793712965.554
+    - 0.0
+  - - 1793712980.554
+    - 0.0
+  - - 1793712995.554
+    - 0.0
+  - - 1793713010.554
+    - 0.0
+  - - 1793713025.554
+    - 0.0
+  - - 1793713040.554
+    - 0.0
+  - - 1793713055.554
+    - 0.0
+  - - 1793713070.554
+    - 0.0
+  - - 1793713085.554
+    - 0.0
+  - - 1793713100.554
+    - 0.0
+  - - 1793713115.554
+    - 0.0
+  - - 1793713130.554
+    - 0.0
+  - - 1793713145.554
+    - 0.0
+  - - 1793713160.554
+    - 0.0
+  - - 1793713175.554
+    - 0.0
+  - - 1793713190.554
+    - 0.0
+  - - 1793713205.554
+    - 0.0
+  - - 1793713220.554
+    - 0.0
+  - - 1793713235.554
+    - 0.0
+  - - 1793713250.554
+    - 0.0
+  - - 1793713265.554
+    - 0.0
+  - - 1793713280.554
+    - 0.0
+  - - 1793713295.554
+    - 0.0
+  - - 1793713310.554
+    - 0.0
+  - - 1793713325.554
+    - 0.0
+  - - 1793713340.554
+    - 0.0
+  - - 1793713355.554
+    - 0.0
+  - - 1793713370.554
+    - 0.0
+  - - 1793713385.554
+    - 0.0
+  - - 1793713400.554
+    - 0.0
+containers:
+- name: cs-worker-220
+  service: worker
+  release: 2.2.0
+  restarts: 7
+  oom_killed: false
+  state: running
+  exit_code: 0
+  health: starting
+- name: cs-worker-210
+  service: worker
+  release: 2.1.0
+  restarts: 0
+  oom_killed: false
+  state: exited
+  exit_code: 0
+  health: unhealthy
+probes_ok: true
+runner:
+  active_release: 2.2.0
+  replicas: 1
+model:
+  gather:
+  - - tool: get_recent_deploys
+      args:
+        service: worker
+    - tool: query_logs
+      args:
+        service: worker
+        level: ERROR
+    - tool: get_service_health
+      args:
+        service: worker
+  hypotheses:
+    hypotheses:
+    - rank: 1
+      root_cause_category: config_error
+      confidence: 0.87
+      evidence_refs:
+      - E2
+      - E3
+      - E4
+      summary: Release 2.2.0 starts with an invalid batch-size setting and crash-loops
+  disproof:
+    target_rank: 1
+    tool: query_metrics
+    params:
+      template: job_failure_rate
+      service: worker
+    expectation_if_true: No jobs are processed at all, rather than failing one by one
+  reflection:
+    items:
+    - rank: 1
+      citations_supported: true
+      adjusted_confidence: 0.85
+      note: crash at startup
+    top_verdict: survived
+  proposal:
+    action: rollback_deploy
+    params:
+      service: worker
+      target_release: 2.1.0
+    expected_effect: 2.1.0 runs again with the previous configuration; restarts stop
+    rationale: 'The crash loop started with the 2.2.0 deploy (E2): startup rejects its setting (E3, E4).'
+    evidence_refs:
+    - E2
+    - E3
+expect:
+  phase: PROPOSED
+  action: rollback_deploy
+  params:
+    service: worker
+    target_release: 2.1.0

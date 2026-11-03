@@ -1,0 +1,2186 @@
+# Scenario 2, bad-deploy: RECORDED from the live testbed on 2026-11-03 12:39 UTC
+# by tests/agent_regression/record.py (B2.6). Model, runner and expect are copied
+# from scenarios/s2_bad_deploy.yaml; the tool outputs are real.
+name: bad-deploy
+now_offset_s: 56
+alert:
+  service: api
+  observed_at: '2026-11-03T12:38:55.206070Z'
+  signals:
+  - name: error_rate
+    value: 0.040024726709024884
+    baseline: 0.0016123287539643047
+    zscore: 7.94
+    first_anomalous_at: '2026-11-03T12:38:45.203434Z'
+ledger:
+- deploy_id: 18b54cf5-ac76-442c-8bec-82c3f55ee24b
+  kind: deploy
+  service: api
+  release: 1.2.0
+  commit_sha: ad7fe550f520d3422c3b0876a964f60973a88e9e
+  commit_message: 'orders: add pagination to order history'
+  image_tag: chaos-shop/api:1.2.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-14T10:20:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 8902ac10-0283-4e63-be55-19e1b4a7450d
+  kind: deploy
+  service: worker
+  release: 2.0.0
+  commit_sha: 10a2829e09250668d2ef5d99256c74a95564fee3
+  commit_message: 'jobs: move receipts to the job queue'
+  image_tag: chaos-shop/worker:2.0.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-09-21T13:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: aa1e4c72-c1b2-4c1e-997e-6f980c5e1927
+  kind: deploy
+  service: api
+  release: 1.3.0
+  commit_sha: 3e0cc25e2fbaaca6def8ac985a3dee8d0e161ce5
+  commit_message: 'catalog: paginate product listing'
+  image_tag: chaos-shop/api:1.3.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-28T09:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 615139a2-e854-46a4-b224-a48338227f64
+  kind: deploy
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-10-01T14:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 2c9a99e6-9f92-4644-8bc4-d192b721cd96
+  kind: deploy
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-10-05T09:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 6bd76b31-840f-4a9f-966a-293fd508a868
+  kind: reset
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-11-03T12:33:58Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+- deploy_id: cbffba8e-9bfb-491d-91d6-e440b9e135b2
+  kind: reset
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-11-03T12:33:58Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+- deploy_id: 2bc7ece3-c4f2-4bd3-9573-ffaca029eadd
+  kind: deploy
+  service: api
+  release: 1.5.0
+  commit_sha: e56a282e7523212fea82c73f9157b41d5ba1743b
+  commit_message: 'checkout: compute totals with new pricing rounding'
+  image_tag: chaos-shop/api:1.5.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-11-03T12:38:32Z'
+  deployed_by: ci
+  reason: scheduled release
+logs:
+- match: service="api"
+  lines:
+  - ts: '2026-11-03T12:39:51.844Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 2.4
+    request_id: fe59b7ea5e4e7fef1292bb8c04e016e2
+    route: /orders
+  - ts: '2026-11-03T12:39:51.645Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 3.7
+    request_id: 4a087fca192ed33b11fb4bd9bc6fb6cb
+    route: /checkout
+  - ts: '2026-11-03T12:39:51.643Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 4a087fca192ed33b11fb4bd9bc6fb6cb
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:51.462Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 16.6
+    request_id: dcd61b92e802885782762ca026b49197
+    route: /cart
+  - ts: '2026-11-03T12:39:51.249Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 5.0
+    request_id: 07925ae4ede27a86d495895578c949b1
+    route: /cart
+  - ts: '2026-11-03T12:39:51.049Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 3.4
+    request_id: a642d18857559b718035b506034ac89e
+    route: /products
+  - ts: '2026-11-03T12:39:50.848Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.9
+    request_id: 65d6f3ac575683797151de49d66cbe55
+    route: /products
+  - ts: '2026-11-03T12:39:50.646Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.3
+    request_id: 128d824c4316f40abdea7a0a4bf4897a
+    route: /products
+  - ts: '2026-11-03T12:39:50.509Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 45.6
+    request_id: 938e311b4c2c4dabad2971209da8bc17
+    route: /cart
+  - ts: '2026-11-03T12:39:50.245Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 2.9
+    request_id: 53dda0b829356cee25bfef44d8b457ed
+    route: /cart
+  - ts: '2026-11-03T12:39:50.047Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.7
+    request_id: c99d7d8a04d7f30061a8cd213cbb2fa0
+    route: /products
+  - ts: '2026-11-03T12:39:49.906Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 61.0
+    request_id: cb3f59aac338d031167939419072141e
+    route: /checkout
+  - ts: '2026-11-03T12:39:49.650Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 4.7
+    request_id: 663ab502291b7ddca6bf5be588f7a7b3
+    route: /products
+  - ts: '2026-11-03T12:39:49.447Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 5.0
+    request_id: 8a28a09b74574a65295fde93764ed402
+    route: /cart
+  - ts: '2026-11-03T12:39:49.243Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.4
+    request_id: ee8e34038c8f9a4a58500040479d87d3
+    route: /products
+  - ts: '2026-11-03T12:39:49.080Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 31.7
+    request_id: ef5d07825396dc11cc8ad171048c75a1
+    route: /checkout
+  - ts: '2026-11-03T12:39:49.070Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: ef5d07825396dc11cc8ad171048c75a1
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:48.853Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 8.3
+    request_id: 82abd6c6e3e2166c292bd9cab691af10
+    route: /cart
+  - ts: '2026-11-03T12:39:48.650Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 7.7
+    request_id: b0a1e99f29f101108e76349d22398ee3
+    route: /cart
+  - ts: '2026-11-03T12:39:48.446Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 4.4
+    request_id: b468883429d20a360b40a80510be43b8
+    route: /checkout
+  - ts: '2026-11-03T12:39:48.443Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: b468883429d20a360b40a80510be43b8
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:48.245Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.6
+    request_id: ff0473aa87e8ca0dae8f7997d60de77f
+    route: /products
+  - ts: '2026-11-03T12:39:48.043Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 1.7
+    request_id: 53bb0f38912ca9415c31ef9177f30da7
+    route: /cart
+  - ts: '2026-11-03T12:39:47.846Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 4.9
+    request_id: 3ca7cc5c92e33fe6a86fc40c376681bb
+    route: /cart
+  - ts: '2026-11-03T12:39:47.649Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 6.4
+    request_id: d354fcbd32bceba9e6b2e622afd4b0c0
+    route: /cart
+  - ts: '2026-11-03T12:39:47.455Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 7.2
+    request_id: 53529e07ce5f6a63d41b6db5a1f5adf4
+    route: /orders
+  - ts: '2026-11-03T12:39:47.249Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 5.4
+    request_id: 89fe35f69c30737e8c0c0bcdb5d77374
+    route: /cart
+  - ts: '2026-11-03T12:39:47.055Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 10.4
+    request_id: ca878203f69afa3f35ce8b75b143903e
+    route: /cart
+  - ts: '2026-11-03T12:39:46.862Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 16.2
+    request_id: bf10e6033c427d883eb001084a60b50b
+    route: /cart
+  - ts: '2026-11-03T12:39:46.647Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.8
+    request_id: 08d7f2f2c9b1b08e31d1643ef3128bc3
+    route: /products
+  - ts: '2026-11-03T12:39:46.444Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.5
+    request_id: 69916951315f148f3c5424da0022c584
+    route: /products
+  - ts: '2026-11-03T12:39:46.251Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 7.1
+    request_id: e3faf647fa9359ecb55b32c7444b1023
+    route: /checkout
+  - ts: '2026-11-03T12:39:46.249Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: e3faf647fa9359ecb55b32c7444b1023
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:46.044Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.3
+    request_id: 7b02eab53583d2313e751d16b950d8e5
+    route: /products
+  - ts: '2026-11-03T12:39:45.854Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 6.5
+    request_id: bd33d1ed2faeae0883744d4189449f4b
+    route: /cart
+  - ts: '2026-11-03T12:39:45.649Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 4.2
+    request_id: 3ff9b262c9eec05db9bc7a2b98a8eb40
+    route: /products
+  - ts: '2026-11-03T12:39:45.503Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 61.5
+    request_id: 0c43e2a37375650616ef4abb3c1297d7
+    route: /checkout
+  - ts: '2026-11-03T12:39:45.252Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 6.1
+    request_id: 0777ebf2a3c16c383a6ed37ccecd3c8b
+    route: /orders
+  - ts: '2026-11-03T12:39:45.064Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 17.2
+    request_id: 3ffb647a7995e7958efe5ac670d87791
+    route: /cart
+  - ts: '2026-11-03T12:39:44.843Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 0.9
+    request_id: e6601f002fe48dedfaa4d9f333ab3955
+    route: /products
+  - ts: '2026-11-03T12:39:44.662Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 16.1
+    request_id: 6d4854572c9903610cf1935cdf541417
+    route: /cart
+  - ts: '2026-11-03T12:39:44.449Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 5.0
+    request_id: 1adf5ad30fa77ce46cd4043e03900a5b
+    route: /cart
+  - ts: '2026-11-03T12:39:44.245Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 3.7
+    request_id: 532a4c0ee3a18ff855efec61f6ff7d21
+    route: /checkout
+  - ts: '2026-11-03T12:39:44.243Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 532a4c0ee3a18ff855efec61f6ff7d21
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:44.064Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 18.1
+    request_id: e6617d296d21243049afc42bf28aaf3a
+    route: /cart
+  - ts: '2026-11-03T12:39:43.847Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 4.8
+    request_id: c428da0dcaf2931a78f9a538731fcd40
+    route: /cart
+  - ts: '2026-11-03T12:39:43.650Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 4.2
+    request_id: ef92663b5fc1f06f57039184e8bc3b97
+    route: /products
+  - ts: '2026-11-03T12:39:43.445Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 1.8
+    request_id: ef8f699f4812a588a5bde952b9f2ae58
+    route: /cart
+  - ts: '2026-11-03T12:39:43.242Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 0.8
+    request_id: 4a07cc1833ae28452dc8fd883646baf1
+    route: /products
+  - ts: '2026-11-03T12:39:43.042Z'
+    level: INFO
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.0
+    request_id: 624c19e634b8e7b02de2c6bd49852790
+    route: /products
+  - ts: '2026-11-03T12:39:38.372Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 11.7
+    request_id: ebc233ef588bcaff06720b7c39ec7408
+    route: /checkout
+  - ts: '2026-11-03T12:39:38.367Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: ebc233ef588bcaff06720b7c39ec7408
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:34.966Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 8.4
+    request_id: 251be4846ea9dd1d90c88f16fc246bac
+    route: /checkout
+  - ts: '2026-11-03T12:39:34.962Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 251be4846ea9dd1d90c88f16fc246bac
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:34.371Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 11.2
+    request_id: 9b52a079022c908ee5aead35ed645649
+    route: /checkout
+  - ts: '2026-11-03T12:39:34.365Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 9b52a079022c908ee5aead35ed645649
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:32.574Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 12.3
+    request_id: 33cb609206fb721e1331525c0e93a1f3
+    route: /checkout
+  - ts: '2026-11-03T12:39:32.569Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 33cb609206fb721e1331525c0e93a1f3
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:31.359Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 3.0
+    request_id: 496c1f99aa477ebacffea7169687fa4d
+    route: /checkout
+  - ts: '2026-11-03T12:39:31.358Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 496c1f99aa477ebacffea7169687fa4d
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:30.762Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 4.8
+    request_id: afc819a6245bfbba10c1860c04ecec9b
+    route: /checkout
+  - ts: '2026-11-03T12:39:30.759Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: afc819a6245bfbba10c1860c04ecec9b
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:30.016Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 60.2
+    request_id: 02ae8196435392f0630e8f11fbc40460
+    route: /checkout
+  - ts: '2026-11-03T12:39:30.014Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 02ae8196435392f0630e8f11fbc40460
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:29.160Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 4.1
+    request_id: ff88b557b536e7325647a9bea20266eb
+    route: /checkout
+  - ts: '2026-11-03T12:39:29.159Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: ff88b557b536e7325647a9bea20266eb
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:25.967Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 9.1
+    request_id: 598410e245d0208c05f0253d8be50876
+    route: /checkout
+  - ts: '2026-11-03T12:39:25.963Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 598410e245d0208c05f0253d8be50876
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:25.563Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 6.5
+    request_id: 8fa52c7c96195a4fc5e0f3b2eb7839f5
+    route: /checkout
+  - ts: '2026-11-03T12:39:25.560Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 8fa52c7c96195a4fc5e0f3b2eb7839f5
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:24.961Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 4.9
+    request_id: 0bf907160c45d62d16693c25bfb4b636
+    route: /checkout
+  - ts: '2026-11-03T12:39:24.959Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 0bf907160c45d62d16693c25bfb4b636
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:21.961Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 4.7
+    request_id: fb1912f5fb8d29efc46d2bcac5b8c2dc
+    route: /checkout
+  - ts: '2026-11-03T12:39:21.959Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: fb1912f5fb8d29efc46d2bcac5b8c2dc
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:18.416Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 60.2
+    request_id: e3286b1903e169213df9143d8f560bd8
+    route: /checkout
+  - ts: '2026-11-03T12:39:18.414Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: e3286b1903e169213df9143d8f560bd8
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:18.222Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 64.3
+    request_id: 42ea88639f2bc4abc3b74b3cbf1d8a00
+    route: /checkout
+  - ts: '2026-11-03T12:39:18.216Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 42ea88639f2bc4abc3b74b3cbf1d8a00
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:16.571Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 11.5
+    request_id: 67afec03fcc39e0c94c53467ec7ae20c
+    route: /checkout
+  - ts: '2026-11-03T12:39:16.566Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 67afec03fcc39e0c94c53467ec7ae20c
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:16.162Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 5.7
+    request_id: 9ae162c1ccdcd52c9a6caa9361b74d48
+    route: /checkout
+  - ts: '2026-11-03T12:39:16.159Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 9ae162c1ccdcd52c9a6caa9361b74d48
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:14.162Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 5.4
+    request_id: fd9c5fdcd9dac384962673a757ef6be0
+    route: /checkout
+  - ts: '2026-11-03T12:39:14.160Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: fd9c5fdcd9dac384962673a757ef6be0
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:13.964Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 7.1
+    request_id: 6111064fdfc2ee731551acf9ece5f770
+    route: /checkout
+  - ts: '2026-11-03T12:39:13.962Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 6111064fdfc2ee731551acf9ece5f770
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:08.862Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 6.6
+    request_id: 2fb900ff3c356d9e04efaf37d351c775
+    route: /checkout
+  - ts: '2026-11-03T12:39:08.859Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: 2fb900ff3c356d9e04efaf37d351c775
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+  - ts: '2026-11-03T12:39:03.872Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.access
+    msg: POST /checkout 500
+    status: 500
+    duration_ms: 14.1
+    request_id: a72e0a4dcfce5adcfc686a51ff52714b
+    route: /checkout
+  - ts: '2026-11-03T12:39:03.867Z'
+    level: ERROR
+    service: api
+    release: 1.5.0
+    instance: cs-api-150-1
+    logger: shop.app
+    msg: unhandled error while serving the request
+    request_id: a72e0a4dcfce5adcfc686a51ff52714b
+    route: /checkout
+    exc_type: IndexError
+    exc_message: tuple index out of range
+    stacktrace: "Traceback (most recent call last):\n  File \"/app/api/app.py\", line 148, in telemetry\n\
+      \    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\"\
+      , line 173, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File\
+      \ \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/base.py\", line 149, in coro\n \
+      \   await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py\"\
+      , line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py\"\
+      , line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 676, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 2786, in app\n    await route.handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 1310, in handle\n    await super().handle(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/routing.py\"\
+      , line 282, in handle\n    await self.app(scope, receive, send)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 165, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in\
+      \ wrapped_app\n    raise exc\n  File \"/opt/venv/lib/python3.12/site-packages/starlette/_exception_handler.py\"\
+      , line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 151, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"\
+      /opt/venv/lib/python3.12/site-packages/fastapi/routing.py\", line 727, in app\n    raw_response\
+      \ = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/fastapi/routing.py\"\
+      , line 360, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/app.py\", line 265, in checkout\n    total = order_total_cents(lines, identity.release)\n\
+      \            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pricing.py\", line 35,\
+      \ in order_total_cents\n    step = _rounding_step(total)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/pricing.py\", line 28, in _rounding_step\n    return ROUNDING_STEPS[bisect_right(bounds,\
+      \ total_cents)][1]\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nIndexError: tuple\
+      \ index out of range"
+metrics:
+- match: (sum(rate(http_requests_total{service="api",status=~"5.."}[1m])) or vector(0)) / sum(rate(http_requests_total{service="api"}[1m]))
+  points:
+  - - 1793707435.206
+    - 0.0
+  - - 1793707450.206
+    - 0.0
+  - - 1793707465.206
+    - 0.0
+  - - 1793707480.206
+    - 0.0
+  - - 1793707495.206
+    - 0.0
+  - - 1793707510.206
+    - 0.0
+  - - 1793707525.206
+    - 0.0
+  - - 1793707540.206
+    - 0.0
+  - - 1793707555.206
+    - 0.0
+  - - 1793707570.206
+    - 0.0
+  - - 1793707585.206
+    - 0.0
+  - - 1793707600.206
+    - 0.0
+  - - 1793707615.206
+    - 0.0
+  - - 1793707630.206
+    - 0.0
+  - - 1793707645.206
+    - 0.0
+  - - 1793707660.206
+    - 0.0
+  - - 1793707675.206
+    - 0.0
+  - - 1793707690.206
+    - 0.0
+  - - 1793707705.206
+    - 0.0
+  - - 1793707720.206
+    - 0.005778
+  - - 1793707735.206
+    - 0.026816
+  - - 1793707750.206
+    - 0.067496
+  - - 1793707765.206
+    - 0.109075
+  - - 1793707780.206
+    - 0.11811
+  - - 1793707795.206
+    - 0.117647
+  - - 1793707810.206
+    - 0.059897
+  - - 1793707825.206
+    - 0.034784
+  - - 1793707840.206
+    - 0.0
+  - - 1793707855.206
+    - 0.0
+  - - 1793707870.206
+    - 0.0
+  - - 1793707885.206
+    - 0.0
+  - - 1793707900.206
+    - 0.0
+  - - 1793707915.206
+    - 0.0
+  - - 1793707930.206
+    - 0.0
+  - - 1793707945.206
+    - 0.0
+  - - 1793707960.206
+    - 0.0
+  - - 1793707975.206
+    - 0.0
+  - - 1793707990.206
+    - 0.0
+  - - 1793708005.206
+    - 0.0
+  - - 1793708020.206
+    - 0.0
+  - - 1793708035.206
+    - 0.0
+  - - 1793708050.206
+    - 0.0
+  - - 1793708065.206
+    - 0.0
+  - - 1793708080.206
+    - 0.0
+  - - 1793708095.206
+    - 0.0
+  - - 1793708110.206
+    - 0.0
+  - - 1793708125.206
+    - 0.0
+  - - 1793708140.206
+    - 0.0
+  - - 1793708155.206
+    - 0.0
+  - - 1793708170.206
+    - 0.0
+  - - 1793708185.206
+    - 0.0
+  - - 1793708200.206
+    - 0.0
+  - - 1793708215.206
+    - 0.0
+  - - 1793708230.206
+    - 0.0
+  - - 1793708245.206
+    - 0.0
+  - - 1793708260.206
+    - 0.0
+  - - 1793708275.206
+    - 0.0
+  - - 1793708290.206
+    - 0.0
+  - - 1793708305.206
+    - 0.0
+  - - 1793708320.206
+    - 0.0
+  - - 1793708335.206
+    - 0.0
+  - - 1793708350.206
+    - 0.0
+  - - 1793708365.206
+    - 0.0
+  - - 1793708380.206
+    - 0.0
+  - - 1793708395.206
+    - 0.0
+  - - 1793708410.206
+    - 0.0
+  - - 1793708425.206
+    - 0.0
+  - - 1793708440.206
+    - 0.0
+  - - 1793708455.206
+    - 0.0
+  - - 1793708470.206
+    - 0.0
+  - - 1793708485.206
+    - 0.0
+  - - 1793708500.206
+    - 0.0
+  - - 1793708515.206
+    - 0.0
+  - - 1793708530.206
+    - 0.0
+  - - 1793708545.206
+    - 0.0
+  - - 1793708560.206
+    - 0.0
+  - - 1793708575.206
+    - 0.0
+  - - 1793708590.206
+    - 0.0
+  - - 1793708605.206
+    - 0.0
+  - - 1793708620.206
+    - 0.0
+  - - 1793708635.206
+    - 0.0
+  - - 1793708650.206
+    - 0.0
+  - - 1793708665.206
+    - 0.0
+  - - 1793708680.206
+    - 0.0
+  - - 1793708695.206
+    - 0.0
+  - - 1793708710.206
+    - 0.0
+  - - 1793708725.206
+    - 0.0
+  - - 1793708740.206
+    - 0.0
+  - - 1793708755.206
+    - 0.0
+  - - 1793708770.206
+    - 0.0
+  - - 1793708785.206
+    - 0.0
+  - - 1793708800.206
+    - 0.0
+  - - 1793708815.206
+    - 0.0
+  - - 1793708830.206
+    - 0.0
+  - - 1793708845.206
+    - 0.0
+  - - 1793708860.206
+    - 0.0
+  - - 1793708875.206
+    - 0.0
+  - - 1793708890.206
+    - 0.0
+  - - 1793708905.206
+    - 0.0
+  - - 1793708920.206
+    - 0.0
+  - - 1793708935.206
+    - 0.0
+  - - 1793708950.206
+    - 0.0
+  - - 1793708965.206
+    - 0.0
+  - - 1793708980.206
+    - 0.0
+  - - 1793708995.206
+    - 0.0
+  - - 1793709010.206
+    - 0.0
+  - - 1793709025.206
+    - 0.0
+  - - 1793709040.206
+    - 0.0
+  - - 1793709055.206
+    - 0.0
+  - - 1793709070.206
+    - 0.0
+  - - 1793709085.206
+    - 0.0
+  - - 1793709100.206
+    - 0.0
+  - - 1793709115.206
+    - 0.0
+  - - 1793709130.206
+    - 0.0
+  - - 1793709145.206
+    - 0.0
+  - - 1793709160.206
+    - 0.0
+  - - 1793709175.206
+    - 0.0
+  - - 1793709190.206
+    - 0.0
+  - - 1793709205.206
+    - 0.0
+  - - 1793709220.206
+    - 0.0
+  - - 1793709235.206
+    - 0.0
+  - - 1793709250.206
+    - 0.0
+  - - 1793709265.206
+    - 0.0
+  - - 1793709280.206
+    - 0.0
+  - - 1793709295.206
+    - 0.0
+  - - 1793709310.206
+    - 0.0
+  - - 1793709325.206
+    - 0.0
+  - - 1793709340.206
+    - 0.0
+  - - 1793709355.206
+    - 0.0
+  - - 1793709370.206
+    - 0.0
+  - - 1793709385.206
+    - 0.0
+  - - 1793709400.206
+    - 0.0
+  - - 1793709415.206
+    - 0.0
+  - - 1793709430.206
+    - 0.0
+  - - 1793709445.206
+    - 0.0
+  - - 1793709460.206
+    - 0.0
+  - - 1793709475.206
+    - 0.0
+  - - 1793709490.206
+    - 0.0
+  - - 1793709505.206
+    - 0.0
+  - - 1793709520.206
+    - 0.01613
+  - - 1793709535.206
+    - 0.040025
+  - - 1793709550.206
+    - 0.073298
+  - - 1793709565.206
+    - 0.107127
+  - - 1793709580.206
+    - 0.11811
+  - - 1793709595.206
+    - 0.114625
+  - - 1793709610.206
+    - 0.118812
+  - - 1793709625.206
+    - 0.111111
+  - - 1793709640.206
+    - 0.117647
+containers:
+- name: cs-api-150-1
+  service: api
+  release: 1.5.0
+  restarts: 0
+  oom_killed: false
+  state: running
+  exit_code: 0
+  health: healthy
+- name: cs-api-140-1
+  service: api
+  release: 1.4.0
+  restarts: 0
+  oom_killed: false
+  state: exited
+  exit_code: 0
+  health: unhealthy
+probes_ok: true
+runner:
+  active_release: 1.5.0
+  replicas: 1
+model:
+  gather:
+  - - tool: query_logs
+      args:
+        service: api
+        level: ERROR
+    - tool: get_recent_deploys
+      args:
+        service: api
+  - - tool: query_metrics
+      args:
+        template: error_rate
+        service: api
+  hypotheses:
+    hypotheses:
+    - rank: 1
+      root_cause_category: bad_deploy
+      confidence: 0.88
+      evidence_refs:
+      - E3
+      - E4
+      - E2
+      summary: Release 1.5.0, deployed 20 s before the errors began, breaks checkout
+    - rank: 2
+      root_cause_category: application_bug
+      confidence: 0.35
+      evidence_refs:
+      - E2
+      summary: A latent checkout bug triggered by unusual traffic
+  disproof:
+    target_rank: 1
+    tool: get_service_health
+    params:
+      service: api
+    expectation_if_true: Only the 1.5.0 slot runs; 1.4.0 is stopped
+  reflection:
+    items:
+    - rank: 1
+      citations_supported: true
+      adjusted_confidence: 0.86
+      note: deploy precedes errors
+    - rank: 2
+      citations_supported: true
+      adjusted_confidence: 0.3
+      note: no other trigger
+    top_verdict: survived
+  proposal:
+    action: rollback_deploy
+    params:
+      service: api
+      target_release: 1.4.0
+    expected_effect: Checkout errors stop once 1.4.0 serves traffic
+    rationale: Errors began right after 1.5.0 was deployed (E3) and all come from checkout (E2, E4).
+    evidence_refs:
+    - E3
+    - E4
+expect:
+  phase: PROPOSED
+  action: rollback_deploy
+  params:
+    service: api
+    target_release: 1.4.0

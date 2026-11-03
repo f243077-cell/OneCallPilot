@@ -1,0 +1,653 @@
+# Scenario 1, memory-leak: RECORDED from the live testbed on 2026-11-03 12:33 UTC
+# by tests/agent_regression/record.py (B2.6). Model, runner and expect are copied
+# from scenarios/s1_memory_leak.yaml; the tool outputs are real.
+name: memory-leak
+now_offset_s: 47
+alert:
+  service: worker
+  observed_at: '2026-11-03T12:32:59.347475Z'
+  signals:
+  - name: restarts
+    value: 2.0
+    baseline: null
+    zscore: null
+    first_anomalous_at: '2026-11-03T12:32:59.347475Z'
+ledger:
+- deploy_id: b7d33846-013f-469c-924a-783fa0238434
+  kind: deploy
+  service: api
+  release: 1.2.0
+  commit_sha: ad7fe550f520d3422c3b0876a964f60973a88e9e
+  commit_message: 'orders: add pagination to order history'
+  image_tag: chaos-shop/api:1.2.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-14T10:20:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 9c8368cc-e62f-453d-94ba-a2e5b7b11c82
+  kind: deploy
+  service: worker
+  release: 2.0.0
+  commit_sha: 10a2829e09250668d2ef5d99256c74a95564fee3
+  commit_message: 'jobs: move receipts to the job queue'
+  image_tag: chaos-shop/worker:2.0.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-09-21T13:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: d7dc7d4d-a902-4de1-b431-df4653757e18
+  kind: deploy
+  service: api
+  release: 1.3.0
+  commit_sha: 3e0cc25e2fbaaca6def8ac985a3dee8d0e161ce5
+  commit_message: 'catalog: paginate product listing'
+  image_tag: chaos-shop/api:1.3.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-28T09:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: a31228cd-9400-488e-ab48-bc96e5de7293
+  kind: deploy
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-10-01T14:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: cc5c5cfd-f728-4e82-85f6-62273fb23f1f
+  kind: deploy
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-10-05T09:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 0984036d-e409-4275-86fc-ad831d2a2fd9
+  kind: reset
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-11-03T12:21:05Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+- deploy_id: 83b27f64-0c9d-4176-92cd-fb8f25e2b218
+  kind: reset
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-11-03T12:21:05Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+logs:
+- match: service="worker"
+  lines:
+  - ts: '2026-11-03T12:33:09.976Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T12:33:09.975Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T12:33:09.960Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T12:33:09.958Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T12:33:09.958Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T12:29:32.240Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T12:29:32.221Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T12:29:32.157Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T12:29:32.156Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T12:29:32.155Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T12:21:29.471Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T12:21:29.471Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T12:21:29.465Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T12:21:29.463Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T12:21:29.462Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T12:21:09.461Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Finished server process [1]
+  - ts: '2026-11-03T12:21:09.459Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application shutdown complete.
+  - ts: '2026-11-03T12:21:09.455Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.worker
+    msg: job loop stopped
+  - ts: '2026-11-03T12:21:09.425Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application shutdown.
+  - ts: '2026-11-03T12:21:09.323Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Shutting down
+  - ts: '2026-11-03T12:19:38.735Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T12:19:38.734Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T12:19:38.721Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T12:19:38.720Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T12:19:38.720Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T12:19:22.966Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Finished server process [1]
+  - ts: '2026-11-03T12:19:22.966Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application shutdown complete.
+  - ts: '2026-11-03T12:19:22.965Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.worker
+    msg: job loop stopped
+  - ts: '2026-11-03T12:19:22.735Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application shutdown.
+  - ts: '2026-11-03T12:19:22.618Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Shutting down
+metrics:
+- match: max(process_resident_memory_bytes{service="worker"})
+  points:
+  - - 1793707304.347
+    - 63635456.0
+  - - 1793707319.347
+    - 63635456.0
+  - - 1793707334.347
+    - 63635456.0
+  - - 1793707349.347
+    - 63635456.0
+  - - 1793707379.347
+    - 63275008.0
+  - - 1793707394.347
+    - 63799296.0
+  - - 1793707409.347
+    - 63799296.0
+  - - 1793707439.347
+    - 62566400.0
+  - - 1793707454.347
+    - 62566400.0
+  - - 1793707469.347
+    - 63090688.0
+  - - 1793707484.347
+    - 63090688.0
+  - - 1793707499.347
+    - 63090688.0
+  - - 1793707514.347
+    - 63090688.0
+  - - 1793707529.347
+    - 63090688.0
+  - - 1793707544.347
+    - 63221760.0
+  - - 1793707559.347
+    - 63221760.0
+  - - 1793707574.347
+    - 63352832.0
+  - - 1793707589.347
+    - 63352832.0
+  - - 1793707604.347
+    - 63352832.0
+  - - 1793707619.347
+    - 63352832.0
+  - - 1793707634.347
+    - 63352832.0
+  - - 1793707649.347
+    - 63352832.0
+  - - 1793707664.347
+    - 63352832.0
+  - - 1793707679.347
+    - 63352832.0
+  - - 1793707694.347
+    - 63352832.0
+  - - 1793707709.347
+    - 63352832.0
+  - - 1793707724.347
+    - 63352832.0
+  - - 1793707739.347
+    - 63352832.0
+  - - 1793707754.347
+    - 63352832.0
+  - - 1793707769.347
+    - 63352832.0
+  - - 1793707784.347
+    - 63352832.0
+  - - 1793707799.347
+    - 62763008.0
+  - - 1793707814.347
+    - 63418368.0
+  - - 1793707829.347
+    - 63549440.0
+  - - 1793707844.347
+    - 63549440.0
+  - - 1793707874.347
+    - 62562304.0
+  - - 1793707889.347
+    - 62562304.0
+  - - 1793707904.347
+    - 62693376.0
+  - - 1793707934.347
+    - 63303680.0
+  - - 1793707949.347
+    - 63827968.0
+  - - 1793707964.347
+    - 63827968.0
+  - - 1793707979.347
+    - 63959040.0
+  - - 1793707994.347
+    - 63959040.0
+  - - 1793708009.347
+    - 63959040.0
+  - - 1793708024.347
+    - 63959040.0
+  - - 1793708039.347
+    - 63959040.0
+  - - 1793708054.347
+    - 64090112.0
+  - - 1793708069.347
+    - 64090112.0
+  - - 1793708084.347
+    - 64221184.0
+  - - 1793708099.347
+    - 64221184.0
+  - - 1793708114.347
+    - 64221184.0
+  - - 1793708129.347
+    - 64221184.0
+  - - 1793708144.347
+    - 64221184.0
+  - - 1793708159.347
+    - 64221184.0
+  - - 1793708174.347
+    - 64221184.0
+  - - 1793708189.347
+    - 65269760.0
+  - - 1793708204.347
+    - 80998400.0
+  - - 1793708219.347
+    - 95678464.0
+  - - 1793708234.347
+    - 111538176.0
+  - - 1793708249.347
+    - 127266816.0
+  - - 1793708264.347
+    - 143126528.0
+  - - 1793708279.347
+    - 158855168.0
+  - - 1793708294.347
+    - 174714880.0
+  - - 1793708309.347
+    - 185331712.0
+  - - 1793708324.347
+    - 201060352.0
+  - - 1793708339.347
+    - 216920064.0
+  - - 1793708354.347
+    - 232648704.0
+  - - 1793708384.347
+    - 63393792.0
+  - - 1793708399.347
+    - 63918080.0
+  - - 1793708414.347
+    - 63918080.0
+  - - 1793708429.347
+    - 63918080.0
+  - - 1793708444.347
+    - 63918080.0
+  - - 1793708459.347
+    - 63918080.0
+  - - 1793708504.347
+    - 62967808.0
+  - - 1793708519.347
+    - 63623168.0
+  - - 1793708534.347
+    - 63623168.0
+  - - 1793708549.347
+    - 63623168.0
+  - - 1793708564.347
+    - 63623168.0
+  - - 1793708579.347
+    - 63623168.0
+  - - 1793708594.347
+    - 63623168.0
+  - - 1793708609.347
+    - 63623168.0
+  - - 1793708624.347
+    - 63623168.0
+  - - 1793708639.347
+    - 63623168.0
+  - - 1793708654.347
+    - 63754240.0
+  - - 1793708669.347
+    - 63754240.0
+  - - 1793708684.347
+    - 63885312.0
+  - - 1793708699.347
+    - 63885312.0
+  - - 1793708714.347
+    - 63885312.0
+  - - 1793708729.347
+    - 63885312.0
+  - - 1793708744.347
+    - 63885312.0
+  - - 1793708759.347
+    - 63885312.0
+  - - 1793708774.347
+    - 79613952.0
+  - - 1793708789.347
+    - 95473664.0
+  - - 1793708804.347
+    - 110153728.0
+  - - 1793708819.347
+    - 126013440.0
+  - - 1793708834.347
+    - 141742080.0
+  - - 1793708849.347
+    - 157470720.0
+  - - 1793708864.347
+    - 173199360.0
+  - - 1793708879.347
+    - 189321216.0
+  - - 1793708894.347
+    - 205049856.0
+  - - 1793708909.347
+    - 215535616.0
+  - - 1793708924.347
+    - 231264256.0
+  - - 1793708939.347
+    - 246992896.0
+  - - 1793708954.347
+    - 262983680.0
+  - - 1793708984.347
+    - 74919936.0
+  - - 1793708999.347
+    - 90648576.0
+  - - 1793709014.347
+    - 105459712.0
+  - - 1793709029.347
+    - 115945472.0
+  - - 1793709044.347
+    - 131674112.0
+  - - 1793709059.347
+    - 147402752.0
+  - - 1793709074.347
+    - 163262464.0
+  - - 1793709089.347
+    - 179122176.0
+  - - 1793709104.347
+    - 194981888.0
+  - - 1793709119.347
+    - 210710528.0
+  - - 1793709134.347
+    - 226701312.0
+  - - 1793709149.347
+    - 242429952.0
+  - - 1793709164.347
+    - 258158592.0
+  - - 1793709179.347
+    - 268644352.0
+  - - 1793709194.347
+    - 63410176.0
+  - - 1793709209.347
+    - 78745600.0
+  - - 1793709224.347
+    - 94474240.0
+  - - 1793709239.347
+    - 99717120.0
+  - - 1793709254.347
+    - 99717120.0
+  - - 1793709269.347
+    - 99717120.0
+  - - 1793709284.347
+    - 99717120.0
+  - - 1793709299.347
+    - 99717120.0
+  - - 1793709314.347
+    - 99717120.0
+  - - 1793709329.347
+    - 99717120.0
+  - - 1793709344.347
+    - 99717120.0
+  - - 1793709359.347
+    - 99717120.0
+  - - 1793709374.347
+    - 99717120.0
+  - - 1793709389.347
+    - 99717120.0
+  - - 1793709404.347
+    - 99717120.0
+  - - 1793709419.347
+    - 99717120.0
+  - - 1793709434.347
+    - 99717120.0
+  - - 1793709449.347
+    - 99717120.0
+  - - 1793709464.347
+    - 99717120.0
+  - - 1793709479.347
+    - 99717120.0
+containers:
+- name: cs-worker-210
+  service: worker
+  release: 2.1.0
+  restarts: 2
+  oom_killed: false
+  state: running
+  exit_code: 0
+  health: healthy
+probes_ok: true
+runner:
+  active_release: 2.1.0
+  replicas: 1
+model:
+  gather:
+  - - tool: query_metrics
+      args:
+        template: memory_rss
+        service: worker
+    - tool: get_service_health
+      args:
+        service: worker
+    - tool: get_recent_deploys
+      args:
+        service: worker
+  hypotheses:
+    hypotheses:
+    - rank: 1
+      root_cause_category: memory_leak
+      confidence: 0.84
+      evidence_refs:
+      - E2
+      - E3
+      summary: Worker memory climbs to the limit and the container is OOM-killed repeatedly
+  disproof:
+    target_rank: 1
+    tool: query_logs
+    params:
+      service: worker
+      level: ERROR
+    expectation_if_true: No application errors explain the restarts
+  reflection:
+    items:
+    - rank: 1
+      citations_supported: true
+      adjusted_confidence: 0.82
+      note: OOM and growth agree
+    top_verdict: survived
+  proposal:
+    action: restart_service
+    params:
+      service: worker
+    expected_effect: A graceful restart clears the leaking state; memory returns to baseline
+    rationale: Memory grows until OOM (E2) and the container restarts (E3); no deploy since reset (E4).
+    evidence_refs:
+    - E2
+    - E3
+expect:
+  phase: PROPOSED
+  action: restart_service
+  params:
+    service: worker

@@ -5,8 +5,9 @@ A scenario file (``scenarios/*.yaml``) holds:
 - ``alert``: the detector alert that opens the incident;
 - ``ledger``: deploy-ledger records (the rest of each record is filled in);
 - ``logs``, ``metrics``, ``containers``: what Loki, Prometheus and
-  socket-proxy-ro answer. Today these are synthetic; task B2.6 replaces them
-  with outputs recorded from the live testbed;
+  socket-proxy-ro answer. The files in ``scenarios/`` are synthetic; those in
+  ``scenarios/recorded/`` were recorded from the live testbed (B2.6,
+  ``record.py``): their metrics are real ``points`` instead of a step change;
 - ``model``: the scripted FakeProvider (gather turns and structured replies);
 - ``runner``: what the fake runner's dry run reports;
 - ``expect``: the terminal state and the proposal or escalation reason.
@@ -86,6 +87,14 @@ def load(path: Path) -> Scenario:
 # --- mocked backends ------------------------------------------------------------------
 
 
+def _value_at(entry: dict[str, Any], t: float) -> Any:
+    """A synthetic step change, or the latest recorded point at or before ``t``."""
+    if "points" not in entry:
+        return entry["before"] if t < parse_time(entry["change_at"]).timestamp() else entry["after"]
+    earlier = [value for at, value in entry["points"] if at <= t]
+    return earlier[-1] if earlier else None
+
+
 def _window(params: dict[str, list[str]]) -> tuple[float, float]:
     return int(params["start"][0]) / 1e9, int(params["end"][0]) / 1e9
 
@@ -141,14 +150,14 @@ class Backends:
         step = int(params["step"][0].rstrip("s"))
         for entry in self.scenario.data.get("metrics", []):
             if entry["match"] in promql:
-                change = parse_time(entry["change_at"]).timestamp()
                 points = []
                 t = start
                 while t <= end:
-                    value = entry["before"] if t < change else entry["after"]
-                    points.append([t, str(value)])
+                    value = _value_at(entry, t)
+                    if value is not None:
+                        points.append([t, str(value)])
                     t += step
-                result = [{"metric": {}, "values": points}]
+                result = [{"metric": {}, "values": points}] if points else []
                 break
         else:
             result = []

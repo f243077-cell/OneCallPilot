@@ -15,10 +15,14 @@ import pytest
 from redis.asyncio import Redis
 from replay import SCENARIOS, Outcome, Scenario, load, run
 
-FILES = sorted(SCENARIOS.glob("*.yaml"))
+FILES = sorted(SCENARIOS.glob("*.yaml")) + sorted((SCENARIOS / "recorded").glob("*.yaml"))
 
 
-@pytest.mark.parametrize("path", FILES, ids=[p.stem for p in FILES])
+@pytest.mark.parametrize(
+    "path",
+    FILES,
+    ids=[p.stem + ("-recorded" if p.parent.name == "recorded" else "") for p in FILES],
+)
 async def test_scenario(
     path: Path, pool: asyncpg.Pool, redis_client: Redis, tmp_path: Path
 ) -> None:
