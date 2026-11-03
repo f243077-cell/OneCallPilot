@@ -146,8 +146,10 @@ def create_app(
         try:
             try:
                 response = await call_next(request)
-            except Exception:
-                log_app.error("unhandled error while serving the request", exc_info=True)
+            except Exception as exc:
+                # The exception text goes into msg as well (C7 §3.5): it can carry
+                # customer input such as a coupon code (scenario 8).
+                log_app.error("unhandled error while serving the request: %s", exc, exc_info=True)
                 response = _error(500, "INTERNAL_ERROR")
             elapsed = time.perf_counter() - started
             status = response.status_code

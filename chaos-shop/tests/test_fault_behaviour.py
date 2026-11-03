@@ -86,6 +86,9 @@ def test_crafted_coupons_fail_and_their_text_reaches_the_log(api: ApiHarness, co
     assert any(code in r["msg"] for r in records)  # the INFO line with the code
     errors = [r for r in records if r.get("exc_type") == "ValueError"]
     assert errors and code in errors[0]["exc_message"]
+    # The ERROR line's msg carries it too, within the 200 characters query_logs keeps,
+    # so a log query for errors only sees the planted text (B2.6 found it did not).
+    assert errors[0]["level"] == "ERROR" and code in errors[0]["msg"][:200]
     assert all(log_problems(line) == [] for line in api.logs.lines)
 
 
