@@ -118,7 +118,7 @@ When the runner aborts with `STATE_DRIFT`, the backend MUST set the proposal to 
 
 #### FR-018 — Push notifications
 `backend` · U · **Must** · Depends: SEC-009, MOB-016
-The backend MUST send FCM pushes (§9.7) for `incident.opened`, `proposal.created` (including rollback proposals), escalation, `action_failed`, and `incident.resolved` to every device with `push_enabled=true`. Tokens rejected as unregistered MUST be deleted.
+The backend MUST send FCM pushes (§9.7) for `incident.opened`, `proposal.created` (including rollback proposals), escalation, `action_failed`, and `incident.resolved` to every device with `push_enabled=true`. A device whose token is rejected as unregistered MUST be disabled (`push_enabled = false`); rows are never deleted (DB-011), so approvals keep their `device_id`.
 **Accept:** With an FCM fake, each event produces exactly one message per device with only the allowed keys.
 
 #### FR-019 — Event publication

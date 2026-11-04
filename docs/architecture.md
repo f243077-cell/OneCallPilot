@@ -1181,7 +1181,7 @@ mobile/lib/
 - **Push:**
   - request `POST_NOTIFICATIONS` on Android 13+;
   - register the token on login and on `onTokenRefresh` (`POST /devices`);
-  - delete the device row on sign-out;
+  - on sign-out, call `DELETE /devices/{id}`: the backend disables the row (`push_enabled = false`); it is never deleted (DB-011, and `approvals.device_id` keeps pointing at it);
   - a notification tap deep-links through go_router.
 - **Debug networking:** `res/xml/network_security_config.xml` allows cleartext only to the configured host (ADR-16). The server URL can be edited in Settings in debug builds, because the laptop's LAN IP can change.
 

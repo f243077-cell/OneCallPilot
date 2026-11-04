@@ -1,7 +1,8 @@
 // Push notifications (architecture §10.5, MOB-016, task A3.2): ask for the
 // notification permission (Android 13+), register the FCM token on sign-in and
-// on every token refresh (`POST /devices`), delete the device row before
-// sign-out, and turn a notification tap into an incident ID for the router.
+// on every token refresh (`POST /devices`), stop pushes to the device before
+// sign-out (`DELETE /devices/{id}`: the backend disables the row), and turn a
+// notification tap into an incident ID for the router.
 // A push carries only the five C9 keys; the app fetches the rest over REST.
 
 import 'dart:async';
@@ -192,7 +193,8 @@ class PushTap {
   final String incidentId;
 }
 
-/// Deletes the device row before the session ends (architecture §10.5).
+/// Stops pushes to this device (`DELETE /devices/{id}`) before the session ends
+/// (architecture §10.5).
 class PushAuthRepository implements AuthRepository {
   PushAuthRepository(this._inner, this._push);
 
