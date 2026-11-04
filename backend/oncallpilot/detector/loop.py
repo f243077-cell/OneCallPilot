@@ -37,6 +37,9 @@ class SampleSource(Protocol):
 
     async def collect(self, at: datetime) -> dict[str, Samples]: ...
 
+    def reset(self, at: datetime) -> None:
+        """A chaos reset was seen: container events until it settles do not count (ADR-26)."""
+
 
 class AlertSink(Protocol):
     async def send(self, alert: AlertIn) -> None: ...
@@ -180,6 +183,7 @@ class DetectorLoop:
             self._last_reset = reset_id
             log.info("chaos reset seen in the deploy ledger: warm-up starts")
             self.detector.reset(at)
+            self.source.reset(at)
 
     @staticmethod
     def _body(alert: Alert) -> AlertIn:

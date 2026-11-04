@@ -7,7 +7,9 @@ One ``Samples`` per monitored service per cycle, read-only:
 - ``restarts``: socket-proxy-ro (GET only), containers labelled
   ``oncallpilot.managed=true``: restarts of running or restarting containers
   within the rule's window (from ``RestartCount`` seen over time), a
-  container that exited non-zero within the window, and the number running;
+  container that exited non-zero within the window, and the number running.
+  After a reset (``reset``), restarts and exits before the end of the settle
+  period belong to the reset and the run before it, not to the next run (ADR-26);
 - ``stack_traces``: Loki, lines containing ``Traceback`` in the last minute,
   by ``exc_type``.
 
@@ -60,12 +62,14 @@ class RestartHistory:
         default_factory=lambda: defaultdict(deque)
     )
 
-    def restarts(self, name: str, count: int, at: datetime) -> int:
+    def restarts(self, name: str, count: int, at: datetime, since: datetime | None = None) -> int:
+        """Restarts within the window, and only those after ``since`` when it is later."""
         seen = self._seen[name]
         if seen and count < seen[-1][1]:
             seen.clear()  # the container was recreated
         seen.append((at, count))
-        while len(seen) > 1 and seen[1][0] <= at - self.window:
+        start = at - self.window if since is None else max(at - self.window, since)
+        while len(seen) > 1 and seen[1][0] <= start:
             seen.popleft()
         return max(0, count - seen[0][1])
 
@@ -92,11 +96,17 @@ class LiveSampleSource:
     loki: LokiClient
     docker: httpx.AsyncClient  # base URL = socket-proxy-ro
     history: RestartHistory | None = None
+    settled_at: datetime | None = None  # end of the last reset's settle period (ADR-26)
 
     def __post_init__(self) -> None:
         if self.history is None:
             window = timedelta(seconds=self.config.signals.restarts.window_seconds)
             self.history = RestartHistory(window)
+
+    def reset(self, at: datetime) -> None:
+        """A chaos reset was seen at ``at``: what happens to containers until the settle
+        period ends (ADR-24) is the reset's own work, not a fault (ADR-26)."""
+        self.settled_at = at + timedelta(seconds=self.config.warmup_settle_seconds)
 
     async def collect(self, at: datetime) -> dict[str, Samples]:
         rules = self.config.signals
@@ -175,9 +185,14 @@ class LiveSampleSource:
             return None
         assert self.history is not None
         mine = [c for c in containers if c.service == service]
+        since = self.settled_at
         window_start = at - self.history.window
+        if since is not None and since > window_start:
+            window_start = since
         # A slot stopped on purpose (an older release after a rollback) no longer counts.
-        restarts = sum(self.history.restarts(c.name, c.restart_count, at) for c in mine if c.active)
+        restarts = sum(
+            self.history.restarts(c.name, c.restart_count, at, since) for c in mine if c.active
+        )
         return RestartsSample(
             restarts_in_window=restarts,
             exited_nonzero=any(

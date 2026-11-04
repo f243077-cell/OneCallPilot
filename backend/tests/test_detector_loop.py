@@ -26,12 +26,16 @@ class Source:
         self.error_rate = 0.004
         self.fail = False
         self.calls = 0
+        self.resets: list[datetime] = []
 
     async def collect(self, at: datetime) -> dict[str, Samples]:
         self.calls += 1
         if self.fail:
             raise TimeoutError("prometheus")
         return {"api": Samples(error_rate=self.error_rate)}
+
+    def reset(self, at: datetime) -> None:
+        self.resets.append(at)
 
 
 class Sink:
@@ -106,9 +110,12 @@ async def test_a_new_reset_record_starts_the_warm_up() -> None:
     resets.latest = (uuid.uuid4(), T0 - timedelta(hours=1))  # there at start: no warm-up
     at = await run_for(loop, T0, 60)
     assert not loop.detector.warming_up(at)
+    assert source.resets == []
     resets.latest = (uuid.uuid4(), at)
+    reset_seen = at
     at = await run_for(loop, at, 1)
     assert loop.detector.warming_up(at)
+    assert source.resets == [reset_seen]  # the sample source settles too (ADR-26)
     source.error_rate = 0.31
     at = await run_for(loop, at, 30)  # 150 s of the 180 s warm-up
     assert sink.sent == []

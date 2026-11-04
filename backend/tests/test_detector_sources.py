@@ -155,6 +155,42 @@ async def test_a_slot_stopped_on_purpose_does_not_count_its_old_restarts() -> No
     assert not after.exited_nonzero
 
 
+async def test_a_crash_before_the_reset_settled_does_not_count_after_the_warm_up() -> None:
+    """ADR-26: found on 2026-11-04. The scenario 6 slot was crash-looping, the reset
+    stopped it (exit code 1), and 185 s later, just after the 180 s warm-up, the
+    5-minute window still held that crash: a worker incident with no fault."""
+    slot = container("cs-worker-220", "worker", status="restarting", restarts=4, exit_code=1)
+    docker = Docker({"slot": slot, "w": container("cs-worker-210", "worker")})
+    src = source(docker, prometheus({}), loki([]))
+    await src.collect(AT)
+    src.reset(AT)
+    slot["RestartCount"] = 6
+    slot["State"].update(
+        Status="exited", FinishedAt=(AT + timedelta(seconds=3)).isoformat().replace("+00:00", "Z")
+    )
+    after = (await src.collect(AT + timedelta(seconds=185)))["worker"].restarts
+    assert after is not None and not after.exited_nonzero and after.restarts_in_window == 0
+
+
+async def test_a_crash_after_the_reset_settled_still_counts() -> None:
+    worker = container("cs-worker-210", "worker", restarts=0)
+    docker = Docker({"w": worker})
+    src = source(docker, prometheus({}), loki([]))
+    await src.collect(AT)
+    src.reset(AT)
+    await src.collect(AT + timedelta(seconds=160))
+    # A fault injected after the settle: two restarts, then a non-zero exit.
+    worker["RestartCount"] = 2
+    worker["State"].update(Status="restarting", ExitCode=1)
+    looping = (await src.collect(AT + timedelta(seconds=250)))["worker"].restarts
+    assert looping is not None and looping.restarts_in_window == 2
+    worker["State"].update(
+        Status="exited", FinishedAt=(AT + timedelta(seconds=255)).isoformat().replace("+00:00", "Z")
+    )
+    crashed = (await src.collect(AT + timedelta(seconds=260)))["worker"].restarts
+    assert crashed is not None and crashed.exited_nonzero
+
+
 async def test_unavailable_sources_leave_values_out() -> None:
     def broken(request: httpx.Request) -> httpx.Response:
         return httpx.Response(500)
