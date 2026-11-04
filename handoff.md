@@ -2,6 +2,18 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-04 (night) — Tanzeel: Gate G3 criterion 2, B3.1
+
+### Done
+- **Gate G3 criterion 2 on the phone:** Wi‑Fi off showed "Reconnecting — approval is paused"; Wi‑Fi on re-synced. New `docs/checks/gate-g3.md` tracks all five criteria. The Approve half needs a proposal (A3.3).
+- **B3.1** (TEST-006, FR-013, TEST-005): six integration tests. They cover the expiry boundary (approve at exactly `expires_at` is `PROPOSAL_EXPIRED`, as the sweeper), two phones approving at once (one execution), approve racing the sweeper (no execution, one escalation), an approval just before expiry beating the sweeper, a superseded proposal (`PROPOSAL_NOT_PENDING`, old fingerprint `STALE_PROPOSAL`) and an approve and reject sent together (`state_version` rising, no duplicates). All passed at once: the code was already right, and the tests now pin it. The race tests passed 10 runs in a row; the integration suite has 127 tests.
+
+### Next
+- Tanzeel: proxy security test, A3.8, the manual pilot with Usman (`next.md`).
+
+### Waiting on Tanzeel
+- Unchanged.
+
 ## 2026-11-04 (evening) — Tanzeel: push with the app killed, ADR-26
 
 ### Done
