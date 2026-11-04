@@ -15,7 +15,7 @@
 openapi: 3.1.0
 info:
   title: OnCallPilot backend-api
-  version: 0.2.0
+  version: 0.2.1
   description: >-
     REST API for the OnCallPilot app and for alert sources. JSON is
     snake_case; timestamps are UTC ISO 8601 with a Z suffix; identifiers are
@@ -313,12 +313,12 @@ paths:
     delete:
       tags: [devices]
       operationId: deleteDevice
-      summary: Remove a device; owner only (API-011). Safe to repeat.
+      summary: Stop pushes to a device (sign-out); owner only (API-011). Safe to repeat. The row is kept with push_enabled=false, as DB-011 grants no DELETE.
       parameters:
         - $ref: "#/components/parameters/DeviceId"
       responses:
         "204":
-          description: Deleted.
+          description: Disabled.
         "401": {$ref: "#/components/responses/Unauthorized"}
         "404": {$ref: "#/components/responses/NotFound"}
 

@@ -39,7 +39,7 @@ Every push is one FCM HTTP v1 message, sent by backend-api or backend-worker thr
 | `incident.action_failed` | An executed action failed its health check | `high` | "Action failed — review the incident" |
 | `incident.resolved` | The incident is resolved | `normal` | "Resolved" |
 
-A push goes to every device with `push_enabled = true` whose incident severity is at or above `monitor_settings.notify.min_push_severity`. A token that FCM reports as unregistered is deleted (FR-018).
+A push goes to every device with `push_enabled = true` whose incident severity is at or above `monitor_settings.notify.min_push_severity`. A device whose token FCM reports as unregistered is disabled (`push_enabled = false`): the backend has no DELETE grant (DB-011), and approvals keep their link to the device (FR-018).
 
 ## 3. Android
 
