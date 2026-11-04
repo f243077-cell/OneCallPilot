@@ -2,6 +2,20 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-04 (evening) — Tanzeel: push with the app killed, ADR-26
+
+### Done
+- **MOB-016 acceptance with the app killed: passed** (`docs/checks/push.md`): the injection at 17:34:02 UTC opened the scenario 2 incident 15 s later, and both pushes arrived. A tap started the app on the incident.
+- **ADR-26 / detector fix:** the same run opened a worker `restarts` incident with no fault, 185 s after the reset. The scenario 6 slot `cs-worker-220` had been crash-looping since Docker Desktop started, and the reset stopped it with exit code 1. The signal's 5-minute window outlasted the 3-minute warm-up. Now the sample source also hears about the reset, and restarts and non-zero exits before the end of the settle period (150 s) do not count. This would have put a false worker incident after every scenario 1 or 6 run in the benchmark. Backend unit 344, integration 121, regression 16 and security 118 tests pass. The live backend image is rebuilt.
+- `ocp-bench` exists (Tanzeel created it; empty until the freeze).
+
+### Next
+- Tanzeel: the "Tanzeel" list in `next.md` (Wi‑Fi-off check, B3.1, proxy test, A3.8, manual pilot with Usman).
+- Usman: unchanged (OpenRouter tasks).
+
+### Waiting on Tanzeel
+- Unchanged from the entry below.
+
 ## 2026-11-04 — Tanzeel: Usman is back, two developers on `main`
 
 ### Done

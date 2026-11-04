@@ -21,6 +21,18 @@
 | The app showed "Offline": the laptop's Wi‑Fi address had changed (DHCP), and the build's `API_BASE_URL` pointed at the old one | Rebuilt for the new address; a DHCP reservation on the router keeps it fixed |
 | The app showed "Reconnecting — approval is paused" with a healthy socket: after `hello`, the refetch read the feed through the socket provider's own ref, a circular dependency that debug builds throw as an `Error` the resync did not catch | `c0d7f48` (refetch through `ref.container`; `test/main_test.dart`) |
 
+## App killed (MOB-016 acceptance, push half of Gate G3 criterion 1): **passed** (2026-11-04, Tanzeel)
+The app was swiped away from recent apps and the screen locked before the injection.
+
+| Step | Time (UTC) | Result |
+|---|---|---|
+| `chaos reset` (by `ocp up`) | 17:29:32 | warm-up starts |
+| `chaos inject bad-deploy` | 17:33:46 → 17:34:02 | api 1.5.0 on `cs-api-150-1` |
+| Incident opened | 17:34:17 (+15 s) | `stack_traces` on api; push received |
+| Escalated | 17:34:26 | `llm_unavailable` (no OpenRouter credit on this laptop); push received |
+| Tap on the notification | | the app started and opened the incident's detail screen |
+
+An unrelated incident (worker `restarts`, 17:32:37, before the injection) also pushed and escalated; see the 2026-11-04 `handoff.md` entry.
+
 ## Not yet checked
-- The tap with the app **killed** (MOB-016's acceptance case) was not separately recorded; repeat once with the app swiped away.
 - A push for a proposal (`proposal.created`) needs a proposal, so OpenRouter credit.

@@ -253,3 +253,16 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 **Words.**
 - *Rebase (on pull)*: replaying your own not-yet-pushed commits on top of the newest `main`, so the history stays one straight line.
 - *Force-push*: overwriting the shared history with yours; it can delete the other person's work, so it is never used here.
+
+### 2026-11-04 (evening) — A phone that was asleep, and an alarm about the past
+
+**What we did.** We closed the app completely, locked the phone and broke the shop. The phone still got the notification, and tapping it started the app straight on the right incident. That is the case that matters on a real on-call night.
+
+**What we found.** The same test raised a second, wrong alarm: "worker restarts". Nothing was wrong with the worker. When the laptop's Docker started, the deliberately broken worker from scenario 6 started too and kept crashing until the reset stopped it. The detector looks back 5 minutes for crashes but only stays quiet for 3 minutes after a reset. So between minute 3 and minute 5 it "saw" a crash from before the reset. In the benchmark, that would add a fake incident after every scenario 1 or 6 run.
+
+**The fix.** The detector now treats everything containers do during a reset's first 150 seconds as part of the reset, not as a new problem. Crashes after that still count. Two tests check both sides.
+
+**Words.**
+- *False positive*: an alarm when nothing is wrong.
+- *Window*: how far back a check looks (here, 5 minutes of container history).
+
