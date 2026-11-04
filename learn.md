@@ -244,3 +244,12 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *DHCP reservation*: telling the router to always give one device the same address.
 - *Circular dependency*: A needs B and B needs A, so neither can be built first.
 
+### 2026-11-04 — Two people on one branch
+
+**What changed.** Usman is back, and both of us now push to `main`. Usman has OpenRouter credit, so he takes the tasks that need the real AI model. Tanzeel keeps the phone, the testbed and everything else.
+
+**Why the rules changed.** With one person, `main` only moves when you push. With two, the other person may have pushed while you worked. So before each push you first pull with `--rebase`: git puts your new, unpushed commits on top of theirs. Then you run the checks again, because their change and yours together can break something that neither broke alone. A rejected push is not an error to force through; it means "pull first".
+
+**Words.**
+- *Rebase (on pull)*: replaying your own not-yet-pushed commits on top of the newest `main`, so the history stays one straight line.
+- *Force-push*: overwriting the shared history with yours; it can delete the other person's work, so it is never used here.

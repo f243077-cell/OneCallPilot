@@ -1,11 +1,12 @@
 # Context — current state
 
 > Rewritten at the end of every session (or chunk) so it matches reality (`CLAUDE.md` §11.4). Read it right after `CLAUDE.md`, then the newest `handoff.md` entry, then **`next.md`**.
-> **Last updated:** 2026-11-02, local session on the laptop.
+> **Last updated:** 2026-11-04, local session on Tanzeel's laptop.
 
 ## Who and where
-- **Tanzeel** is the only developer since 2026-10-21 (Usman has left). Sessions work for him and may edit every folder.
-- Repository `https://github.com/f243077-cell/OneCallPilot`; all work is committed and pushed **directly to `main`** (`CLAUDE.md` §11). Sessions may run in the cloud while his laptop is off.
+- **Two developers since 2026-11-04:** Tanzeel (alone from 2026-10-21 to 2026-11-03) and Usman, who is back. Both may edit every folder; a session works for the developer who started it.
+- **Split:** Usman does the tasks that need the real LLM (OpenRouter, his own key): `ocp smoke` live, recorded-model replay, Gate G2, B2.13, B3.3, B3.4, B3.9. Tanzeel does the rest (phone, testbed, runner, CI, docs). A3.3, A3.7, Gate G3 and Phase 4 run together on Tanzeel's laptop (`CLAUDE.md` §11.6).
+- Repository `https://github.com/f243077-cell/OneCallPilot`; all work is committed and pushed **directly to `main`**, with `git pull --rebase origin main` before each push (`CLAUDE.md` §11). Both backends use Supabase `ocp-dev`: agree before running the full stack.
 
 ## Branches
 | Branch | State |
@@ -39,7 +40,7 @@
 - `git push --delete` is refused by the session proxy (403). There is no `gh` CLI; use the GitHub MCP tools for CI status.
 
 ## Decisions (and where they are written)
-- Single developer, direct pushes to `main` (`CLAUDE.md` §8.1, §11).
+- Two developers, direct pushes to `main` (`CLAUDE.md` §8.1, §11); a single developer from 2026-10-21 to 2026-11-03.
 - `ocp_backend` is `NOLOGIN BYPASSRLS` in the migration; the login and password are set by hand per Supabase project. RLS stays on with no policies (`supabase/migrations/20261021190000_initial_schema.sql`).
 - `audit_log` also refuses TRUNCATE (a statement trigger), besides UPDATE and DELETE.
 - Migration CI: forward-only check against the previous head of `main`; names `<14 digits>_<snake>.sql`; Postgres 17 (`pgvector/pgvector:0.8.1-pg17`).

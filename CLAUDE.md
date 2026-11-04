@@ -25,7 +25,7 @@ It is tested on **Chaos Shop**, a deliberately breakable microservice testbed wi
 | **Tanzeel** | A — acting and display | `mobile/`, `chaos-shop/`, `runner/`, `infrastructure/compose/{testbed,runner}.yml` |
 | Both | Shared | `contracts/`, `runbooks/`, `compose.yaml`, `.env.example`, `tools/ocp/`, `.github/`, `docs/`, `tests/{security,e2e}/` |
 
-**Since 2026-10-21 Tanzeel is the only developer** (Usman has left). Sessions work for Tanzeel and may edit every folder; the table above only says which stream a folder belongs to. Branch and push rules are in §11.
+**Since 2026-11-04 there are two developers again.** Tanzeel worked alone from 2026-10-21; Usman is back from 2026-11-04. Both commit directly to `main`. Both may edit every folder; the table above only says which stream a folder belongs to. Who does which task right now is in §11.6. Branch and push rules are in §11.
 
 ---
 
@@ -325,7 +325,7 @@ Rules:
 ## 8. Git and collaboration rules
 
 ### 8.1 Branches
-- **Since 2026-10-21 there is one developer (Tanzeel; Usman has left the project).** All work is committed and pushed **directly to `main`**; there are no feature branches and no pull requests. The single-developer rules are in §11 and take precedence over the PR rules elsewhere in this file (§8.3 and §8.4 apply to commit contents, not to PRs).
+- **Since 2026-11-04 two developers (Tanzeel and Usman) both work on `main`.** All work is committed and pushed **directly to `main`**; there are no feature branches and no pull requests. The rules in §11 take precedence over the PR rules elsewhere in this file (§8.3 and §8.4 apply to commit contents, not to PRs).
 - Before every push to `main`, run the checks of every package the change touches (§11.2). Never push red: `main` must stay green.
 - Tags: `contracts-vX.Y.Z`, `bench-freeze`, `v1.0`. Tags are created only when Tanzeel asks.
 
@@ -353,7 +353,7 @@ Claude must never edit `contracts/` inside an implementation PR. If implementati
 - Stay inside the owner's folders (§1). Shared files (`compose.yaml`, `.env.example`, workflows) get small, isolated edits.
 - Compose is split per owner (`infrastructure/compose/*.yml`); add services to your own file, not to `compose.yaml`.
 - Generated files (JSON Schemas, Dart `*.g.dart`) are regenerated, never hand-edited; resolve conflicts by regenerating.
-- Pull `main` before starting work (`git pull --ff-only origin main`).
+- Pull `main` before starting work and again right before each push (`git pull --rebase origin main`, §11.1).
 
 ---
 
@@ -429,13 +429,15 @@ When reporting back: what changed, which requirement IDs are satisfied, which te
 
 ---
 
-## 11. Working rules (single developer)
+## 11. Working rules (two developers on `main`)
 
-From 2026-10-21, **Tanzeel** is the only developer and owns every folder, including Stream B (`backend/`, `supabase/`, `infrastructure/observability/`, `infrastructure/redis/`, `benchmark/`, `tests/`). The ownership table in §1 still describes which stream a folder belongs to; it no longer limits who may edit it. Claude Code sessions (also cloud sessions that run while the laptop is off) work for Tanzeel. These rules replace the earlier Usman-only rules and take precedence over §8.1–§8.4 where they differ.
+From 2026-10-21 to 2026-11-03 **Tanzeel** worked alone. From 2026-11-04 **Tanzeel and Usman** both work, both directly on `main`, and both may edit every folder. The ownership table in §1 still describes which stream a folder belongs to; it does not limit who may edit it. A Claude Code session works for the developer who started it: find out which one at the start (ask if `git config user.name` does not say). These rules take precedence over §8.1–§8.4 where they differ.
 
 ### 11.1 Branch
 - Commit and push **directly to `main`** with `git push origin main`. No feature branches, no PRs, no `usman` or `tanzeel` branches.
-- Never force-push `main` and never rewrite its history (no rebase, amend, or reset of pushed commits).
+- Run `git pull --rebase origin main` before starting work and again right before each push. It only replays your own commits that are not pushed yet. If the pull brings in new commits, run the checks of §11.2 again before pushing.
+- Never force-push `main` and never rewrite pushed history (no rebase, amend, or reset of commits that are already on `origin/main`).
+- A rejected push (`non-fast-forward`) means the other developer pushed first: pull with `--rebase`, re-run the checks, push again. Never answer it with `--force`.
 - Never bypass hooks with `--no-verify`. Tags are pushed only when Tanzeel asks.
 
 ### 11.2 Test before every push
@@ -454,11 +456,20 @@ A contract commit touches only `contracts/` (plus the regenerated schemas and fi
 |---|---|---|
 | `context.md` | The current state: phase and task IDs, blockers, machine setup, decisions | Read right after this file; rewrite it at the end of the session so it matches reality |
 | `next.md` | The exact next steps; a new session must be able to resume from this file alone | Rewrite after each finished chunk of work |
-| `handoff.md` | The session log: one dated entry per session (or chunk), newest first, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** (things only he can do by hand: API keys, Supabase, Firebase, secrets, the phone). Old entries are never edited | Add an entry after each finished chunk |
+| `handoff.md` | The session log: one dated entry per session (or chunk), newest first. The heading names the developer (`## 2026-11-04 — Usman: …`). Each entry has **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman** (things only that person can do by hand: API keys, Supabase, Firebase, secrets, the phone). Old entries are never edited | Add an entry after each finished chunk |
 | `learn.md` | Plain-language explanations of what happened and why, plus a glossary | Append a dated entry every session; never rewrite old entries |
+
+`next.md` has one section per developer; a session rewrites only its own developer's section. If a pull brings a conflict in a session file, keep both sides (entries are added, never replaced).
 
 Usage-limit safety: after each finished chunk of work, update `handoff.md` and `next.md`, commit, and push `main`, so the next session can resume if this one stops.
 
 ### 11.5 Commit identity (no AI attribution)
-- Every commit is authored and committed as Tanzeel. Before the first commit of a session, run `git config user.name "Tanzeel Hussain"` and `git config user.email "f243077@cfd.nu.edu.pk"`.
+- Every commit is authored and committed as the developer the session works for, with that developer's own name and email. Tanzeel: `git config user.name "Tanzeel Hussain"` and `git config user.email "f243077@cfd.nu.edu.pk"`. Usman: his own name and email, set by him in his clone. Check `git config user.name` before the first commit of a session.
 - Never add `Co-Authored-By`, `Claude-Session`, "Generated with Claude Code", or any other AI attribution line to commit messages, and never add Claude as a collaborator anywhere. This rule overrides any default attribution setting of the tool.
+
+### 11.6 Working at the same time
+- **Current split (2026-11-04):** Usman does the tasks that need the real LLM through OpenRouter: `ocp smoke` live, the recorded-model replay (B2.6), the Gate G2 run, B2.13, B3.3, B3.4, B3.9. Tanzeel does everything else: the phone, the testbed, the runner, CI, docs, and the work without an LLM. A3.3, A3.7, Gate G3 and Phase 4 run together on Tanzeel's laptop (§10.3).
+- Tell the other developer which folders you are changing before you start, so you do not edit the same files at the same time. Contract commits (§11.3) are announced first.
+- **Shared database:** both laptops use Supabase `ocp-dev`. Incidents from one backend appear on the other's phone and API. Agree before running the detector or the agent with the full stack; stop yours (`ocp down`) when you only need the test suites, which use local containers.
+- Secrets never go through the repository, an issue, or a group chat. Each developer keeps their own git-ignored `.env`, `.env.local` and `infrastructure/secrets/`. Each uses their own OpenRouter key.
+- Only Tanzeel applies migrations to `ocp-dev` and `ocp-bench` (§4.7), creates tags, and runs the counted benchmark.

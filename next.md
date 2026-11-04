@@ -1,17 +1,32 @@
 # Next session — start here
 
-> **For:** the next Claude Code session (cloud or local) working for **Tanzeel**, the only developer since 2026-10-21.
-> **Read order:** `CLAUDE.md` (§11 = the single-developer rules), `context.md`, the newest `handoff.md` entry, then this file.
-> **Rewrite this file** after every finished chunk of work, so a session that stops at a usage limit can be resumed from here alone.
+> **For:** the next Claude Code session working for **Tanzeel** or **Usman** (two developers on `main` since 2026-11-04).
+> **Read order:** `CLAUDE.md` (§11 = the rules for two developers on `main`), `context.md`, the newest `handoff.md` entry, then this file.
+> **Rewrite your own developer's section** after every finished chunk of work, so a session that stops at a usage limit can be resumed from here alone (`CLAUDE.md` §11.4).
+
+## Tanzeel — next (no LLM needed)
+1. **MOB-016 with the app killed** (also the push half of Gate G3 criterion 1): swipe the app away, `chaos inject bad-deploy`; the escalation push (`llm_unavailable`) is enough without credit. Record it in `docs/checks/push.md`.
+2. **Gate G3 criterion 2 on the phone:** Wi‑Fi off during review shows the stale banner; reconnecting re-syncs.
+3. **B3.1** stale and expiry hardening (TEST-006, FR-013): fingerprint 409 paths and `state_version` ordering, with FakeProvider integration tests.
+4. **Proxy security test** (`bash runner/tests/security/run_proxy_test.sh`) on the laptop.
+5. **A3.8** demo storyboard (2-minute script).
+6. **Supabase `ocp-bench`** project for Phase 4 (by hand); it is migrated only during the freeze (`CLAUDE.md` §4.7).
+7. Decisions: device DELETE vs DB-011; runbook review.
+
+## Usman — next (OpenRouter)
+Setup: the folder Tanzeel sends privately (`SETUP.md` in it). In order: `ocp smoke` live (`docs/checks/smoke.md`), the recorded-model replay (B2.6), the Gate G2 run (`docs/checks/gate-g2.md`), B2.13, B3.3, B3.4, B3.9 (details in section 2 below). Tell Tanzeel before running the full stack: both use Supabase `ocp-dev`.
+
+## Together (Tanzeel's laptop and phone)
+A3.3 live biometric approval, A3.7 all 8 scenarios from the phone, Gate G3, Phase 4.
 
 ## 0. Rules (short form of `CLAUDE.md` §11)
-- Work on `main`; commit and push directly (`git push origin main`). No branches, no PRs, no force-push, no tags unless Tanzeel asks.
+- Work on `main`; `git pull --rebase origin main` before you start and right before each push; commit and push directly (`git push origin main`). No branches, no PRs, no force-push, no tags unless Tanzeel asks.
 - Run the checks of every touched package before each push (§11.2). Never push red. After a push, check CI on `main` (GitHub MCP `actions_list` → `list_workflow_runs`, branch `main`).
-- **Commit identity (§11.5):** `git config user.name "Tanzeel Hussain"` and `git config user.email "f243077@cfd.nu.edu.pk"` before the first commit; never add `Co-Authored-By`, `Claude-Session` or any AI attribution line.
-- Never print or commit secrets. Things only Tanzeel can do by hand go under "Waiting on Tanzeel" in `handoff.md`.
+- **Commit identity (§11.5):** the session's own developer. Tanzeel: `git config user.name "Tanzeel Hussain"` and `git config user.email "f243077@cfd.nu.edu.pk"`; Usman: his own. Never add `Co-Authored-By`, `Claude-Session` or any AI attribution line.
+- Never print or commit secrets. Things only one person can do by hand go under "Waiting on Tanzeel" or "Waiting on Usman" in `handoff.md`.
 
 ## 1. Start of the session (cloud container)
-1. `git checkout main && git pull --ff-only origin main`.
+1. `git checkout main && git pull --rebase origin main`.
 2. uv: CI pins **0.12.7**. If `uv --version` is older, use `/usr/local/bin/uv` (`pip install uv==0.12.7`).
 3. Docker: if `docker info` fails, start the daemon: `(dockerd > /tmp/dockerd.log 2>&1 &)`. Docker Hub rate-limits this container (429), so pull through the mirror: `docker pull mirror.gcr.io/pgvector/pgvector:0.8.1-pg17`.
 4. Test database: `docker run -d --name ocp-test-pg -e POSTGRES_PASSWORD=postgres -p 127.0.0.1:54329:5432 mirror.gcr.io/pgvector/pgvector:0.8.1-pg17`, then

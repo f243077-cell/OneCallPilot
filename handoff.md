@@ -1,6 +1,24 @@
 # Handoff — session log
 
-> One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel**. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
+> One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
+
+## 2026-11-04 — Tanzeel: Usman is back, two developers on `main`
+
+### Done
+- **`CLAUDE.md`** §1, §8.1, §8.5 and §11 rewritten for two developers on `main`: `git pull --rebase` before each push, each commit under its own developer's name, no AI attribution, one `next.md` section per developer, handoff headings name the developer, and a new §11.6 (who does what, the shared `ocp-dev` database, secrets per person).
+- `next.md` and `context.md` updated to match.
+- Usman's setup folder prepared outside the repository (not committed): his `.env` with a placeholder for his own OpenRouter key, `.env.local` without the admin URL, `google-services.json`, and `SETUP.md`.
+
+### Next
+- Tanzeel: the "Tanzeel" list in `next.md` (push with the app killed, the Wi‑Fi-off check, B3.1, the proxy test, A3.8, `ocp-bench`).
+- Usman: `ocp smoke` live, recorded-model replay, Gate G2, B2.13, B3.3, B3.4, B3.9.
+
+### Waiting on Tanzeel
+- Send the setup folder to Usman privately and delete it afterwards. Add Usman as a GitHub collaborator.
+- DHCP reservation for 192.168.0.105; optional rotation of `INGEST_TOKEN` and the Redis password; runbook review; device DELETE vs DB-011.
+
+### Waiting on Usman
+- His own OpenRouter key in his `.env`, with a credit limit.
 
 ## 2026-11-03 (evening) — Local session: scenario 8 fix, push on the real phone
 
