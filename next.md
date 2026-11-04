@@ -5,11 +5,10 @@
 > **Rewrite your own developer's section** after every finished chunk of work, so a session that stops at a usage limit can be resumed from here alone (`CLAUDE.md` §11.4).
 
 ## Tanzeel — next (no LLM needed)
-Done 2026-11-04: MOB-016 with the app killed (`docs/checks/push.md`); ADR-26 (a false worker `restarts` incident after a reset); Gate G3 criterion 2 on the phone (banner and re-sync, `docs/checks/gate-g3.md`); B3.1 tests (expiry boundary, two phones approving at once, approve racing the sweeper, superseded proposal, rising `state_version`); `ocp-bench` exists (empty; migrated only during the freeze, `CLAUDE.md` §4.7).
-Proxy security test on the laptop: 54/54 passed 2026-11-04 (`docs/checks/proxy.md`).
-1. **A3.8** demo storyboard (2-minute script).
-2. **Manual half of the pilot** (P4.1, not counted) with Usman: 8 runs with `AGENT_ENABLED=false`, one injects, the other diagnoses; harness bugs found may be fixed before the freeze (P4.2).
-3. Decisions: device DELETE vs DB-011; runbook review.
+Done 2026-11-04: MOB-016 with the app killed (`docs/checks/push.md`); ADR-26 (a false worker `restarts` incident after a reset); Gate G3 criterion 2 on the phone (`docs/checks/gate-g3.md`); B3.1 tests; proxy security test 54/54 (`docs/checks/proxy.md`); A3.8 storyboard drafted (`docs/demo-storyboard.md`); runbook review (`docs/checks/runbook-review.md`, no blockers); device rows are disabled, never deleted (DB-011 kept; contracts 0.2.1); `ocp-bench` exists (empty; migrated only during the freeze, `CLAUDE.md` §4.7).
+1. **Tomorrow, with Usman: manual half of the pilot** (P4.1, not counted): 8 runs with `AGENT_ENABLED=false` in `.env`, then `ocp up`; one injects, the other diagnoses (`benchmark/PROCEDURE.md`). Harness bugs found may be fixed before the freeze (P4.2). Tell each other first: both use `ocp-dev`.
+2. Tick the two boxes in `docs/checks/runbook-review.md` (Tanzeel, Usman).
+3. Read the storyboard once; adjust captions to taste. It is filmed with A3.3 (needs a proposal).
 
 ## Usman — next (OpenRouter)
 Setup: the folder Tanzeel sends privately (`SETUP.md` in it). In order: `ocp smoke` live (`docs/checks/smoke.md`), the recorded-model replay (B2.6), the Gate G2 run (`docs/checks/gate-g2.md`), B2.13, B3.3, B3.4, B3.9 (details in section 2 below). Tell Tanzeel before running the full stack: both use Supabase `ocp-dev`.

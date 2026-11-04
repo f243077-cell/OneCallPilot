@@ -266,3 +266,16 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *False positive*: an alarm when nothing is wrong.
 - *Window*: how far back a check looks (here, 5 minutes of container history).
 
+### 2026-11-04 (late night) — A script for the demo, a check of the runbooks, and one rule made consistent
+
+**Demo script.** The final video is two minutes long, but the real run takes about four. So the script says exactly what to film, and every cut shows how much time it skipped. Nothing the AI wrote may be edited.
+
+**Runbooks.** These are the short guides the AI can search. We checked that they promise only actions that really exist, with the right risk level, and that they do not secretly contain the answers to the 8 test scenarios. If they did, the benchmark would be cheating.
+
+**One rule, two descriptions.** Some documents said "delete the phone's record" when a phone signs out or Firebase says its address is dead. The database rules say the backend may never delete anything. The code followed the database rules and switched the phone off instead. We kept that. Deleting would also break the approval history, because each approval remembers which phone gave it. Now every document says "disabled".
+
+**Words.**
+- *Storyboard*: a shot-by-shot plan for a video.
+- *Patch version* (0.2.0 → 0.2.1): a change to the wording of a contract that changes no data or behaviour.
+- *Foreign key*: a column that must point at an existing row in another table.
+

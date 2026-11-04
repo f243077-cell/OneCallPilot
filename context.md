@@ -40,6 +40,7 @@
 - `git push --delete` is refused by the session proxy (403). There is no `gh` CLI; use the GitHub MCP tools for CI status.
 
 ## Decisions (and where they are written)
+- Devices are disabled, never deleted (DB-011 kept, 2026-11-04; contracts 0.2.1 wording).
 - Two developers, direct pushes to `main` (`CLAUDE.md` §8.1, §11); a single developer from 2026-10-21 to 2026-11-03.
 - `ocp_backend` is `NOLOGIN BYPASSRLS` in the migration; the login and password are set by hand per Supabase project. RLS stays on with no policies (`supabase/migrations/20261021190000_initial_schema.sql`).
 - `audit_log` also refuses TRUNCATE (a statement trigger), besides UPDATE and DELETE.

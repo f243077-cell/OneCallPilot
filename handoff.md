@@ -2,6 +2,22 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-04 (late night) — Tanzeel: A3.8 storyboard, runbook review, device rows
+
+### Done
+- **A3.8** demo storyboard (`docs/demo-storyboard.md`): a 2-minute shot list for scenario 2 with the app's real labels and the C9 push texts, recording rules (real timings, labelled cuts, no secrets on screen), a checklist, and what to do if the agent escalates. Labels checked against `mobile/lib`.
+- **Runbook review** (`docs/checks/runbook-review.md`): all 8 match the catalogue (tiers, approvals, limits, rollback steps) and the tools; no scenario names or answers; every action runbook has a disproof check. No blockers, two minor notes. The confirm boxes are for Tanzeel and Usman.
+- **Device DELETE vs DB-011, decided: keep DB-011.** A device is disabled (`push_enabled = false`), never deleted; besides, `approvals.device_id` references `devices` with no `ON DELETE`, so a delete would fail for any phone that approved something. Contract text fixed (`contracts/push.md`, the OpenAPI `DELETE /devices/{id}` summary) as **contracts 0.2.1** (patch, wording only), lockfiles of backend, benchmark and chaos-shop/cli updated; FR-018 and architecture §10.5 reworded; the app's comments too. Checks: contracts 259, backend 344, integration 127, security 118, db 70, benchmark 31, chaos-shop/cli 41, Flutter analyze clean and 216 tests (Flutter 3.44.2).
+
+### Next
+- Tomorrow with Usman: the manual pilot (`next.md`).
+
+### Waiting on Tanzeel
+- Tick the runbook review box; read the storyboard. DHCP reservation; optional rotation of `INGEST_TOKEN` and the Redis password.
+
+### Waiting on Usman
+- His OpenRouter tasks; the runbook review box.
+
 ## 2026-11-04 (night) — Tanzeel: Gate G3 criterion 2, B3.1
 
 ### Done
