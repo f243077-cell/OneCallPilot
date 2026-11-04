@@ -222,6 +222,94 @@ async def test_expired_proposal_is_refused(env: Env) -> None:
     assert (response.status_code, code(response)) == (409, "PROPOSAL_EXPIRED")
 
 
+async def test_expiry_starts_exactly_at_expires_at(env: Env) -> None:
+    # B3.1 / FR-013: the same boundary as the sweeper (`expires_at <= now`).
+    env.clock[0] = NOW + timedelta(seconds=899)
+    issued = (await env.challenge()).json()
+    env.clock[0] = NOW + timedelta(seconds=900)
+    body = {
+        "challenge_id": issued["challenge_id"],
+        "nonce": issued["nonce"],
+        "proposal_fingerprint": FINGERPRINT,
+        "auth_method": "biometric",
+    }
+    response = await env.approve(body=body, key=str(uuid.uuid4()))
+    assert (response.status_code, code(response)) == (409, "PROPOSAL_EXPIRED")
+    assert await execute_requests(env.redis) == []
+
+
+async def test_two_phones_approving_at_once_make_one_execution(env: Env) -> None:
+    # B3.1 / TEST-005: two users, two challenges, two keys, sent together.
+    other = str(uuid.uuid4())
+    bodies = []
+    for user in (env.user, other):
+        issued = (await env.challenge(user=user)).json()
+        bodies.append(
+            {
+                "challenge_id": issued["challenge_id"],
+                "nonce": issued["nonce"],
+                "proposal_fingerprint": FINGERPRINT,
+                "auth_method": "biometric",
+            }
+        )
+    first, second = await asyncio.gather(
+        env.approve(body=bodies[0], key=str(uuid.uuid4())),
+        env.approve(body=bodies[1], key=str(uuid.uuid4()), user=other),
+    )
+    outcomes = sorted([(first.status_code, first.text), (second.status_code, second.text)])
+    assert outcomes[0][0] == 202
+    assert outcomes[1][0] == 409 and "PROPOSAL_NOT_PENDING" in outcomes[1][1]
+    assert len(await execute_requests(env.redis)) == 1
+    counts = await env.pool.fetchrow(
+        "select (select count(*) from ocp.executions) as executions,"
+        " (select count(*) from ocp.approvals where decision = 'approved') as approvals"
+    )
+    assert counts is not None and (counts["executions"], counts["approvals"]) == (1, 1)
+
+
+async def test_a_superseded_proposal_cannot_be_approved(env: Env) -> None:
+    # B3.1 / FR-017: after drift the old proposal is not pending; its fingerprint is stale
+    # for the new one.
+    old = env.proposal_id
+    early = (await env.challenge()).json()  # taken before the drift
+    env.proposal_id = await make_pending_after_reset(env, "medium")
+    new_fingerprint = "d" * 64
+    await env.pool.execute(
+        "update ocp.proposals set fingerprint = $2 where id = $1", env.proposal_id, new_fingerprint
+    )
+    stale = await env.challenge(FINGERPRINT)
+    assert (stale.status_code, code(stale)) == (409, "STALE_PROPOSAL")
+    env.proposal_id = old
+    body = {
+        "challenge_id": early["challenge_id"],
+        "nonce": early["nonce"],
+        "proposal_fingerprint": FINGERPRINT,
+        "auth_method": "biometric",
+    }
+    response = await env.approve(body=body, key=str(uuid.uuid4()))
+    assert (response.status_code, code(response)) == (409, "PROPOSAL_NOT_PENDING")
+    assert await execute_requests(env.redis) == []
+
+
+async def test_concurrent_decisions_publish_rising_state_versions(env: Env) -> None:
+    # B3.1: an approve and a reject sent together; one wins, and every published event
+    # has a higher state_version than the one before (clients drop lower ones, C3).
+    start = await env.pool.fetchval(
+        "select state_version from ocp.incidents where id = $1", env.incident_id
+    )
+    approved, rejected = await asyncio.gather(
+        env.approve(key=str(uuid.uuid4())), env.reject(key=str(uuid.uuid4()))
+    )
+    assert sorted([approved.status_code, rejected.status_code]) in ([200, 409], [202, 409])
+    published = await EventStream(env.redis).read_after("0-0", block_ms=None, count=20)
+    versions = [e["state_version"] for e in published]
+    assert versions == sorted(versions) and len(set(versions)) == len(versions)
+    final = await env.pool.fetchval(
+        "select state_version from ocp.incidents where id = $1", env.incident_id
+    )
+    assert versions[-1] == final and final > start
+
+
 async def test_medium_tier_needs_biometric(env: Env) -> None:
     response = await env.approve(key=str(uuid.uuid4()), auth_method="tap")
     assert (response.status_code, code(response)) == (403, "BIOMETRIC_REQUIRED")

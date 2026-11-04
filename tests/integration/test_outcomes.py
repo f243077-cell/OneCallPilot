@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 from datetime import timedelta
@@ -404,6 +405,42 @@ async def test_sweeper_expires_pending_proposals(env: Env, worker: Worker) -> No
     again = await env.challenge()
     assert (again.status_code, again.json()["error"]["code"]) == (409, "PROPOSAL_EXPIRED")
     await detail_validates(env)
+
+
+async def test_approve_racing_the_sweeper_never_executes_an_expired_proposal(
+    env: Env, worker: Worker
+) -> None:
+    # B3.1 / FR-013: the approval arrives as the sweeper runs, both past expires_at.
+    issued = (await env.challenge()).json()
+    env.clock[0] += timedelta(seconds=901)
+    body = {
+        "challenge_id": issued["challenge_id"],
+        "nonce": issued["nonce"],
+        "proposal_fingerprint": FINGERPRINT,
+        "auth_method": "biometric",
+    }
+    response, _ = await asyncio.gather(
+        env.approve(body=body, key=str(uuid.uuid4())), worker.sweeper.cycle()
+    )
+    assert (response.status_code, response.json()["error"]["code"]) == (409, "PROPOSAL_EXPIRED")
+    s = await state(env)
+    assert s["proposals"][0]["status"] == "expired" and s["executions"] == []
+    escalations = await env.pool.fetchval(
+        "select count(*) from ocp.audit_log where event = 'incident.status_changed'"
+        " and payload->>'to' = 'escalated'"
+    )
+    assert escalations == 1
+
+
+async def test_approval_just_before_expiry_wins_over_the_sweeper(env: Env, worker: Worker) -> None:
+    env.clock[0] += timedelta(seconds=899)
+    execution_id = await approve(env)
+    env.clock[0] += timedelta(seconds=2)  # now past expires_at
+    await worker.sweeper.cycle()
+    s = await state(env)
+    assert s["proposals"][0]["status"] == "approved"
+    assert [str(e["id"]) for e in s["executions"]] == [execution_id]
+    assert s["incident"]["status"] == "executing"
 
 
 async def test_auto_resolve_after_three_normal_minutes(env: Env, worker: Worker) -> None:
