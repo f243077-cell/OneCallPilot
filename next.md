@@ -6,10 +6,10 @@
 
 ## Tanzeel — next (no LLM needed)
 Done 2026-11-04: MOB-016 with the app killed (`docs/checks/push.md`); ADR-26 (a false worker `restarts` incident after a reset); Gate G3 criterion 2 on the phone (banner and re-sync, `docs/checks/gate-g3.md`); B3.1 tests (expiry boundary, two phones approving at once, approve racing the sweeper, superseded proposal, rising `state_version`); `ocp-bench` exists (empty; migrated only during the freeze, `CLAUDE.md` §4.7).
-1. **Proxy security test** (`bash runner/tests/security/run_proxy_test.sh`) on the laptop.
-2. **A3.8** demo storyboard (2-minute script).
-3. **Manual half of the pilot** (P4.1, not counted) with Usman: 8 runs with `AGENT_ENABLED=false`, one injects, the other diagnoses; harness bugs found may be fixed before the freeze (P4.2).
-4. Decisions: device DELETE vs DB-011; runbook review.
+Proxy security test on the laptop: 54/54 passed 2026-11-04 (`docs/checks/proxy.md`).
+1. **A3.8** demo storyboard (2-minute script).
+2. **Manual half of the pilot** (P4.1, not counted) with Usman: 8 runs with `AGENT_ENABLED=false`, one injects, the other diagnoses; harness bugs found may be fixed before the freeze (P4.2).
+3. Decisions: device DELETE vs DB-011; runbook review.
 
 ## Usman — next (OpenRouter)
 Setup: the folder Tanzeel sends privately (`SETUP.md` in it). In order: `ocp smoke` live (`docs/checks/smoke.md`), the recorded-model replay (B2.6), the Gate G2 run (`docs/checks/gate-g2.md`), B2.13, B3.3, B3.4, B3.9 (details in section 2 below). Tell Tanzeel before running the full stack: both use Supabase `ocp-dev`.

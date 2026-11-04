@@ -8,8 +8,10 @@
 - **Gate G3 criterion 2 on the phone:** Wi‑Fi off showed "Reconnecting — approval is paused"; Wi‑Fi on re-synced. New `docs/checks/gate-g3.md` tracks all five criteria. The Approve half needs a proposal (A3.3).
 - **B3.1** (TEST-006, FR-013, TEST-005): six integration tests. They cover the expiry boundary (approve at exactly `expires_at` is `PROPOSAL_EXPIRED`, as the sweeper), two phones approving at once (one execution), approve racing the sweeper (no execution, one escalation), an approval just before expiry beating the sweeper, a superseded proposal (`PROPOSAL_NOT_PENDING`, old fingerprint `STALE_PROPOSAL`) and an approve and reject sent together (`state_version` rising, no duplicates). All passed at once: the code was already right, and the tests now pin it. The race tests passed 10 runs in a row; the integration suite has 127 tests.
 
+- **Proxy security test** on the laptop's running `socket-proxy-rw`: 54/54 passed (`docs/checks/proxy.md`).
+
 ### Next
-- Tanzeel: proxy security test, A3.8, the manual pilot with Usman (`next.md`).
+- Tanzeel: A3.8, the manual pilot with Usman (`next.md`).
 
 ### Waiting on Tanzeel
 - Unchanged.

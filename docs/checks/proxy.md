@@ -79,6 +79,10 @@ The WebSocket attach endpoint (`GET /containers/{id}/attach/ws`) is reachable th
 
 `runner.yml` now has a **`runner-proxy`** job that runs `run_proxy_test.sh` on every push and PR: GitHub-hosted runners have Docker and the host socket, so the proxy starts and the test container reaches it over `rw_proxy_net`. The script derives the API version from the host's `docker version` when `DOCKER_API_VERSION` is unset.
 
+### Re-run on the benchmark laptop — Tanzeel — 2026-11-04 — **54/54 passed**
+
+`bash runner/tests/security/run_proxy_test.sh` on Tanzeel's laptop (Windows, Docker Desktop, Engine 29.8.2, API 1.56) with the full stack up: the running `socket-proxy-rw` (the one the runner uses) passed all 54 checks. The throwaway containers were removed afterwards.
+
 ### Not covered here
 
 - Through the **ro** proxy: see §(a) below (`tests/security/check_ro_proxy.py`, 2026-10-21).
