@@ -75,3 +75,30 @@ def test_a_drifted_prompt_is_refused(tmp_path: Path, monkeypatch: pytest.MonkeyP
         FilePrompts("v1")
     with pytest.raises(PromptIntegrityError, match="not in manifest"):
         FilePrompts("v9")
+
+
+def test_v2_hypothesize_lists_the_citation_rules_the_code_applies() -> None:
+    # Live smoke run, 2026-11-07: a correct bad_deploy hypothesis cited only the
+    # detector signals, so the citation check halved it below the threshold
+    # (AI-014). From v2 the model is told the rule, in the source names it sees.
+    import yaml
+
+    from oncallpilot.agent.citations import RULES_FILE
+    from oncallpilot.agent.effects import SOURCES
+
+    data = yaml.safe_load(RULES_FILE.read_text(encoding="utf-8"))
+    always = data["always_compatible"]
+    expected = []
+    for category, rule in data["categories"].items():
+        required = " or ".join(SOURCES[k] for k in rule["requires"]) or "none"
+        also = [SOURCES[k] for k in rule["compatible"] if k not in rule["requires"] + always]
+        line = f"- `{category}`: requires {required}"
+        expected.append(line + (f"; also accepts {', '.join(also)}" if also else ""))
+    text = FilePrompts("v2").hypothesize()
+    assert text.endswith("Sources by category:\n\n" + "\n".join(expected))
+    # The model is told what the code does: unaccepted sources are removed AND halve it.
+    assert f"{' and '.join(SOURCES[k] for k in always)} are accepted for every category" in text
+    assert "removed, and a hypothesis that loses a citation" in text
+    assert FilePrompts("v2").hypothesize().startswith(FilePrompts("v1").hypothesize())
+    for name in ("system", "gather", "disproof", "reflect", "propose"):
+        assert getattr(FilePrompts("v2"), name)() == getattr(FilePrompts("v1"), name)()
