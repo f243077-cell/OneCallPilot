@@ -57,6 +57,8 @@ class FakeEffects:
     escalated: list[EscalationReason] = field(default_factory=list)
     meta: list[RunMeta] = field(default_factory=list)
     llm_calls: list[tuple[str, str, str]] = field(default_factory=list)
+    # Seed evidence that a deduplicated alert adds while the agent runs.
+    late: list[EvidenceView] = field(default_factory=list)
 
     async def load_context(self) -> IncidentContext:
         seed = EvidenceView(
@@ -84,6 +86,11 @@ class FakeEffects:
         kind = TOOL_EVIDENCE_KIND[name]  # type: ignore[index]
         view = EvidenceView(ref, kind, f"{name} result", wrap(ref, "tool", "lines"))
         return ToolOutcome(view, view.rendered)
+
+    async def late_evidence(self) -> tuple[EvidenceView, ...]:
+        late, self.late = tuple(self.late), []
+        self.evidence.extend(item.ref for item in late)
+        return late
 
     async def store_hypotheses(self, hypotheses: list[HypothesisOut]) -> None:
         self.hypotheses = hypotheses

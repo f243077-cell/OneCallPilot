@@ -177,7 +177,18 @@ class Investigation:
             self._apply(GatherTurn(calls=len(allowed), done=done))
 
     async def _hypothesize(self) -> list[HypothesisOut]:
-        reply = await self._structured("hypothesize", HypothesisSetOut, self.prompts.hypothesize())
+        # A repeated alert may have added a detector signal since the run began.
+        # It belongs to the incident, so the model sees it and may cite it (AI-013).
+        late = await self.effects.late_evidence()
+        prompt = self.prompts.hypothesize()
+        if late:
+            for item in late:
+                self.evidence[item.ref] = item
+            added = "\n\n".join(item.rendered for item in late)
+            prompt = (
+                f"Evidence added by the detector during the investigation:\n\n{added}\n\n{prompt}"
+            )
+        reply = await self._structured("hypothesize", HypothesisSetOut, prompt)
         known = set(self.evidence)
         valid = [h for h in reply.hypotheses if set(h.evidence_refs) <= known]
         valid = [h.model_copy(update={"rank": i}) for i, h in enumerate(valid, start=1)]

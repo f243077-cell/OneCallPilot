@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from oncallpilot.agent.citations import CitationCheck
+from oncallpilot.agent.effects import EvidenceView
 from oncallpilot.agent.providers.base import LLMTurn, LLMUnavailableError
 from oncallpilot.agent.providers.fake import INVALID_JSON, FakeProvider
 from oncallpilot.agent.run import Investigation
@@ -152,6 +153,24 @@ async def test_unknown_refs_drop_hypotheses() -> None:
     await investigation(FakeProvider(structured=script), effects).run()
     assert [h.evidence_refs for h in effects.hypotheses] == [["E1"]]
     assert effects.hypotheses[0].rank == 1
+
+
+async def test_seed_evidence_added_during_the_run_can_be_cited() -> None:
+    # A deduplicated alert adds a detector signal while the agent gathers
+    # (architecture §3 step 3). Live smoke run, 2026-11-07: the model cited it
+    # unseen, and AI-013 dropped the correct hypothesis because the agent's
+    # view of the evidence was the one from the start of the run.
+    script = happy_script()
+    script["HypothesisSetOut"] = [hypotheses((0.9, ["E3"]))]
+    late = EvidenceView("E3", "detector_signal", "api error rate 5%", wrap("E3", "detector", "{}"))
+    effects = FakeEffects(late=[late])
+    provider = FakeProvider(turns=[tool_turn("query_logs", service="api")], structured=script)
+    state = await investigation(provider, effects).run()
+    assert state.phase == "PROPOSED"
+    assert [h.evidence_refs for h in effects.hypotheses] == [["E3"]]
+    [hypothesize_prompt] = [p for kind, p, _ in effects.llm_calls if kind == "hypothesize"]
+    assert late.rendered in hypothesize_prompt  # the model is shown what it may cite
+    assert state.llm_calls == 6 and state.tool_calls == 3  # no extra calls (AI-029)
 
 
 async def test_all_hypotheses_cite_unknown_refs_escalates() -> None:

@@ -69,7 +69,8 @@ def unused(request: httpx.Request) -> httpx.Response:
     return httpx.Response(500)
 
 
-async def open_incident(pool: asyncpg.Pool) -> uuid.UUID:
+async def open_incident(pool: asyncpg.Pool, signal: str = "error_rate") -> uuid.UUID:
+    """Opens the api incident; a second call with a new signal is deduplicated into it."""
     from oncallpilot_contracts.api import AlertIn
 
     alert = AlertIn.model_validate(
@@ -78,7 +79,7 @@ async def open_incident(pool: asyncpg.Pool) -> uuid.UUID:
             "service": "api",
             "signals": [
                 {
-                    "name": "error_rate",
+                    "name": signal,
                     "value": 0.31,
                     "baseline": 0.004,
                     "zscore": 9.2,
@@ -276,6 +277,35 @@ async def test_disproved_top_is_dropped_in_the_database(setup: Any, pool: asyncp
     )
     assert [(r["rank"], r["status"]) for r in rows] == [(1, "active"), (1, "dropped")]
     assert rows[0]["summary"].startswith("hypothesis number 2")
+
+
+async def test_seed_evidence_from_a_repeated_alert_reaches_the_agent(
+    setup: Any, pool: asyncpg.Pool
+) -> None:
+    # Live smoke run, 2026-11-07: the detector's first alert timed out, its
+    # retry added E3 while the agent gathered, and the hypothesis citing it was
+    # dropped as unknown (AI-013).
+    incident_id, effects = setup
+    await effects.load_context()
+    own = await effects.run_tool("query_logs", {"service": "api", "level": "ERROR"}, "gather")
+    assert own.evidence is not None and own.evidence.ref == "E2"
+    assert await open_incident(pool, signal="stack_traces") == incident_id  # deduplicated
+    late = await effects.late_evidence()
+    assert [(e.ref, e.kind) for e in late] == [("E3", "detector_signal")]
+    assert late[0].rendered.startswith('<untrusted_data ref="E3" source="detector">')
+    assert await effects.late_evidence() == ()  # each item once
+    hyps = hypotheses((0.9, ["E3", "E2"]), category="unknown")
+    await effects.store_hypotheses(_parsed(hyps))
+    cited = await pool.fetchval(
+        "select cardinality(evidence_ids) from ocp.hypotheses where incident_id = $1", incident_id
+    )
+    assert cited == 2
+
+
+def _parsed(hypothesis_set: dict[str, Any]) -> list[Any]:
+    from oncallpilot.agent.schemas import HypothesisSetOut
+
+    return list(HypothesisSetOut.model_validate(hypothesis_set).hypotheses)
 
 
 async def test_refused_tool_calls_store_no_evidence(setup: Any, pool: asyncpg.Pool) -> None:

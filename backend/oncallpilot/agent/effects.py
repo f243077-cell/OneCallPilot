@@ -101,6 +101,14 @@ class AgentEffects(Protocol):
         self, name: str, arguments: dict[str, Any], purpose: Literal["gather", "disproof"]
     ) -> ToolOutcome: ...
 
+    async def late_evidence(self) -> tuple[EvidenceView, ...]:
+        """Evidence the incident gained since ``load_context`` from anyone but this run.
+
+        A deduplicated alert adds a seed row for a new signal while the agent is
+        running (architecture §3, step 3). Each item is returned once.
+        """
+        ...
+
     async def store_hypotheses(self, hypotheses: list[HypothesisOut]) -> None: ...
 
     async def store_reflection(self, ranked: list[RankedHypothesis]) -> None: ...
@@ -187,6 +195,24 @@ class DbEffects:
             if row is None:
                 raise LookupError(f"incident {self.incident_id} not found")
             rows = await db.evidence_rows(conn, self.incident_id)
+        views = self._register(rows)
+        self._context = IncidentContext(
+            incident_id=row["id"],
+            service=row["service"],
+            title=row["title"],
+            window_start=row["window_start"],
+            window_end=row["window_end"],
+            evidence=views,
+        )
+        return self._context
+
+    async def late_evidence(self) -> tuple[EvidenceView, ...]:
+        async with self.pool.acquire() as conn:
+            rows = await db.evidence_rows(conn, self.incident_id)
+        return self._register([r for r in rows if r["ref"] not in self._evidence_ids])
+
+    def _register(self, rows: list[Any]) -> tuple[EvidenceView, ...]:
+        """Remembers each row's id by ref; returns what the model may see of them."""
         views = []
         for r in rows:
             self._evidence_ids[r["ref"]] = r["id"]
@@ -198,15 +224,7 @@ class DbEffects:
                     render_evidence(r["ref"], r["kind"], r["payload"]),
                 )
             )
-        self._context = IncidentContext(
-            incident_id=row["id"],
-            service=row["service"],
-            title=row["title"],
-            window_start=row["window_start"],
-            window_end=row["window_end"],
-            evidence=tuple(views),
-        )
-        return self._context
+        return tuple(views)
 
     async def run_tool(
         self, name: str, arguments: dict[str, Any], purpose: Literal["gather", "disproof"]
