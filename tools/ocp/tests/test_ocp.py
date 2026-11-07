@@ -110,6 +110,21 @@ def test_up_starts_the_backend_unless_told_not_to(stack: Stack, docker: FakeDock
     assert docker.ran("up", "--profile", "runner")
 
 
+def test_up_builds_the_backend_image_first(stack: Stack, docker: FakeDocker) -> None:
+    # backend-api and backend-worker only reuse oncallpilot/backend; backend-seed
+    # (profile tools) builds it, so on a fresh host `up --build` alone pulled a
+    # repository that does not exist.
+    assert up.run(up_args(), stack) == 0
+    build = docker.commands.index(
+        ["docker", "compose", "--profile", "tools", "--profile", "copilot", "build", "backend-seed"]
+    )
+    assert build < next(i for i, c in enumerate(docker.commands) if "up" in c)
+    for overrides in ({"no_build": True}, {"no_backend": True}):
+        docker.commands.clear()
+        assert up.run(up_args(**overrides), stack) == 0
+        assert not docker.ran("build", "backend-seed")
+
+
 def test_up_without_build_and_without_env(stack: Stack, docker: FakeDocker, root: Path) -> None:
     assert up.run(up_args(no_build=True), stack) == 0
     assert docker.ran("up", "--no-build") and not docker.ran("up", "--build")

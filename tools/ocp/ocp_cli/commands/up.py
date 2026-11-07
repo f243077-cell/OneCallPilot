@@ -19,6 +19,9 @@ HELP = "start the stack, reset the testbed, wait for health, print the LAN URL"
 HEALTH_TIMEOUT = 240.0
 POLL_SECONDS = 3.0
 API_PORT = 8000
+# backend-api and backend-worker only reuse the image that backend-seed builds
+# (profile tools; it depends on copilot-redis, hence copilot too).
+BACKEND_IMAGE_BUILD = (("tools", "copilot"), "backend-seed")
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
@@ -44,6 +47,10 @@ def run(args: argparse.Namespace, stack: Stack) -> int:
 
     profiles = [p for p in PROFILES if not (args.no_backend and p == BACKEND_PROFILE)]
     started = time.monotonic()
+    if BACKEND_PROFILE in profiles and not args.no_build:
+        build_profiles, service = BACKEND_IMAGE_BUILD
+        print(f"[ocp up] building the backend image ({service})")
+        stack.check([*stack.compose(*build_profiles), "build", service], capture=False)
     print(f"[ocp up] starting profiles {', '.join(profiles)}")
     up = [*stack.compose(*profiles), "up", "-d", "--wait", "--wait-timeout", f"{args.timeout:.0f}"]
     up += ["--no-build"] if args.no_build else ["--build"]
