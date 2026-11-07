@@ -136,6 +136,25 @@ def test_no_resolution_within_5_minutes_of_the_approval_fails() -> None:
         smoke.smoke(world.deps())
 
 
+def test_an_incident_opened_during_the_warm_up_stops_before_the_injection() -> None:
+    # Live run, 2026-11-07: a p95_latency alert opened an api incident seconds
+    # before the injection; the fault's alerts were deduplicated into it and the
+    # smoke reported "no incident within 300 s".
+    api = FakeApi()
+    world = World(api)
+    noisy = {"id": "w1", "status": "investigating", "service": "api",
+             "title": "api p95 latency 389 ms"}  # fmt: skip
+
+    def chaos(*words: str) -> None:
+        world.chaos_calls.append(words)
+        api.leftovers.append(noisy)  # the detector opens it during the warm-up
+
+    world.chaos = chaos  # type: ignore[method-assign]
+    with pytest.raises(SmokeFailed, match="w1 for api opened during the warm-up"):
+        smoke.smoke(world.deps())
+    assert world.chaos_calls == [("reset",)] and api.approved == []
+
+
 def test_no_incident_fails_without_approving() -> None:
     api = FakeApi()
     world = World(api)

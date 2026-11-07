@@ -239,7 +239,15 @@ def smoke(deps: Deps) -> dict[str, float]:
     deps.chaos("reset")
     say(f"waiting {deps.warmup:.0f} s for the detector warm-up and a healthy baseline")
     deps.sleep(deps.warmup)
-    known = {str(i["id"]) for i in api.incidents()}
+    before = api.incidents()
+    noisy = [i for i in before if i["service"] == SERVICE and i["status"] != "resolved"]
+    if noisy:
+        # The fault's alerts would be deduplicated into it: no new incident to follow.
+        raise SmokeFailed(
+            f"incident {noisy[0]['id']} for {SERVICE} opened during the warm-up"
+            f" ({noisy[0]['title']}): the baseline was not quiet; nothing injected, run again"
+        )
+    known = {str(i["id"]) for i in before}
 
     say(f"chaos inject {SCENARIO}")
     deps.chaos("inject", SCENARIO)
