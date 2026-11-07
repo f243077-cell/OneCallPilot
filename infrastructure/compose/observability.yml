@@ -156,7 +156,10 @@ services:
       interval: 10s
       timeout: 3s
       retries: 10
-      start_period: 20s
+      # The first start on an empty grafana_data volume runs several hundred
+      # database migrations, which took over 2 minutes on a slow disk (`ocp up`
+      # then failed on a fresh host). Later starts are healthy in seconds.
+      start_period: 300s
 
 volumes:
   prometheus_data:
