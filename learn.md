@@ -279,3 +279,16 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Patch version* (0.2.0 → 0.2.1): a change to the wording of a contract that changes no data or behaviour.
 - *Foreign key*: a column that must point at an existing row in another table.
 
+### 2026-11-08 — The first full loop with a real AI, and why it took five tries
+
+**What happened.** The smoke test runs one fault from start to finish: the shop breaks (a bad release), the detector notices, the AI investigates and proposes a fix, a person approves, the system rolls the release back, and the shop recovers. On Usman's laptop it finally passed, about 4 minutes from fault to recovery. Each failed try before that taught something:
+- *A slow computer can look like a broken one.* A game was using the CPU, so health checks ran out of time.
+- *Timing between parts.* The detector sent its alarm twice. The second alarm added a new clue while the AI was working, and the AI was not shown it. When the AI mentioned that clue, the code thought it was invented and threw away the right answer. Now the AI is shown clues that arrive during its work.
+- *Rules the AI never heard.* The code halves the confidence of an answer that does not cite the right kind of evidence: for "a bad release", the deploy history. Nobody told the AI that rule. Version 2 of the instructions now does, in the words the AI sees. A review found that the first draft explained only half the rule, which would have hurt other faults, so it was fixed before anyone else saw it.
+- *Old evidence.* The AI's tools look back 30 minutes. A fault from the previous try was still in that window and looked like proof against the right answer. The fix for testing is to wait 30 healthy minutes; the benchmark needs a team decision.
+
+**Words.**
+- *Smoke test*: one quick end-to-end run that shows the whole system works at all.
+- *Look-back window*: how far into the past a tool searches (here 30 minutes before the incident).
+- *Prompt version*: a frozen set of instructions for the AI; changing it means a new version, so results stay comparable.
+

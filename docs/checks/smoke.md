@@ -2,7 +2,9 @@
 
 > `uv run --project tools/ocp ocp smoke` on Tanzeel's laptop: the full stack (`ocp up`, backend included) against Supabase `ocp-dev`, the agent on OpenRouter (`google/gemini-3.8-flash`, ADR-23). Scenario 2 (bad-deploy): reset → 240 s warm-up → inject → incident → proposal → challenge and approve as the test user → resolved within 5 minutes of the approval.
 
-## Status: **not passed yet** (2026-11-03): blocked on OpenRouter credit
+## Status: **PASSED** (2026-11-07, run 12, Usman's laptop, prompts v2)
+
+Earlier status (2026-11-03): not passed, blocked on OpenRouter credit.
 
 Each run got further, and each stop found a real problem, fixed and pushed:
 
@@ -17,5 +19,36 @@ Each run got further, and each stop found a real problem, fixed and pushed:
 
 What already works end to end on the real stack: detection within 11–31 s of the injection, the agent's gather phase with real tools (deploys, logs, metrics, health, runbook search over OpenRouter embeddings), evidence stored and published, escalation with the evidence kept.
 
+### 2026-11-07, Usman's laptop (fresh host, his own OpenRouter key)
+
+`ocp up` itself first failed twice on the fresh host: the backend image was never built (fixed in `af7be4c`), and Grafana's first start ran past its healthcheck (`26849ee`). Then:
+
+| # | Time (UTC) | Prompts | Stopped at | Cause | Fix |
+|---|---|---|---|---|---|
+| 7 | 10:54 | v1 | `chaos reset`: cs-api not healthy after 60 s | A game (FC 25) was using the CPU: cs-api's 3 s healthchecks timed out while it served traffic normally | none needed; machine load |
+| 8 | 11:05 | v1 | incident at +12.2 s; escalated `low_confidence`, no hypothesis stored | The detector's first alert timed out client-side but opened the incident; its retry added a second detector signal (E3) while the agent gathered. The model cited E3 without having been shown it, and the correct `bad_deploy` hypothesis (0.95) was dropped as citing an unknown reference (AI-013) | `a7307c5`: evidence added during the run is loaded and shown before the hypothesis step |
+| 9 | 11:27 | v1 | "no incident for api within 300 s" | A `p95_latency` alert opened an api incident 10 s before the injection (end of the warm-up); the fault's alerts were deduplicated into it | `79b9eb8`: the smoke stops before injecting and names that incident |
+| 10 | 11:38 | v1 | incident at +24.3 s; escalated `low_confidence` | Right hypothesis (`bad_deploy` 0.95, reflection 0.98) but it cited only detector signals, not the deploy ledger; the citation check halved it to 0.47 (AI-014). The model is not told the rules | `a949f46`: prompts v2 state the citation rules |
+| 11 | 12:08 | v2 (first draft) | incident at +26.1 s; escalated `low_confidence` | v2 worked (the deploy ledger was cited), but the disproof query found the same error 5 minutes before this deploy: left by run 10's escalated fault, inside the tools' 30-minute look-back (`tools/window.py`). The model read it as a contradiction | A fair run needs 30 healthy minutes before the injection. The v2 text was also corrected after review before any push (see `a949f46`) |
+| 12 | 19:50 | v2 | **PASS** | — | — |
+
+OpenRouter spend for runs 8–11: about $0.11 (2–3 cents per run).
+
+**Run 12 (PASS)**, `ocp smoke` on a stack that had been down for hours (no earlier fault in the 30-minute look-back), `PROMPT_VERSION=v2`, `google/gemini-3.8-flash`:
+
+| Step | Seconds after the injection |
+|---|---|
+| incident (api, 5 stack traces/min) | +17.6 |
+| proposal `rollback_deploy {"service": "api", "target_release": "1.4.0"}`, risk medium, needs biometric | +95.0 |
+| challenge and approve as the test user (`auth_method: biometric`) | +104.9 |
+| resolved (`action_succeeded`) | +240.8 (136 s after the approval; TEST-014 limit 300 s) |
+
+Alert to proposal took about 77 s: over the 60 s of NFR-001, so B3.4 has real work.
+
+### Lessons for live runs
+- Keep the laptop otherwise idle (run 7).
+- Leave 30 healthy minutes between a fault and the next injection: the tools look back 30 minutes (`tools/window.py`), so an earlier fault's errors read as a contradiction (run 11). `bench run` waits only 4 minutes between runs; raised for a decision before the pilot (`handoff.md`, 2026-11-08).
+- If the warm-up opens an incident, `ocp smoke` now stops and says so (run 9); just run it again.
+
 ## Next run
-After credit is added: `uv run --project tools/ocp ocp smoke`; record the timings it prints (`+N s` for incident, proposal, approval, resolution) in this file.
+Re-run after changes to the agent, the prompts or the detector: `uv run --project tools/ocp ocp smoke` with 30 healthy minutes before it; record the timings here.

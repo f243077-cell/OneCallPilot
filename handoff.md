@@ -2,6 +2,33 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-08 — Usman: back on main, `ocp smoke` live PASSED, prompts v2
+
+### Done
+- **Set up on Usman's laptop** from Tanzeel's bundle (his own OpenRouter key, $5 limit; about $0.15 spent on 13 live runs). Docker's disk moved to G: (C: is small).
+- **`ocp smoke` live PASSED** (S2.1, TEST-014), run 12: incident +17.6 s, proposal `rollback_deploy api → 1.4.0` +95.0 s, approved +104.9 s, resolved +240.8 s (136 s after the approval). All runs and causes: `docs/checks/smoke.md`.
+- Five bugs found by the live runs, fixed with tests, pushed (`a949f46`, CI 9/9 green):
+  - `a7307c5` **agent:** a repeated alert's seed evidence (added while the agent gathers) is now loaded and shown before the hypothesis step. Before, the correct hypothesis was dropped as citing an "unknown" reference (AI-013).
+  - `af7be4c` **`ocp up` on a fresh host:** it now builds the backend image first (only `backend-seed`, profile `tools`, built it).
+  - `26849ee` **Grafana:** `start_period` 300 s (its first start runs hundreds of migrations).
+  - `79b9eb8` **`ocp smoke`:** stops before injecting when the warm-up already opened an incident (a false `p95_latency` alert swallowed the fault's alerts).
+  - `a949f46` **prompts v2:** `hypothesize.md` states the citation rules the code applies (required and accepted sources per category, in the source names the model sees). v1 hid them, so a right answer citing only detector signals was halved below 0.70. A 3-lens review caught a flaw in the first draft before the push. The other five files are identical to v1. **`PROMPT_VERSION` still defaults to v1**; Usman's `.env` uses v2.
+- Checks: backend 345, agent 184, integration 127 of 128, security 118, regression 16, ocp 41. The one integration failure (`test_two_workers_and_a_duplicate_job_make_one_investigation`) also fails on the old code on this laptop (timing) and passes in CI.
+- **Gate G2 run started** (all 8 scenarios, real model, 30 healthy minutes before each injection, about 5 h, scratch driver). Results go into `docs/checks/gate-g2.md` in the next entry.
+
+### Next
+1. Gate G2 results → `docs/checks/gate-g2.md`; then B2.13 (pin the model by the ADR-13 rule).
+2. Decide the default prompt version (v2 for everyone?) with Tanzeel.
+3. Recorded-model replay (B2.6), B3.3, B3.4 (alert to proposal is about 77 s, target 60 s), B3.9.
+
+### Waiting on Tanzeel
+- **Decision before the pilot (P4.1):** `bench run` waits only 4 minutes between runs, but the agent's tools look back 30 minutes (`tools/window.py`, architecture §5.1). The previous run's fault then sits in the next run's logs and can read as a contradiction (smoke run 11 failed exactly this way). Options: (a) the tools' look-back starts no earlier than the last `kind=reset` in the deploy ledger (an ADR plus a small agent change, before the freeze); (b) 30+ minutes between runs (about 24 h more for 48 runs). Usman's recommendation: (a).
+- **Default prompt version:** switch `PROMPT_VERSION` to v2 in `.env.example`, `copilot.yml` and `settings.py`? Usman recommends yes (the smoke passed only with v2).
+- Usman's incidents land in the shared `ocp-dev` while Gate G2 runs (8 scenarios, about 5 h); there are no pushes from his backend (no FCM key).
+
+### Waiting on Usman
+- Tick his box in `docs/checks/runbook-review.md`.
+
 ## 2026-11-04 (late night) — Tanzeel: A3.8 storyboard, runbook review, device rows
 
 ### Done

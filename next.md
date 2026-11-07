@@ -11,7 +11,12 @@ Done 2026-11-04: MOB-016 with the app killed (`docs/checks/push.md`); ADR-26 (a 
 3. Read the storyboard once; adjust captions to taste. It is filmed with A3.3 (needs a proposal).
 
 ## Usman — next (OpenRouter)
-Setup: the folder Tanzeel sends privately (`SETUP.md` in it). In order: `ocp smoke` live (`docs/checks/smoke.md`), the recorded-model replay (B2.6), the Gate G2 run (`docs/checks/gate-g2.md`), B2.13, B3.3, B3.4, B3.9 (details in section 2 below). Tell Tanzeel before running the full stack: both use Supabase `ocp-dev`.
+State 2026-11-08: `ocp smoke` live **passed** (`docs/checks/smoke.md`, run 12); prompts v2 exist (default still v1; Usman's `.env` has `PROMPT_VERSION=v2`). A Gate G2 run of all 8 scenarios was started 2026-11-08 (scratch driver: reset, 30 healthy minutes, reset, 240 s warm-up, inject, wait for proposal or escalation; a matching proposal is approved like `ocp smoke`).
+1. Gate G2 results into `docs/checks/gate-g2.md` (criteria 1, 2, 5); misses get a cause each. If the run stopped, re-run the missing scenarios with 30 healthy minutes before each injection.
+2. B2.13: pin the model (ADR-13: keep `google/gemini-3.8-flash` if criterion 1 is at least 6/8, else the Claude adapter).
+3. With Tanzeel: the default prompt version, and the 30-minute look-back between benchmark runs (`handoff.md` 2026-11-08, "Waiting on Tanzeel").
+4. B2.6 recorded-model replay; B3.3 (scenario 8 injection hardening; a prompt change needs v3); B3.4 (alert to proposal about 77 s now, target 60 s, NFR-001); B3.9 procedure dry run.
+Live runs: keep the laptop idle, leave 30 healthy minutes before each injection, check the OpenRouter spend after each chunk. Docker on this laptop: disk on `G:\DockerData`; if WSL says `E_ACCESSDENIED` on `ext4.vhdx`, quit Docker Desktop, `wsl --shutdown`, restart it (or Windows).
 
 ## Together (Tanzeel's laptop and phone)
 A3.3 live biometric approval, A3.7 all 8 scenarios from the phone, Gate G3, Phase 4.
