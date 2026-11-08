@@ -2,6 +2,22 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-08 — Tanzeel: Usman's work plan for Phase 3 and Phase 4
+
+### Done
+- **`docs/usman-work-plan.md`:** a detailed plan for Usman. Part 1 is Phase 3 (U1 Gate G2 results, U2 pin the model, U3 default prompt version, U4 tool look-back after a reset, U5 recorded-model replay, U6 injection hardening, U7 latency to 60 s, U8 procedure dry run, U9 small items). Part 2 is Phase 4 (P4.1 pilot, P4.2 fixes, P4.3 clean machine, P4.4 freeze checklist, P4.5 README, P4.6 counted runs, P4.7 evidence audit, P4.8 safety audit and report, P4.9, P4.10, a Gate G4 checklist). It also lists the decisions to settle before the pilot, the rules for live runs and a suggested calendar.
+
+### Next
+- Tanzeel: answer D1 (tool look-back, recommendation: option a) and D2 (default prompt version v2) from the plan; then the points in D3.
+- Usman: U1 and U2 first (`docs/usman-work-plan.md`).
+
+### Waiting on Tanzeel
+- D1 and D2 (above). D3: where you two sit, whose fingerprint approves in copilot mode, an OpenRouter key and credit on his own laptop, which database the pilot uses.
+- DHCP reservation for 192.168.0.105 (needed if Usman uses his own phone).
+
+### Waiting on Usman
+- Gate G2 results and the model pin (U1, U2); his box in `docs/checks/runbook-review.md`.
+
 ## 2026-11-08 — Usman: back on main, `ocp smoke` live PASSED, prompts v2
 
 ### Done
