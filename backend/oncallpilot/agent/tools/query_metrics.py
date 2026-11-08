@@ -62,9 +62,10 @@ async def query_metrics(
     incident_start: datetime,
     incident_end: datetime | None,
     now: datetime,
+    not_before: datetime | None = None,
 ) -> MetricQueryPayload:
     promql = render(params.template, params.service)
-    start, end = clamp(params.start, params.end, incident_start, incident_end, now)
+    start, end = clamp(params.start, params.end, incident_start, incident_end, now, not_before)
     step = step_for(start, end, params.step_seconds)
     raw = await prometheus.query_range(promql, start, end, step)
     points = [MetricPoint(ts=datetime.fromtimestamp(ts, UTC), value=v) for ts, v in raw]

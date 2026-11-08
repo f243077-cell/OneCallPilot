@@ -73,8 +73,9 @@ async def query_logs(
     incident_start: datetime,
     incident_end: datetime | None,
     now: datetime,
+    not_before: datetime | None = None,
 ) -> LogQueryPayload:
-    start, end = clamp(params.start, params.end, incident_start, incident_end, now)
+    start, end = clamp(params.start, params.end, incident_start, incident_end, now, not_before)
     stream = selector(params.service, params.level, params.contains)
     seconds = max(1, int((end - start).total_seconds()))
     raw_lines = await loki.query_range(stream, start, end, params.limit)

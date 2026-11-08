@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+import json
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
@@ -126,14 +127,14 @@ def test_summaries_are_capped() -> None:
     assert len(long) == 300
 
 
-def make_box(handler: Any) -> ToolBox:
+def make_box(handler: Any, ledger: Path = LEDGER) -> ToolBox:
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
     return ToolBox(
         loki=LokiClient(client, "http://loki"),
         prometheus=PrometheusClient(client, "http://prom"),
         docker=client,
         http=client,
-        ledger=LEDGER,
+        ledger=ledger,
         pool=cast(Any, None),
         embedder=FakeEmbeddingProvider(),
     )
@@ -183,3 +184,30 @@ async def test_successful_call_returns_kind_params_and_payload() -> None:
     assert result.kind == "deploy_list"
     assert result.params == {"service": "api", "limit": 2}
     assert len(result.payload["records"]) <= 2
+
+
+async def test_queries_never_reach_back_past_the_last_reset(tmp_path: Path) -> None:
+    # ADR-27. Live ocp smoke, 2026-11-07: the incident window started 6 minutes
+    # before that run's reset, so the previous run's fault was in the evidence.
+    reset_at = T0 + timedelta(minutes=6)
+    template = json.loads(LEDGER.read_text(encoding="utf-8").splitlines()[0])
+    records = [
+        template | {"kind": "deploy", "deployed_at": "2026-10-21T09:00:00Z"},
+        template | {"kind": "reset", "deployed_at": reset_at.isoformat().replace("+00:00", "Z")},
+    ]
+    ledger = tmp_path / "deploys.jsonl"
+    ledger.write_text("".join(json.dumps(r) + chr(10) for r in records), encoding="utf-8")
+    starts: list[float] = []
+
+    def loki(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("query_range"):
+            starts.append(int(request.url.params["start"]) / 1e9)
+        return httpx.Response(200, json={"status": "success", "data": {"result": []}})
+
+    now = T0 + timedelta(minutes=20)
+    await make_box(loki, ledger).run("query_logs", {"service": "api"}, T0, None, now)
+    floor = reset_at + timedelta(seconds=150)  # the reset itself and the 1-minute windows
+    assert starts == [floor.timestamp()]
+    starts.clear()
+    await make_box(loki).run("query_logs", {"service": "api"}, T0, None, now)
+    assert starts == [T0.timestamp()]  # no reset in the ledger: the incident window

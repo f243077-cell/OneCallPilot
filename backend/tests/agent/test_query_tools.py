@@ -153,6 +153,17 @@ def test_window_is_clamped_to_the_incident_window_plus_minus_30_min() -> None:
         clamp(T0 + timedelta(hours=2), None, T0, None, NOW)
 
 
+def test_window_never_reaches_back_past_a_reset_floor() -> None:
+    # ADR-27: the incident window starts 10 min before the anomaly (FR-007), but a
+    # run's reset is only 4 min before its injection; before it lies another fault.
+    floor = T0 + timedelta(minutes=2)
+    assert clamp(None, None, T0, None, NOW, not_before=floor) == (floor, NOW)
+    assert clamp(T0 - timedelta(minutes=20), None, T0, None, NOW, not_before=floor)[0] == floor
+    assert clamp(None, None, T0, None, NOW, not_before=T0 - timedelta(hours=2)) == (T0, NOW)
+    with pytest.raises(WindowError):
+        clamp(None, None, T0, None, NOW, not_before=NOW)
+
+
 def test_step_keeps_at_most_120_points() -> None:
     assert step_for(T0, T0 + timedelta(minutes=10), 15) == 15
     step = step_for(T0, T0 + timedelta(hours=2), 15)

@@ -36,7 +36,8 @@ from oncallpilot.agent.tools.query_logs import query_logs
 from oncallpilot.agent.tools.query_metrics import query_metrics
 from oncallpilot.agent.tools.registry import READ_TOOLS
 from oncallpilot.agent.tools.search_runbooks import search_runbooks
-from oncallpilot.agent.tools.window import WindowError
+from oncallpilot.agent.tools.window import RESET_SETTLE, WindowError
+from oncallpilot.ledger import read_records
 
 TOOL_TIMEOUT_SECONDS = 10.0
 
@@ -104,9 +105,13 @@ class ToolBox:
         now: datetime,
     ) -> BaseModel:
         if isinstance(params, QueryLogsParams):
-            return await query_logs(self.loki, params, window_start, window_end, now)
+            floor = self._settled_reset(now)
+            return await query_logs(self.loki, params, window_start, window_end, now, floor)
         if isinstance(params, QueryMetricsParams):
-            return await query_metrics(self.prometheus, params, window_start, window_end, now)
+            floor = self._settled_reset(now)
+            return await query_metrics(
+                self.prometheus, params, window_start, window_end, now, floor
+            )
         if isinstance(params, GetRecentDeploysParams):
             return get_recent_deploys(self.ledger, params)
         if isinstance(params, GetServiceHealthParams):
@@ -115,3 +120,16 @@ class ToolBox:
             async with self.pool.acquire() as conn:
                 return await search_runbooks(conn, self.embedder, params)
         raise ToolRefusedError(f"no implementation for {name}")  # pragma: no cover
+
+    def _settled_reset(self, now: datetime) -> datetime | None:
+        """ADR-27: the end of the last testbed reset's settle period, from the ledger.
+
+        Logs and metrics from before it belong to another run (``chaos reset``
+        restores the baseline). A ledger without resets (production) changes nothing.
+        """
+        resets = [
+            r.deployed_at
+            for r in read_records(self.ledger)
+            if r.kind == "reset" and r.deployed_at <= now
+        ]
+        return max(resets) + RESET_SETTLE if resets else None
