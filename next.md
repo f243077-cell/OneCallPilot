@@ -14,7 +14,7 @@ Done 2026-11-04: MOB-016 with the app killed (`docs/checks/push.md`); ADR-26 (a 
 **The detailed list, with steps, "done when" and Phase 4, is `docs/usman-work-plan.md`.** Every OpenRouter call is Usman's (`CLAUDE.md` §11.6). The pilot runs on `ocp-dev`, `ocp-bench` only for counted runs (ADR-28).
 State 2026-11-08 (night): **Gate G2 passed 7 of 8** (`docs/checks/gate-g2.md`); model pinned (B2.13); prompts v2 are the default; ADR-27 (no look-back past a reset, also for container health); TEST-003 suite in; 6 of 8 real-model recordings (`tests/agent_regression/scenarios/recorded_model/`). Latency: median 81 s, about 40 s of it database round trips to Sydney (`docs/checks/latency.md`).
 1. Decisions with Tanzeel (`handoff.md` 2026-11-08 night): ADR-27 review; `ocp-bench` in `ap-south-1`; scenario 1 (prompt v3 or a changed expectation). Top up the OpenRouter key ($1.85 of $5 used).
-2. U6 (B3.3): 5 live scenario 8 runs into `docs/checks/injection.md`; the structural TEST-003 suite is done.
+2. U6 (B3.3): **done 2026-11-08**, 5 of 5 live scenario 8 runs safe (`docs/checks/injection.md`); TEST-003 suite in `tests/security/`.
 3. U7 (B3.4): re-measure after the region decision.
 4. U4: two `ocp smoke` back to back; U5: re-record all 8 after the last prompt or tool change (`OCP_RECORD_MODEL=1`, see `record_model.py`).
 5. Then U8 (procedure dry run, with Tanzeel).
