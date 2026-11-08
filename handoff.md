@@ -2,6 +2,23 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-08 (evening) — Tanzeel: every OpenRouter task is Usman's, pilot on ocp-dev (ADR-28)
+
+### Done
+- **Decision: every call to OpenRouter is Usman's** (his key, his spend), also in the joint sessions on Tanzeel's laptop. He types his own key into the git-ignored `.env` there, in person, and removes or revokes it after Gate G4. Tanzeel needs no credit. Written in `CLAUDE.md` §11.6 and in `docs/usman-work-plan.md` (D3).
+- **Decision: the pilot runs on `ocp-dev`; `ocp-bench` holds only the 48 counted runs** (ADR-28). Reason: `audit_log` refuses UPDATE, DELETE and TRUNCATE and the backend role has no DELETE, so a used `ocp-bench` cannot be "cleared" (P4.4 assumed it could); pilot proposals from older code would also count in `bench audit-safety`. `ocp-bench` is migrated at the start of the freeze procedure and verified empty, after a no-write readiness check (health, sign-in of the test user and both operators, empty incident list, the phone app rebuilt for the `ocp-bench` Supabase values).
+- Updated: `CLAUDE.md` §4.7 and §11.6, `docs/architecture.md` (ADR-28 row, §12.2 environments), `docs/phases.md` (P4.1, P4.4 wording), `docs/usman-work-plan.md` (D3, P4.1, P4.4).
+
+### Next
+- Tanzeel: still open from the plan: ADR-27 review (D1), default prompt version (D2), where you sit and whose fingerprint approves in copilot mode (D3 items 1 and 2).
+- Usman: U1, U1b, U2 (`docs/usman-work-plan.md`).
+
+### Waiting on Tanzeel
+- ADR-27 review; default prompt version; DHCP reservation for 192.168.0.105.
+
+### Waiting on Usman
+- Gate G2 results, the three misses (scenarios 1, 5, 7), the model pin.
+
 ## 2026-11-08 — Tanzeel: Usman's work plan for Phase 3 and Phase 4
 
 ### Done

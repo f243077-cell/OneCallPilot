@@ -50,6 +50,8 @@
 ## Decisions (and where they are written)
 - Prompts v2 (2026-11-07): v1 plus the citation rules in `hypothesize.md`; a test keeps the table equal to `reflection_rules.yaml`. Default still v1 until Tanzeel and Usman decide.
 - Evidence that a deduplicated alert adds during an investigation is shown to the model before the hypothesis step (`late_evidence`, 2026-11-07).
+- Every OpenRouter call is Usman's (his own key, entered in person on Tanzeel's laptop for joint sessions); Tanzeel needs no credit (2026-11-08, `CLAUDE.md` §11.6).
+- The pilot runs on `ocp-dev`; `ocp-bench` holds only the 48 counted runs and is migrated at the freeze (ADR-28, 2026-11-08).
 - Devices are disabled, never deleted (DB-011 kept, 2026-11-04; contracts 0.2.1 wording).
 - Two developers, direct pushes to `main` (`CLAUDE.md` §8.1, §11); a single developer from 2026-10-21 to 2026-11-03.
 - `ocp_backend` is `NOLOGIN BYPASSRLS` in the migration; the login and password are set by hand per Supabase project. RLS stays on with no policies (`supabase/migrations/20261021190000_initial_schema.sql`).

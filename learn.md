@@ -292,3 +292,18 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Look-back window*: how far into the past a tool searches (here 30 minutes before the incident).
 - *Prompt version*: a frozen set of instructions for the AI; changing it means a new version, so results stay comparable.
 
+### 2026-11-08 (evening) — Why the practice runs use a different database
+
+**The question.** The benchmark needs a clean database, but the 16 practice runs (the "pilot") also write incidents, proposals and approvals. Where should they go?
+
+**The problem with reusing one database.** The plan said "clear the benchmark database before the real runs". But the database has a rule: the audit log can only be added to, never changed or emptied, and the backend is not allowed to delete rows at all. That rule is a safety feature (nobody can hide what happened). It also means a database that has been used cannot be cleaned. And the safety check at the end of the benchmark reads every proposal in the database, so old practice proposals made by older, buggier code would be counted as if they were real.
+
+**The decision.** Practice on the development database. Start the benchmark database fresh at the freeze, check it is empty, and use it only for the 48 counted runs.
+
+**Who pays for the AI.** Usman pays for every call to the AI service with his own key. In sessions on Tanzeel's laptop he types the key in himself and removes it at the end of the project.
+
+**Words.**
+- *Append-only*: new rows can be added, existing rows can never be changed or deleted.
+- *Pilot*: practice runs that are not counted.
+- *Readiness check*: looking at a system without changing anything, to see that it is ready.
+

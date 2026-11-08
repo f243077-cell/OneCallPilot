@@ -11,7 +11,7 @@ Done 2026-11-04: MOB-016 with the app killed (`docs/checks/push.md`); ADR-26 (a 
 3. Read the storyboard once; adjust captions to taste. It is filmed with A3.3 (needs a proposal).
 
 ## Usman — next (OpenRouter)
-**The detailed list, with steps, "done when" and Phase 4, is `docs/usman-work-plan.md`.** Short form below.
+**The detailed list, with steps, "done when" and Phase 4, is `docs/usman-work-plan.md`.** Short form below. Every OpenRouter call is Usman's (his key, typed in person into the `.env` of Tanzeel's laptop for joint sessions; `CLAUDE.md` §11.6). The pilot runs on `ocp-dev`; `ocp-bench` is for the counted runs only (ADR-28).
 State 2026-11-08: `ocp smoke` live **passed** (`docs/checks/smoke.md`, run 12); prompts v2 exist (default still v1; Usman's `.env` has `PROMPT_VERSION=v2`). A Gate G2 run of all 8 scenarios was started 2026-11-08 (scratch driver: reset, 30 healthy minutes, reset, 240 s warm-up, inject, wait for proposal or escalation; a matching proposal is approved like `ocp smoke`).
 1. Gate G2 results into `docs/checks/gate-g2.md` (criteria 1, 2, 5); misses get a cause each. If the run stopped, re-run the missing scenarios with 30 healthy minutes before each injection.
 2. B2.13: pin the model (ADR-13: keep `google/gemini-3.8-flash` if criterion 1 is at least 6/8, else the Claude adapter).
