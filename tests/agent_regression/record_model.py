@@ -127,7 +127,7 @@ async def test_record_model(
     if not key:
         pytest.skip("OPENROUTER_API_KEY is not set")
     model = os.environ.get("LLM_MODEL", "google/gemini-3.8-flash")
-    version = os.environ.get("PROMPT_VERSION", "v1")
+    version = os.environ.get("PROMPT_VERSION", "v2")
 
     source = load(path)
     data = dict(source.data)

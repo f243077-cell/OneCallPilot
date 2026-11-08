@@ -400,7 +400,7 @@ When reporting back: what changed, which requirement IDs are satisfied, which te
 |---|---|---|
 | `AGENT_ENABLED` | `true` (`false` in manual-baseline runs) | api, worker |
 | `LLM_PROVIDER` / `LLM_MODEL` | pinned per ADR-13 (`fake` in CI) | worker |
-| `PROMPT_VERSION` | `v1` | worker |
+| `PROMPT_VERSION` | `v2` (since 2026-11-08; v1 kept for history) | worker |
 | `MAX_TOOL_CALLS` / `MAX_AGENT_SECONDS` | `8` / `90` | worker |
 | `CONFIDENCE_THRESHOLD` | `0.70` | worker |
 | `AGENT_CONCURRENCY` | `2` | worker |
