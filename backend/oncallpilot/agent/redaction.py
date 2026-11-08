@@ -64,6 +64,11 @@ SUSPICIOUS = [
         r"\bnew\s+instructions\b",
         r"\bcall\s+(?:rollback_deploy|restart_service|scale_service|clear_cache"
         r"|run_migration_rollback|propose_action)\b",
+        # TEST-003: a fake authority line, and a push to approve (an allowlisted but
+        # wrong action needs no "call" to be an instruction).
+        r"\b(?:system|admin|administrator|assistant|operator)\s+"
+        r"(?:note|message|override|instruction|notice)s?\s*:",
+        r"\bapprove\s+(?:it|this|that|the\s+(?:fix|action|proposal))\b",
         r"\brm\s+-rf\b",
         r"\b(?:curl|wget)\b[^\n|]*\|\s*(?:ba|z)?sh\b",
         r"</?untrusted_data",
