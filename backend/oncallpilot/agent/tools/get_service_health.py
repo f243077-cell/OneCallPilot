@@ -99,9 +99,16 @@ async def _probe(http: httpx.AsyncClient, url: str) -> ProbeResult:
 
 
 async def get_service_health(
-    docker: httpx.AsyncClient, http: httpx.AsyncClient, params: GetServiceHealthParams
+    docker: httpx.AsyncClient,
+    http: httpx.AsyncClient,
+    params: GetServiceHealthParams,
+    not_before: datetime | None = None,
 ) -> ServiceHealthPayload:
-    """``docker`` has the proxy as its base URL; ``http`` reaches chaos_net."""
+    """``docker`` has the proxy as its base URL; ``http`` reaches chaos_net.
+
+    ``not_before`` is the settled end of the last testbed reset (ADR-27): a stopped
+    container that finished before it belongs to another run.
+    """
     filters = json.dumps(
         {"label": ["oncallpilot.managed=true", f"oncallpilot.service={params.service}"]}
     )
@@ -110,12 +117,18 @@ async def get_service_health(
     )
     listing.raise_for_status()
     containers = []
+    stale: set[str] = set()
     for item in sorted(listing.json(), key=lambda c: (c.get("Names") or [""])[0]):
         detail = await docker.get(f"/containers/{item['Id']}/json", timeout=DOCKER_TIMEOUT_SECONDS)
         detail.raise_for_status()
-        containers.append(project(detail.json()))
+        inspect = detail.json()
+        health = project(inspect)
+        containers.append(health)
+        finished = docker_time((inspect.get("State") or {}).get("FinishedAt"))
+        if health.state != "running" and not_before and finished and finished < not_before:
+            stale.add(health.name)
     if any(c.state == "running" for c in containers):
-        containers = [c for c in containers if not _standby(c)]
+        containers = [c for c in containers if not _standby(c) and c.name not in stale]
     url = PROBES.get(params.service)
     probe = await _probe(http, url) if url else None
     return ServiceHealthPayload(service=params.service, containers=containers, probe=probe)

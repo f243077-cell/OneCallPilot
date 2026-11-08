@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -154,7 +155,9 @@ def _slot(name: str, status: str, exit_code: int = 0, restarts: int = 0) -> dict
                       "StartedAt": "2026-10-21T09:58:01Z"}}  # fmt: skip
 
 
-async def _health(service: str, slots: list[dict[str, Any]]) -> list[str]:
+async def _health(
+    service: str, slots: list[dict[str, Any]], not_before: datetime | None = None
+) -> list[str]:
     by_id = {s["Name"].lstrip("/"): s for s in slots}
 
     def docker(request: httpx.Request) -> httpx.Response:
@@ -166,7 +169,8 @@ async def _health(service: str, slots: list[dict[str, Any]]) -> list[str]:
         httpx.AsyncClient(transport=httpx.MockTransport(docker), base_url="http://proxy") as d,
         httpx.AsyncClient(transport=httpx.MockTransport(lambda r: httpx.Response(200))) as h,
     ):
-        payload = await get_service_health(d, h, GetServiceHealthParams(service=service))
+        params = GetServiceHealthParams(service=service)
+        payload = await get_service_health(d, h, params, not_before=not_before)
     return [c.name for c in payload.containers]
 
 
@@ -183,6 +187,19 @@ async def test_spare_slots_stopped_on_purpose_are_not_shown_as_failures() -> Non
     assert await _health("api", api) == ["cs-api-140-1", "cs-api-150-2", "cs-api-150-3"]
     # A stopped service with nothing running is the fault itself: always shown.
     assert await _health("redis", [_slot("cs-redis", "exited", exit_code=0)]) == ["cs-redis"]
+
+
+async def test_a_crash_from_before_the_last_reset_is_not_this_runs_evidence() -> None:
+    # Gate G2, 2026-11-08: scenario 6's crashed worker 2.2.0 slot (exit 1) stayed
+    # exited through the resets; in the next scenario 1 the model blamed it (ADR-27).
+    floor = datetime(2026, 10, 21, 10, 0, tzinfo=UTC)
+    old = _slot("cs-worker-220", "exited", exit_code=1)
+    old["State"]["FinishedAt"] = "2026-10-21T09:40:00Z"
+    new = _slot("cs-worker-210", "exited", exit_code=1)
+    new["State"]["FinishedAt"] = "2026-10-21T10:03:00Z"
+    slots = [_slot("cs-worker-210-1", "running"), old, new]
+    assert await _health("worker", slots, floor) == ["cs-worker-210", "cs-worker-210-1"]
+    assert await _health("worker", slots) == ["cs-worker-210", "cs-worker-210-1", "cs-worker-220"]
 
 
 async def test_services_without_a_probe() -> None:

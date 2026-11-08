@@ -115,7 +115,8 @@ class ToolBox:
         if isinstance(params, GetRecentDeploysParams):
             return get_recent_deploys(self.ledger, params)
         if isinstance(params, GetServiceHealthParams):
-            return await get_service_health(self.docker, self.http, params)
+            floor = self._settled_reset(now)
+            return await get_service_health(self.docker, self.http, params, floor)
         if isinstance(params, SearchRunbooksParams):
             async with self.pool.acquire() as conn:
                 return await search_runbooks(conn, self.embedder, params)
