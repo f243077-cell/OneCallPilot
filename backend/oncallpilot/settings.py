@@ -49,7 +49,7 @@ class WorkerSettings(BaseSettings):
     ingest_token: SecretStr
     ingest_url: str = "http://backend-api:8000/ingest/alert"
     llm_provider: Literal["openrouter", "gemini", "anthropic", "fake"] = "openrouter"
-    llm_model: str = "google/gemini-3.8-flash"  # ADR-23
+    llm_model: str = "google/gemini-3.8-flash"  # ADR-23; pinned in B2.13 (2026-11-08)
     openrouter_api_key: SecretStr | None = None  # LLM and embeddings (ADR-23)
     gemini_api_key: SecretStr | None = None  # LLM and embeddings (ADR-14)
     anthropic_api_key: SecretStr | None = None  # Claude adapter (ADR-13 fallback)

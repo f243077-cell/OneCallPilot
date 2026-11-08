@@ -112,7 +112,7 @@ services:
       INGEST_TOKEN: ${INGEST_TOKEN}
       INGEST_URL: http://backend-api:8000/ingest/alert
       LLM_PROVIDER: ${LLM_PROVIDER:-openrouter}
-      LLM_MODEL: ${LLM_MODEL}
+      LLM_MODEL: ${LLM_MODEL:-google/gemini-3.8-flash}  # pinned, B2.13
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
