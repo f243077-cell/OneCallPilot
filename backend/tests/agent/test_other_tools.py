@@ -148,6 +148,43 @@ async def test_service_health_reads_only_through_get() -> None:
     )
 
 
+def _slot(name: str, status: str, exit_code: int = 0, restarts: int = 0) -> dict[str, Any]:
+    return {**INSPECT, "Name": f"/{name}", "RestartCount": restarts,
+            "State": {"Status": status, "ExitCode": exit_code, "OOMKilled": False,
+                      "StartedAt": "2026-10-21T09:58:01Z"}}  # fmt: skip
+
+
+async def _health(service: str, slots: list[dict[str, Any]]) -> list[str]:
+    by_id = {s["Name"].lstrip("/"): s for s in slots}
+
+    def docker(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/containers/json":
+            return httpx.Response(200, json=[{"Id": n, "Names": [f"/{n}"]} for n in by_id])
+        return httpx.Response(200, json=by_id[request.url.path.split("/")[2]])
+
+    async with (
+        httpx.AsyncClient(transport=httpx.MockTransport(docker), base_url="http://proxy") as d,
+        httpx.AsyncClient(transport=httpx.MockTransport(lambda r: httpx.Response(200))) as h,
+    ):
+        payload = await get_service_health(d, h, GetServiceHealthParams(service=service))
+    return [c.name for c in payload.containers]
+
+
+async def test_spare_slots_stopped_on_purpose_are_not_shown_as_failures() -> None:
+    # Recorded-model runs, 2026-11-08: a stopped spare slot (state exited, as a
+    # rollback leaves it) read as a failed container, and the model blamed it.
+    api = [
+        _slot("cs-api-140-1", "running"),
+        _slot("cs-api-140-2", "created"),  # never started
+        _slot("cs-api-150-1", "exited", exit_code=143),  # stopped (SIGTERM)
+        _slot("cs-api-150-2", "exited", exit_code=1),  # crashed: kept
+        _slot("cs-api-150-3", "exited", exit_code=0, restarts=4),  # crash-looped: kept
+    ]
+    assert await _health("api", api) == ["cs-api-140-1", "cs-api-150-2", "cs-api-150-3"]
+    # A stopped service with nothing running is the fault itself: always shown.
+    assert await _health("redis", [_slot("cs-redis", "exited", exit_code=0)]) == ["cs-redis"]
+
+
 async def test_services_without_a_probe() -> None:
     def docker(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json=[])

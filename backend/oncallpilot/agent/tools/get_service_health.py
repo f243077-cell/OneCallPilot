@@ -66,6 +66,21 @@ def project(inspect: dict[str, Any]) -> ContainerHealth:
     )
 
 
+def _standby(c: ContainerHealth) -> bool:
+    """A spare slot that was never started or was stopped cleanly, and never failed.
+
+    The testbed keeps stopped replica and release slots next to the running ones;
+    shown, they read as failed containers. Only dropped while another container of
+    the service runs: a service with nothing running is the fault itself (a
+    stopped cache, say) and stays visible. A crash (non-zero exit other than a
+    SIGTERM stop), an OOM kill or any restart always stays.
+    """
+    if c.state == "created":
+        return c.restart_count == 0
+    clean_stop = c.exit_code in (0, 143)
+    return c.state == "exited" and clean_stop and not c.oom_killed and c.restart_count == 0
+
+
 async def _probe(http: httpx.AsyncClient, url: str) -> ProbeResult:
     started = time.monotonic()
     try:
@@ -99,6 +114,8 @@ async def get_service_health(
         detail = await docker.get(f"/containers/{item['Id']}/json", timeout=DOCKER_TIMEOUT_SECONDS)
         detail.raise_for_status()
         containers.append(project(detail.json()))
+    if any(c.state == "running" for c in containers):
+        containers = [c for c in containers if not _standby(c)]
     url = PROBES.get(params.service)
     probe = await _probe(http, url) if url else None
     return ServiceHealthPayload(service=params.service, containers=containers, probe=probe)
