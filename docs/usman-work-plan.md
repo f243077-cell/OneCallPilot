@@ -1,6 +1,6 @@
 # Usman's work plan: Phase 3 and Phase 4
 
-> Written for Usman and for the Claude Code sessions that work for him. State: **2026-11-08**.
+> Written for Usman and for the Claude Code sessions that work for him. State: **2026-11-08**, updated after Usman's commits `27940c2` (ADR-27) and `bf92bc9` (recorded model answers).
 > Source documents: `docs/phases.md` (Phase 3, Phase 4, Gates G2–G4), `docs/requirements.md` (BENCH-001…BENCH-014, NFR-001), `benchmark/PROCEDURE.md`, `docs/project-requirements.md` §8, `CLAUDE.md` §11.
 > This file lists **what to do, in what order, how to know it is done, and where to write the result**. If this file and `docs/phases.md` disagree, `docs/phases.md` wins; tell Tanzeel.
 > `next.md` (section "Usman") stays the short list for a session that restarts. This file is the long one.
@@ -14,6 +14,8 @@
 | `ocp smoke` live (S2.1, TEST-014) | **Passed** (run 12): incident +17.6 s, proposal +95.0 s, approved +104.9 s, resolved +240.8 s. See `docs/checks/smoke.md`. |
 | Prompts | v2 exists (`hypothesize.md` states the citation rules). The default is still v1; your `.env` uses v2. |
 | Gate G2 run (all 8 scenarios, real model) | **Started on 2026-11-08** with your scratch driver (about 5 hours). Results are not yet in `docs/checks/gate-g2.md`. |
+| Tool look-back after a reset | **Done** by Usman: ADR-27 (`27940c2`), the tools never read earlier than the last reset plus 150 s. Needs Tanzeel's review and a live proof (U4). |
+| Recorded model answers (B2.6, second half) | **5 of 8 recorded** (`bf92bc9`): scenarios 2, 3, 4, 6, 8 with `google/gemini-3.8-flash` and prompts v2. **Scenarios 1, 5, 7 failed to record** because of real defects (task U1b). |
 | Alert-to-proposal | About 77 s in run 12. The target is a median of 60 s (NFR-001). |
 | OpenRouter spend | About $0.15 for 13 live runs (2 to 3 cents per run). Limit on your key: $5. |
 | Tanzeel's side | Done: push on the phone (also with the app killed), stale banner and re-sync, B3.1 tests, proxy test, demo storyboard, runbook review. Waiting for a proposal on his laptop to do A3.3 (biometric approval) and A3.7. |
@@ -24,7 +26,8 @@
 
 These two block your later work. Ask Tanzeel for an answer this week. They are written in `handoff.md` (2026-11-08) under "Waiting on Tanzeel".
 
-### D1. How far back the agent's tools look between benchmark runs
+### D1. How far back the agent's tools look between benchmark runs (decided in code, needs Tanzeel's review)
+**Status.** Usman chose option (a) and implemented it as ADR-27 (`27940c2`). Tanzeel: read `docs/adr/ADR-27-tools-do-not-look-back-past-a-reset.md` and say yes or no this week. If no, option (b) applies and ADR-27 is reverted before the pilot.
 **Problem.** The tools look back 30 minutes (`backend/oncallpilot/agent/tools/window.py`). `bench run` waits only 4 minutes between runs. So the previous run's fault is still in the next run's logs, and the model can read it as a contradiction. Smoke run 11 failed exactly like this.
 
 | Option | Cost | Effect |
@@ -32,7 +35,7 @@ These two block your later work. Ask Tanzeel for an answer this week. They are w
 | (a) The look-back starts no earlier than the last `kind=reset` in the deploy ledger | An ADR (ADR-27), a small code change, tests; must be done **before the freeze** | Runs stay about 15 minutes each |
 | (b) Wait 30 or more minutes between runs | No code; about 24 hours more for 48 runs | Easier, but a longer benchmark |
 
-**Recommendation: (a).** It is also the correct behaviour for a real on-call engineer: what happened before the reset belongs to another run. If Tanzeel agrees, do it as task **U4** below.
+**Recommendation: (a).** It is also the correct behaviour for a real on-call engineer: what happened before the reset belongs to another run. The live proof is task **U4**.
 
 ### D2. Default prompt version
 Switch `PROMPT_VERSION` to `v2` in `.env.example`, `infrastructure/compose/copilot.yml` and `backend/oncallpilot/settings.py`? **Recommendation: yes.** The smoke passed only with v2, and everyone else would otherwise run v1 by mistake. Do it as task **U3**.
@@ -48,7 +51,7 @@ Switch `PROMPT_VERSION` to `v2` in `.env.example`, `infrastructure/compose/copil
 
 ## 3. Part 1: Phase 3 tasks
 
-Order: U1 → U2 → (U3, U4 after the decisions) → U6 → U7 → U5 → U8. Do **U5 (recorded replay) late**: any prompt or tool change makes recorded model answers out of date.
+Order: U1 → U1b → U2 → (U3, U4) → U6 → U7 → U5 (finish the recordings) → U8. Do the **last recording of U5 late**: any prompt or tool change makes recorded model answers out of date.
 
 ### U1. Gate G2 results (finish what you started)
 **Why.** Gate G2 criterion 1 decides the model (U2).
@@ -60,6 +63,18 @@ Order: U1 → U2 → (U3, U4 after the decisions) → U6 → U7 → U5 → U8. D
 5. If the run stopped, repeat only the missing scenarios, with 30 healthy minutes before each injection.
 **Done when.** Each of the five criteria has a state and evidence, and the OpenRouter spend of the run is written down.
 **Where.** `docs/checks/gate-g2.md`, plus new causes in `docs/checks/smoke.md` if they are smoke-related.
+
+### U1b. Three misses found by recording the real model (new)
+`tests/agent_regression/record_model.py` records the real model only when it reaches the expected result. It could not record three scenarios (from the message of `bf92bc9`):
+
+| Scenario | What went wrong | Where to look |
+|---|---|---|
+| 1 memory leak | The diagnosis was right (`memory_leak`, confidence 0.9), but the model proposed `rollback_deploy` with an **invalid parameter** instead of `restart_service(worker)`. | The propose step: prompt text for the proposal, the parameter enums, the repair step (one repair per structured call, `CLAUDE.md` §5.3). Find out why the model chose a rollback when the runbook says restart. |
+| 5 traffic spike and 7 slow dependency | `get_service_health` shows the **stopped spare api slot** (release 1.5.0, stopped on purpose) as a failed container, and the model uses it as evidence of a problem. | `backend/oncallpilot/agent/tools/get_service_health.py`. A slot that the testbed stopped on purpose is not a failure. Decide the fix at the root (what the tool projects), not with a prompt hint about scenarios. |
+
+**Rules for the fix.** Prompts must not name scenarios or contain answers (`CLAUDE.md` §5.8). A prompt change is a new version folder (v3) with `manifest.json`. Add a unit test for each fix. Then re-run the Gate G2 scenario and re-record (U5).
+**Done when.** Scenarios 1, 5 and 7 reach the expected result with the real model (7 expects an escalation), and the three recordings are added.
+**Why it matters.** Gate G2 needs at least 6 of 8, and the project target is top-1 accuracy of at least 6 of 8 (`project-requirements.md` §8.2). These three are probably misses in your Gate G2 run too; compare.
 
 ### U2. B2.13: pin the model
 **Rule (ADR-13).** If criterion 1 is at least **6 of 8**, keep `google/gemini-3.8-flash`. If not, switch to the Claude adapter and pin that model, then repeat the Gate G2 run with it.
@@ -73,24 +88,21 @@ Order: U1 → U2 → (U3, U4 after the decisions) → U6 → U7 → U5 → U8. D
 **Steps.** Change the default to the agreed version in the three places; keep `prompts/manifest.json` and its CI check consistent; run the backend unit and regression suites.
 **Done when.** A fresh clone with the default `.env.example` uses the same prompt version as your `.env`.
 
-### U4. Tools look back no earlier than the last reset (after D1, option a)
-**Steps.**
-1. Write ADR-27 (`docs/adr/`), saying: the window of `query_logs` and `query_metrics` starts at the later of "incident window minus 30 minutes" and the newest `kind=reset` record in the deploy ledger. The 30-minute limit of `CLAUDE.md` §5.1 stays as the outer limit.
-2. Change `tools/window.py` and the code that gives it the ledger time. Add tests: a run whose incident follows a reset 4 minutes earlier sees nothing from before the reset; a run with no reset in the ledger behaves as before.
-3. Update `docs/architecture.md` (§5.1 and the ADR table).
-4. Prove it live: run `ocp smoke` twice in a row, **without** waiting 30 minutes between them. Both must pass.
-**Done when.** The two back-to-back smoke runs pass and the ADR is merged. This is an agent-behaviour change, so it must be finished **before the freeze**.
+### U4. Tools look back no earlier than the last reset: live proof (code done, ADR-27)
+**Done already.** ADR-27 and the code (`27940c2`), with unit tests.
+**Still to do.**
+1. Run `ocp smoke` twice in a row, **without** waiting 30 minutes between them. Both must pass. Write both in `docs/checks/smoke.md`.
+2. Ask Tanzeel to review ADR-27 (D1).
+3. Check the effect on baselines: with the 240 s warm-up, a run keeps 90 s of healthy baseline for metric queries (ADR-27). Look at scenario 5 (traffic spike) and scenario 3 (pool) in particular, because they are metric-heavy.
+**Done when.** Two back-to-back smoke runs pass and Tanzeel accepted ADR-27. It is an agent-behaviour change, so it must be finished **before the freeze**.
 
-### U5. B2.6, second half: recorded model answers replayed in CI
-**What exists.** The tool outputs of all 8 scenarios are recorded from the live testbed (`tests/agent_regression/scenarios/recorded/`, `record.py`). The regression suite replays them with the `FakeProvider` (16 cases).
-**What is missing.** The **real model's** answers, replayed without a network call (`@pytest.mark.recorded`, `CLAUDE.md` §7).
-**Steps.**
-1. Add a way to record: run the real agent loop for each scenario against the recorded tool outputs, and save every LLM request/response pair. Name the files with the prompt version and the model (for example `…/model/v2_<model>_s2.yaml`).
-2. Add a replay provider that implements `LLMProvider` (keep the provider abstraction, `CLAUDE.md` §2.9), looks up the saved answer by request, and fails if a request has no saved answer.
-3. Add `@pytest.mark.recorded` tests for the 8 scenarios: terminal state, action and parameters or escalation reason, budgets (≤ 8 tool calls, ≤ 15 LLM calls), and citations. Register the marker in the `pyproject.toml` of `backend/`.
-4. CI must never call a real LLM. Re-record only on purpose, and any change to a prompt, a tool output format or the model means re-recording.
-**Do this after** U3, U4, U6 and U7, so you record once.
-**Done when.** `uv run pytest -c pyproject.toml ../tests/agent_regression -q` runs the recorded cases offline and they pass in CI.
+### U5. B2.6, second half: recorded model answers replayed in CI (5 of 8 done)
+**Done already (`bf92bc9`).** `tests/agent_regression/record_model.py` records the real model (opt-in with `OCP_RECORD_MODEL=1`, never in CI) and writes `scenarios/recorded_model/<scenario>.<prompt version>.yaml`, only when the model reached the expected outcome. `test_scenarios.py` replays these with the `FakeProvider` under the `recorded` marker. Recorded: scenarios 2, 3, 4, 6, 8 (prompts v2, `google/gemini-3.8-flash`, with ADR-27).
+**Still to do.**
+1. Record scenarios 1, 5 and 7 after U1b is fixed.
+2. **Re-record all 8 at the end**, after the last prompt, tool or model change (U3, U6, U7). A recording belongs to one prompt version and one model (`CLAUDE.md` §7); old ones are removed or kept under their own version name.
+3. Check that CI runs the recorded cases offline and green, and that no recording contains a secret (the scan in `record.py` covers tool outputs; do the same for model answers).
+**Done when.** All 8 scenarios have a model recording for the **final** prompt version, the suite is green in CI, and `docs/checks/recordings.md` says so.
 
 ### U6. B3.3: prompt-injection hardening against live scenario 8
 **Why.** Since `600f1f8` the planted text reaches error-level log queries, so the real model now sees it. This is the safety headline of the project (zero unsafe actions).
@@ -232,9 +244,9 @@ Fill the "Results" section: links to the CSV, `scenarios.yaml`, the chaos script
 
 | When | You | Together |
 |---|---|---|
-| 2026-11-08 to 11-13 | U1 Gate G2 results, U2 pin the model, answer D1 and D2, U3, U4 | — |
+| 2026-11-08 to 11-13 | U1 Gate G2 results, U1b the three misses, U2 pin the model, U3, U4 live proof; Tanzeel answers D1 and D2 | — |
 | 2026-11-09 to 11-15 | U6 injection hardening, U7 latency | — |
-| 2026-11-16 to 11-20 | U5 recorded replay (after U3, U4, U6, U7), U9 | U8 dry run; A3.3, A3.7, Gate G3 on Tanzeel's laptop and phone |
+| 2026-11-16 to 11-20 | U5 final recordings (after U3, U4, U6, U7), U9 | U8 dry run; A3.3, A3.7, Gate G3 on Tanzeel's laptop and phone |
 | Week 7 (from 11-23) | P4.2 fixes, P4.3 clean machine, P4.5 README draft | P4.1 pilot, then P4.4 freeze at the end of the week |
 | Week 8 (from 11-30) | P4.8 report, §8.2, charts | P4.6 counted runs (3 to 4 days), P4.7 audit, P4.10 |
 | 2026-12-04 | — | Gate G4 |

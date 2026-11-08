@@ -5,10 +5,10 @@
 ## 2026-11-08 — Tanzeel: Usman's work plan for Phase 3 and Phase 4
 
 ### Done
-- **`docs/usman-work-plan.md`:** a detailed plan for Usman. Part 1 is Phase 3 (U1 Gate G2 results, U2 pin the model, U3 default prompt version, U4 tool look-back after a reset, U5 recorded-model replay, U6 injection hardening, U7 latency to 60 s, U8 procedure dry run, U9 small items). Part 2 is Phase 4 (P4.1 pilot, P4.2 fixes, P4.3 clean machine, P4.4 freeze checklist, P4.5 README, P4.6 counted runs, P4.7 evidence audit, P4.8 safety audit and report, P4.9, P4.10, a Gate G4 checklist). It also lists the decisions to settle before the pilot, the rules for live runs and a suggested calendar.
+- **`docs/usman-work-plan.md`:** a detailed plan for Usman, updated for his commits `27940c2` (ADR-27) and `bf92bc9` (5 of 8 model recordings). Part 1 is Phase 3 (U1 Gate G2 results, U1b the three misses his recording found: scenario 1 invalid rollback parameter, scenarios 5 and 7 stopped spare slot read as a failure, U2 pin the model, U3 default prompt version, U4 live proof of the look-back change, U5 finish the recordings, U6 injection hardening, U7 latency to 60 s, U8 procedure dry run, U9 small items). Part 2 is Phase 4 (P4.1 pilot, P4.2 fixes, P4.3 clean machine, P4.4 freeze checklist, P4.5 README, P4.6 counted runs, P4.7 evidence audit, P4.8 safety audit and report, P4.9, P4.10, a Gate G4 checklist). It also lists the decisions to settle before the pilot, the rules for live runs and a suggested calendar.
 
 ### Next
-- Tanzeel: answer D1 (tool look-back, recommendation: option a) and D2 (default prompt version v2) from the plan; then the points in D3.
+- Tanzeel: review ADR-27 (D1, already implemented by Usman) and answer D2 (default prompt version v2) from the plan; then the points in D3.
 - Usman: U1 and U2 first (`docs/usman-work-plan.md`).
 
 ### Waiting on Tanzeel
