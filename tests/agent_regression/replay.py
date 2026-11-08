@@ -8,7 +8,10 @@ A scenario file (``scenarios/*.yaml``) holds:
   socket-proxy-ro answer. The files in ``scenarios/`` are synthetic; those in
   ``scenarios/recorded/`` were recorded from the live testbed (B2.6,
   ``record.py``): their metrics are real ``points`` instead of a step change;
-- ``model``: the scripted FakeProvider (gather turns and structured replies);
+- ``model``: the scripted FakeProvider (gather turns and structured replies). In
+  ``scenarios/recorded_model/`` the script is what the real model answered to the
+  same tool outputs (``record_model.py``), and ``prompt_version`` names the
+  prompts it was recorded with (also in the file name; ``CLAUDE.md`` §7);
 - ``runner``: what the fake runner's dry run reports;
 - ``expect``: the terminal state and the proposal or escalation reason.
 
@@ -39,9 +42,9 @@ from redis.asyncio import Redis
 from oncallpilot.agent.effects import DbEffects
 from oncallpilot.agent.prompts import FilePrompts
 from oncallpilot.agent.proposer import RunnerProposer
-from oncallpilot.agent.providers.base import LLMTurn, ToolCall, Usage
+from oncallpilot.agent.providers.base import LLMProvider, LLMTurn, ToolCall, Usage
 from oncallpilot.agent.providers.embeddings import FakeEmbeddingProvider
-from oncallpilot.agent.providers.fake import FakeProvider
+from oncallpilot.agent.providers.fake import INVALID_JSON, FakeProvider
 from oncallpilot.agent.run import Investigation
 from oncallpilot.agent.state_machine import AgentState
 from oncallpilot.agent.toolbox import ToolBox
@@ -53,6 +56,8 @@ from tests.runner_replies import LINK_KEY, dry_run_reply
 
 ROOT = Path(__file__).resolve().parents[2]
 SCENARIOS = Path(__file__).parent / "scenarios"
+RECORDED_MODEL = SCENARIOS / "recorded_model"
+INVALID = "__invalid__"  # a recorded reply that failed its schema (the repair path)
 LEDGER_TEMPLATE = json.loads(
     (ROOT / "contracts" / "fixtures" / "ledger" / "deploys.jsonl").read_text().splitlines()[0]
 )
@@ -125,17 +130,31 @@ class Backends:
         self.loki_queries.append(logql)
         if request.url.path.endswith("/query"):  # exception counts by exc_type
             counts: dict[str, int] = {}
-            for line in self._logs_for(logql):
+            lines = self._logs_for(logql)
+            if lines and all("ts" in ln for ln in lines):
+                # count_over_time(…[Ns]) at `time`: only the lines in that range count.
+                at = int(params["time"][0]) / 1e9
+                span = int(logql.rsplit("[", 1)[1].split("s]", 1)[0])
+                lines = [ln for ln in lines if at - span <= parse_time(ln["ts"]).timestamp() <= at]
+            for line in lines:
                 if line.get("exc_type"):
                     counts[line["exc_type"]] = counts.get(line["exc_type"], 0) + 1
             result = [{"metric": {"exc_type": t}, "value": [0, str(n)]} for t, n in counts.items()]
             return httpx.Response(200, json={"status": "success", "data": {"result": result}})
         start, end = _window(params)
         lines = self._logs_for(logql)
-        values = []
-        for i, line in enumerate(lines):
-            at = end - (i + 1) * max(1.0, (end - start) / (len(lines) + 1))
-            values.append([str(int(at * 1e9)), json.dumps(line)])
+        if lines and all("ts" in ln for ln in lines):
+            # Recorded lines keep their real time, and a query sees only its window:
+            # a disproof query "before the deploy" must not get later lines.
+            stamped = [(parse_time(ln["ts"]).timestamp(), ln) for ln in lines]
+            stamped = [(at, ln) for at, ln in stamped if start <= at <= end]
+            lines = [ln for _, ln in stamped]
+            values = [[str(int(at * 1e9)), json.dumps(ln)] for at, ln in stamped]
+        else:
+            values = []
+            for i, line in enumerate(lines):
+                at = end - (i + 1) * max(1.0, (end - start) / (len(lines) + 1))
+                values.append([str(int(at * 1e9)), json.dumps(line)])
         streams = [
             {"stream": {"level": ln["level"]}, "values": [v]}
             for ln, v in zip(lines, values, strict=True)
@@ -218,7 +237,13 @@ def structured(model: dict[str, Any]) -> dict[str, list[Any]]:
         "reflection": "ReflectionOut",
         "proposal": "ProposalOut",
     }
-    return {schema: [model[key]] for key, schema in keys.items() if key in model}
+    out: dict[str, list[Any]] = {}
+    for key, schema in keys.items():
+        if key in model:
+            # One reply, or every attempt in order when a reply needed its repair.
+            replies = model[key] if isinstance(model[key], list) else [model[key]]
+            out[schema] = [INVALID_JSON if r == INVALID else r for r in replies]
+    return out
 
 
 def write_ledger(scenario: Scenario, folder: Path) -> Path:
@@ -244,7 +269,14 @@ class Outcome:
     backends: Backends
 
 
-async def run(scenario: Scenario, pool: asyncpg.Pool, redis: Redis, tmp_path: Path) -> Outcome:
+async def run(
+    scenario: Scenario,
+    pool: asyncpg.Pool,
+    redis: Redis,
+    tmp_path: Path,
+    provider: LLMProvider | None = None,
+) -> Outcome:
+    """``provider`` defaults to the scenario's script; ``record_model.py`` passes a real one."""
     alert = AlertIn.model_validate({"source": "detector", **scenario.data["alert"]})
     async with pool.acquire() as conn:
         opened = await ingest_alert(
@@ -297,9 +329,9 @@ async def run(scenario: Scenario, pool: asyncpg.Pool, redis: Redis, tmp_path: Pa
         )
         model = scenario.data["model"]
         state = await Investigation(
-            provider=FakeProvider(turns=turns(model), structured=structured(model)),
+            provider=provider or FakeProvider(turns=turns(model), structured=structured(model)),
             effects=effects,
-            prompts=FilePrompts("v1"),
+            prompts=FilePrompts(str(scenario.data.get("prompt_version", "v1"))),
         ).run()
         requests = list(runner.requests)
     return Outcome(state, opened.incident_id, requests, backends)

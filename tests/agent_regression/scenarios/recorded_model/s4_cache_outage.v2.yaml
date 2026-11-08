@@ -1,0 +1,2385 @@
+# cache-outage: the real model's answers to the tool outputs of
+# scenarios/recorded/s4_cache_outage.yaml, recorded 2026-11-08 15:50 UTC
+# by tests/agent_regression/record_model.py (B2.6): google/gemini-3.8-flash, prompts v2.
+# Replayed with FakeProvider by test_scenarios.py; regenerate only on purpose.
+name: cache-outage
+now_offset_s: 52
+alert:
+  service: api
+  observed_at: '2026-11-03T15:14:46.252408Z'
+  signals:
+  - name: stack_traces
+    value: 10.0
+    baseline: null
+    zscore: null
+    first_anomalous_at: '2026-11-03T15:14:46.252408Z'
+ledger:
+- deploy_id: a9f4f282-05f8-4db8-b740-0ba81ed22b12
+  kind: deploy
+  service: api
+  release: 1.2.0
+  commit_sha: ad7fe550f520d3422c3b0876a964f60973a88e9e
+  commit_message: 'orders: add pagination to order history'
+  image_tag: chaos-shop/api:1.2.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-14T10:20:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 5faa3ec6-482c-4b0e-a0aa-066284ae0fcc
+  kind: deploy
+  service: worker
+  release: 2.0.0
+  commit_sha: 10a2829e09250668d2ef5d99256c74a95564fee3
+  commit_message: 'jobs: move receipts to the job queue'
+  image_tag: chaos-shop/worker:2.0.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-09-21T13:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 86898ff8-4a4e-4de4-8651-54a3b18105c8
+  kind: deploy
+  service: api
+  release: 1.3.0
+  commit_sha: 3e0cc25e2fbaaca6def8ac985a3dee8d0e161ce5
+  commit_message: 'catalog: paginate product listing'
+  image_tag: chaos-shop/api:1.3.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-28T09:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: f2debf7b-4846-455b-b798-3663c38738ba
+  kind: deploy
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-10-01T14:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: fc3cc330-5c02-4524-b733-76bd9550be6c
+  kind: deploy
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-10-05T09:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: e5946335-822e-4563-875f-7e43d003840d
+  kind: reset
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-11-03T15:09:54Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+- deploy_id: a37cf749-f2b8-4e48-b388-38a3e8bb0a76
+  kind: reset
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-11-03T15:09:54Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+logs:
+- match: service="api"
+  lines:
+  - ts: '2026-11-03T15:15:38.106Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 17.0
+    request_id: c168476534973b6dfa869d5e4c78c5b5
+    route: /orders
+  - ts: '2026-11-03T15:15:37.912Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1029.8
+    request_id: e1b54edc63c07fe95b1d7b29a2acb5fe
+    route: /products
+  - ts: '2026-11-03T15:15:37.891Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: e1b54edc63c07fe95b1d7b29a2acb5fe
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:37.528Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 1041.6
+    request_id: 78d73c375cffd74e3c858695c1f5c6d6
+    route: /cart
+  - ts: '2026-11-03T15:15:37.490Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: 78d73c375cffd74e3c858695c1f5c6d6
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:37.292Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: checkout with coupon SPRING-15
+    request_id: d812283093ce9d2dbfef99f97e00ee43
+    route: /checkout
+  - ts: '2026-11-03T15:15:37.289Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1008.2
+    request_id: 18309f9ad8d35cad5a1e2273d0cd5355
+    route: /products
+  - ts: '2026-11-03T15:15:37.282Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 18309f9ad8d35cad5a1e2273d0cd5355
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:37.108Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 1027.2
+    request_id: 95da6a47407cef680a483b1f4ffb6c87
+    route: /cart
+  - ts: '2026-11-03T15:15:37.090Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 7.6
+    request_id: 88411c5154abc76887f24be67ac58b68
+    route: /orders
+  - ts: '2026-11-03T15:15:37.084Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: 95da6a47407cef680a483b1f4ffb6c87
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:36.894Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 1011.0
+    request_id: 5b67667674ff121a675134a07b7a7d5e
+    route: /cart
+  - ts: '2026-11-03T15:15:36.885Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: 5b67667674ff121a675134a07b7a7d5e
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:36.759Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 1073.2
+    request_id: bf9e1d09791b5e036e60f3aeeb525fa4
+    route: /checkout
+  - ts: '2026-11-03T15:15:36.757Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not queue jobs for order 19dfdc2b-401b-4378-9b43-446f68d7b024
+    request_id: bf9e1d09791b5e036e60f3aeeb525fa4
+    route: /checkout
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 300, in checkout\n    await cache.enqueue({\"\
+      type\": job_type, \"order_id\": str(order.id)})\n  File \"/app/api/rediscache.py\", line 89, in\
+      \ enqueue\n    await self._call(self._redis.lpush(JOB_QUEUE_KEY, payload))\n  File \"/app/api/rediscache.py\"\
+      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:36.686Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 3.8
+    request_id: bbfb7600c8434ada2e3adbddb0c4a5d7
+    route: /cart
+  - ts: '2026-11-03T15:15:36.595Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 1110.8
+    request_id: d817ab97cbc8931182e00d4f2242315e
+    route: /checkout
+  - ts: '2026-11-03T15:15:36.584Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not queue jobs for order 1a23632c-9763-44d3-8f6e-c7b4befa46b1
+    request_id: d817ab97cbc8931182e00d4f2242315e
+    route: /checkout
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 300, in checkout\n    await cache.enqueue({\"\
+      type\": job_type, \"order_id\": str(order.id)})\n  File \"/app/api/rediscache.py\", line 89, in\
+      \ enqueue\n    await self._call(self._redis.lpush(JOB_QUEUE_KEY, payload))\n  File \"/app/api/rediscache.py\"\
+      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:36.366Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 1074.2
+    request_id: 1a53209b98fbfc5193ffa74bdc1c51ca
+    route: /checkout
+  - ts: '2026-11-03T15:15:36.364Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not queue jobs for order 54b6ed99-2829-4621-88f9-fb9b8fab8c65
+    request_id: 1a53209b98fbfc5193ffa74bdc1c51ca
+    route: /checkout
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 300, in checkout\n    await cache.enqueue({\"\
+      type\": job_type, \"order_id\": str(order.id)})\n  File \"/app/api/rediscache.py\", line 89, in\
+      \ enqueue\n    await self._call(self._redis.lpush(JOB_QUEUE_KEY, payload))\n  File \"/app/api/rediscache.py\"\
+      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:36.204Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 1115.7
+    request_id: ef893d735ca1699c5dbae25fb0a71451
+    route: /checkout
+  - ts: '2026-11-03T15:15:36.203Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not queue jobs for order dba3423f-914a-4a13-a495-46a918d67956
+    request_id: ef893d735ca1699c5dbae25fb0a71451
+    route: /checkout
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 300, in checkout\n    await cache.enqueue({\"\
+      type\": job_type, \"order_id\": str(order.id)})\n  File \"/app/api/rediscache.py\", line 89, in\
+      \ enqueue\n    await self._call(self._redis.lpush(JOB_QUEUE_KEY, payload))\n  File \"/app/api/rediscache.py\"\
+      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:35.925Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 1021.3
+    request_id: 60e9cd56be0afc2b0c55cdd7986a5ca6
+    route: /cart
+  - ts: '2026-11-03T15:15:35.908Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: 60e9cd56be0afc2b0c55cdd7986a5ca6
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:35.791Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 1108.6
+    request_id: 08bb48f6d21b1706efc35ccc258989d7
+    route: /checkout
+  - ts: '2026-11-03T15:15:35.786Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not queue jobs for order be8f4e95-4da3-4aab-8aa2-ac52b6493b2b
+    request_id: 08bb48f6d21b1706efc35ccc258989d7
+    route: /checkout
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 300, in checkout\n    await cache.enqueue({\"\
+      type\": job_type, \"order_id\": str(order.id)})\n  File \"/app/api/rediscache.py\", line 89, in\
+      \ enqueue\n    await self._call(self._redis.lpush(JOB_QUEUE_KEY, payload))\n  File \"/app/api/rediscache.py\"\
+      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:35.504Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1022.7
+    request_id: ad29b5cd97823340e162acc0105d8014
+    route: /products
+  - ts: '2026-11-03T15:15:35.487Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: ad29b5cd97823340e162acc0105d8014
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:35.137Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 1037.6
+    request_id: c3be7470cc84f22015310ca4650f44b5
+    route: /cart
+  - ts: '2026-11-03T15:15:35.118Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: checkout with coupon SPRING-15
+    request_id: ef893d735ca1699c5dbae25fb0a71451
+    route: /checkout
+  - ts: '2026-11-03T15:15:35.102Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: c3be7470cc84f22015310ca4650f44b5
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:34.909Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1027.9
+    request_id: 832792e9e318f5c7025d1a0d289fff20
+    route: /products
+  - ts: '2026-11-03T15:15:34.883Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 832792e9e318f5c7025d1a0d289fff20
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:34.719Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 1031.3
+    request_id: be8654036f74f8d57769ee23f574e2a6
+    route: /cart
+  - ts: '2026-11-03T15:15:34.692Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: be8654036f74f8d57769ee23f574e2a6
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:34.687Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: checkout with coupon WELCOME-10
+    request_id: 08bb48f6d21b1706efc35ccc258989d7
+    route: /checkout
+  - ts: '2026-11-03T15:15:34.496Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1009.7
+    request_id: f8509074f82fe93a13cd7c85f0e3bcfa
+    route: /products
+  - ts: '2026-11-03T15:15:34.488Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: f8509074f82fe93a13cd7c85f0e3bcfa
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:34.298Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 9.4
+    request_id: 2bf251a28e38d5157c14f410660ad0f9
+    route: /orders
+  - ts: '2026-11-03T15:15:34.103Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1017.8
+    request_id: 3ee36b190614449de95ea29c9d328e25
+    route: /products
+  - ts: '2026-11-03T15:15:34.089Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 3ee36b190614449de95ea29c9d328e25
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:33.898Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 1017.8
+    request_id: 762f1090f8f7a549444132c404be334e
+    route: /cart
+  - ts: '2026-11-03T15:15:33.883Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: 762f1090f8f7a549444132c404be334e
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:33.746Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 1040.4
+    request_id: 331c6d97f89abb774ca5e5535c97c344
+    route: /cart
+  - ts: '2026-11-03T15:15:33.708Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: 331c6d97f89abb774ca5e5535c97c344
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:33.526Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1009.5
+    request_id: ced6fde19535209139cc65a71f4b3d46
+    route: /products
+  - ts: '2026-11-03T15:15:33.519Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: ced6fde19535209139cc65a71f4b3d46
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:33.313Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1010.4
+    request_id: 9880487701e1481e119acd06cc81ba5d
+    route: /products
+  - ts: '2026-11-03T15:15:33.307Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 9880487701e1481e119acd06cc81ba5d
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:33.284Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 2.1
+    request_id: c82fa97a9663688ab64b4574d2a275ce
+    route: /cart
+  - ts: '2026-11-03T15:15:33.101Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 03fb86e7ba12b76b9eaed3b780479809
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:32.884Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: d59979e4bb74ba605d1ff5b557d5ac57
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:32.683Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: b841dcca08db4a43c2b8b0d0d2acf1b9
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:32.486Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: ae63977b36ce01ef68914c01eed9b9f9
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:32.284Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: ede393dd84b28d70e9db51bfd22e18bb
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:32.160Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 1079.2
+    request_id: 52bd8530c4c1961a4d7f44c5a7424b32
+    route: /checkout
+  - ts: '2026-11-03T15:15:32.156Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not queue jobs for order d8b10fb5-824c-4b02-a27a-a123b935aade
+    request_id: 52bd8530c4c1961a4d7f44c5a7424b32
+    route: /checkout
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 300, in checkout\n    await cache.enqueue({\"\
+      type\": job_type, \"order_id\": str(order.id)})\n  File \"/app/api/rediscache.py\", line 89, in\
+      \ enqueue\n    await self._call(self._redis.lpush(JOB_QUEUE_KEY, payload))\n  File \"/app/api/rediscache.py\"\
+      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:31.544Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 1062.1
+    request_id: b0cca3b42e203c4bfdd583cc69afc030
+    route: /checkout
+  - ts: '2026-11-03T15:15:31.541Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not queue jobs for order bb2ade3e-79af-4e2a-b027-31de17086148
+    request_id: b0cca3b42e203c4bfdd583cc69afc030
+    route: /checkout
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 300, in checkout\n    await cache.enqueue({\"\
+      type\": job_type, \"order_id\": str(order.id)})\n  File \"/app/api/rediscache.py\", line 89, in\
+      \ enqueue\n    await self._call(self._redis.lpush(JOB_QUEUE_KEY, payload))\n  File \"/app/api/rediscache.py\"\
+      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:31.090Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 0880330d5822f98fb33f2d459f9e86ca
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:30.750Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 21afc1cebe9c912a3120a91e12f12b48
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:30.482Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: ae440280dcca7ac0a28457da07f21875
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:30.433Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 1104.0
+    request_id: 9bb0adec19f4078240533f4535c69cfb
+    route: /checkout
+  - ts: '2026-11-03T15:15:30.430Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not queue jobs for order 5bf849c5-f3a5-4298-a0c8-b255a23928d6
+    request_id: 9bb0adec19f4078240533f4535c69cfb
+    route: /checkout
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 300, in checkout\n    await cache.enqueue({\"\
+      type\": job_type, \"order_id\": str(order.id)})\n  File \"/app/api/rediscache.py\", line 89, in\
+      \ enqueue\n    await self._call(self._redis.lpush(JOB_QUEUE_KEY, payload))\n  File \"/app/api/rediscache.py\"\
+      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:30.133Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: b377215601d9f3f0172428a25dac2478
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:29.883Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 7213a5e9e4cb25d0a481a30b553b5957
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:29.731Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 29453b8f092440a9e346228ba436c70d
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:29.529Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: b474a95fa7a214db6ae31024854bdece
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:29.329Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: d2f3eaa1bdc212431766c7593b32d932
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:29.129Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: e615233b54879181b49279db0f437a6d
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:28.928Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.catalog
+    msg: catalog cache unavailable, reading the database
+    request_id: 799c2ce0200617b3ccf6edc4a311a819
+    route: /products
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 206, in products\n    cached = await\
+      \ cache.get_catalog()\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\"\
+      , line 46, in get_catalog\n    raw = await self._call(self._redis.get(CATALOG_KEY))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/rediscache.py\", line 43, in _call\n    raise CacheUnavailable(\"cache server\
+      \ unavailable\") from exc\napi.deps.CacheUnavailable: cache server unavailable"
+  - ts: '2026-11-03T15:15:28.693Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: pricing cache unavailable, reading prices from the database
+    request_id: 98a66086106a1b50ed0a99ac50f29023
+    route: /cart
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 175, in lookup_prices\n    cached =\
+      \ await cache.get_prices(product_ids)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/api/rediscache.py\", line 58, in get_prices\n    values: list[str | None] = await self._call(\n\
+      \                               ^^^^^^^^^^^^^^^^^\n  File \"/app/api/rediscache.py\", line 43, in\
+      \ _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+  - ts: '2026-11-03T15:15:28.589Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 1099.3
+    request_id: 9117ade312174bc0890952382db41867
+    route: /checkout
+  - ts: '2026-11-03T15:15:28.583Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not queue jobs for order 23f2f6ce-668f-4bf6-86a5-2b0471537f38
+    request_id: 9117ade312174bc0890952382db41867
+    route: /checkout
+    exc_type: CacheUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1487, in _connect\n    reader, writer = await asyncio.open_connection(\n                \
+      \     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line\
+      \ 48, in open_connection\n    transport, _ = await loop.create_connection(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/base_events.py\", line 1083, in create_connection\n\
+      \    infos = await self._ensure_resolved(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 1466, in _ensure_resolved\n    return await loop.getaddrinfo(host, port, family=family, type=type,\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/base_events.py\"\
+      , line 905, in getaddrinfo\n    return await self.run_in_executor(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      asyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\
+      \nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 850, in connect_check_health\n    await self._connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1486, in _connect\n    async with async_timeout(self.socket_connect_timeout):\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nDuring handling of\
+      \ the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/rediscache.py\", line 41, in _call\n    return await pending\n           ^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\", line 929, in execute_command\n\
+      \    conn = self.connection or await pool.get_connection()\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/utils.py\", line 249, in async_wrapper\n\
+      \    return await func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2824, in get_connection\n    await self.ensure_connection(connection)\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 2865, in ensure_connection\n    await connection.connect()\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 819, in connect\n    await self.retry.call_with_retry(\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 81, in call_with_retry\n    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\"\
+      , line 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 864, in connect_check_health\n    raise e\nredis.exceptions.TimeoutError: Timeout connecting\
+      \ to server\n\nThe above exception was the direct cause of the following exception:\n\nTraceback\
+      \ (most recent call last):\n  File \"/app/api/app.py\", line 300, in checkout\n    await cache.enqueue({\"\
+      type\": job_type, \"order_id\": str(order.id)})\n  File \"/app/api/rediscache.py\", line 89, in\
+      \ enqueue\n    await self._call(self._redis.lpush(JOB_QUEUE_KEY, payload))\n  File \"/app/api/rediscache.py\"\
+      , line 43, in _call\n    raise CacheUnavailable(\"cache server unavailable\") from exc\napi.deps.CacheUnavailable:\
+      \ cache server unavailable"
+metrics:
+- match: sum(rate(cache_operations_total{service="api",result="error"}[1m]))
+  points:
+  - - 1793718901.252
+    - 1.06626
+  - - 1793718916.252
+    - 1.718405
+  - - 1793718931.252
+    - 2.693153
+  - - 1793718946.252
+    - 2.930765
+  - - 1793718961.252
+    - 2.079053
+  - - 1793718976.252
+    - 1.383983
+  - - 1793718991.252
+    - 0.503029
+containers:
+- name: cs-redis
+  service: redis
+  release: 7.4.11
+  restarts: 0
+  oom_killed: false
+  state: exited
+  exit_code: 0
+  health: unhealthy
+probes_ok: true
+runner:
+  active_release: null
+  replicas: 0
+model:
+  gather:
+  - - tool: query_logs
+      args:
+        service: api
+        level: ERROR
+  - - tool: get_service_health
+      args:
+        service: redis
+  - - tool: get_recent_deploys
+      args: {}
+  - - tool: search_runbooks
+      args:
+        query: redis cache unavailable restart
+  - - tool: search_runbooks
+      args:
+        query: redis
+  - - tool: query_logs
+      args:
+        service: redis
+  hypotheses:
+    hypotheses:
+    - rank: 1
+      summary: The Redis container (cs-redis) exited and is in an unhealthy state, causing CacheUnavailable
+        exceptions across the API service when accessing the catalog and pricing caches as well as job
+        queueing.
+      root_cause_category: cache_failure
+      confidence: 0.95
+      evidence_refs:
+      - E1
+      - E2
+      - E3
+    - rank: 2
+      summary: Redis service is unavailable due to an exited container, causing dependent API operations
+        to fail with CacheUnavailable errors.
+      root_cause_category: dependency_unavailable
+      confidence: 0.85
+      evidence_refs:
+      - E1
+      - E2
+      - E3
+  disproof:
+    target_rank: 1
+    tool: query_metrics
+    params:
+      metric: container_cpu_usage_seconds_total
+      service: redis
+    expectation_if_true: Redis container metrics will show zero or absent CPU activity around the incident
+      onset since the container has exited.
+  reflection:
+    items:
+    - rank: 1
+      citations_supported: true
+      adjusted_confidence: 0.95
+      note: Redis container exit and unhealthy state directly explain all CacheUnavailable errors observed
+        in the API service.
+    - rank: 2
+      citations_supported: true
+      adjusted_confidence: 0.85
+      note: Supported by the same direct evidence showing Redis service container has exited.
+    top_verdict: survived
+  proposal:
+    action: restart_service
+    params:
+      service: redis
+    expected_effect: The Redis container will start, restoring cache and job queue availability and eliminating
+      CacheUnavailable stack traces in API logs.
+    rationale: Evidence E3 shows the Redis container cs-redis has exited with health state 'unhealthy'.
+      API error logs in E2 show continuous CacheUnavailable exceptions and failed checkouts due to Redis
+      unavailability. Restarting the Redis service brings it back online and resolves the failures.
+    evidence_refs:
+    - E1
+    - E2
+    - E3
+expect:
+  phase: PROPOSED
+  action: restart_service
+  params:
+    service: redis
+prompt_version: v2

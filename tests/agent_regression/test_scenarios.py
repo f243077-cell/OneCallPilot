@@ -13,15 +13,18 @@ from typing import Any
 import asyncpg
 import pytest
 from redis.asyncio import Redis
-from replay import SCENARIOS, Outcome, Scenario, load, run
+from replay import RECORDED_MODEL, SCENARIOS, Outcome, Scenario, load, run
 
 FILES = sorted(SCENARIOS.glob("*.yaml")) + sorted((SCENARIOS / "recorded").glob("*.yaml"))
+# The real model's answers to the recorded tool outputs (B2.6, record_model.py).
+MODEL_FILES = sorted(RECORDED_MODEL.glob("*.yaml"))
+SUFFIX = {"recorded": "-recorded", "recorded_model": "-model"}
 
 
 @pytest.mark.parametrize(
     "path",
-    FILES,
-    ids=[p.stem + ("-recorded" if p.parent.name == "recorded" else "") for p in FILES],
+    [pytest.param(p, id=p.stem + SUFFIX.get(p.parent.name, "")) for p in FILES]
+    + [pytest.param(p, id=p.stem + "-model", marks=pytest.mark.recorded) for p in MODEL_FILES],
 )
 async def test_scenario(
     path: Path, pool: asyncpg.Pool, redis_client: Redis, tmp_path: Path
