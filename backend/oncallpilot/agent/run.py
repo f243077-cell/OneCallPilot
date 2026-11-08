@@ -17,6 +17,7 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Literal, Protocol
 
 from oncallpilot.agent.citations import CitationCheck, check_citations
@@ -53,7 +54,7 @@ from oncallpilot.agent.state_machine import (
     transition,
 )
 from oncallpilot.agent.tools.registry import read_tool_specs
-from oncallpilot.catalogue import Catalogue
+from oncallpilot.catalogue import Catalogue, Targets
 
 log = logging.getLogger(__name__)
 
@@ -83,8 +84,11 @@ class Investigation:
     prompts: Prompts
     max_seconds: float = MAX_AGENT_SECONDS
     threshold: float = CONFIDENCE_THRESHOLD
-    # The action catalogue (C4): its exact parameter names precede the propose prompt.
+    # The action catalogue (C4): its exact parameter names precede the propose prompt;
+    # with the targets and the ledger, also the release values that are valid now.
     catalogue: Catalogue | None = None
+    targets: Targets | None = None
+    ledger: Path | None = None
     citation_check: Callable[[HypothesisOut, dict[str, str]], CitationCheck] = check_citations
     clock: Callable[[], float] = time.monotonic
     state: AgentState = field(default_factory=AgentState)
@@ -222,7 +226,8 @@ class Investigation:
     async def _propose(self) -> None:
         prompt = self.prompts.propose()
         if self.catalogue is not None:
-            prompt = f"{self.catalogue.describe_params()}\n\n{prompt}"
+            guide = self.catalogue.describe_params(self.targets, self.ledger)
+            prompt = f"{guide}\n\n{prompt}"
         proposal = await self._structured("propose", ProposalOut, prompt)
         self._apply(ToolCalled("propose"))
         if proposal.action == "none":

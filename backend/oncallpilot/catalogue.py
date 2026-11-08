@@ -91,18 +91,30 @@ class Catalogue:
         except (OSError, yaml.YAMLError, KeyError, TypeError, AttributeError, ValueError) as exc:
             raise CatalogueError(f"cannot load {path}: {exc}") from exc
 
-    def describe_params(self) -> str:
-        """The exact parameters of every enabled action, for the propose step."""
+    def describe_params(self, targets: Targets | None = None, ledger: Path | None = None) -> str:
+        """The exact parameters of every enabled action, for the propose step.
+
+        With ``targets`` and ``ledger``, release parameters list the values that
+        ``validate`` accepts right now, per service (CLAUDE.md §5.6).
+        """
         lines = []
         for action in self.actions.values():
             if not action.enabled:
                 continue
+            services = action.params["service"].values if "service" in action.params else None
             parts = []
             for name, p in action.params.items():
                 if p.type == "integer":
                     parts.append(f"`{name}` (an integer from {p.minimum} to {p.maximum})")
                 elif p.values:
                     parts.append(f"`{name}` (one of {', '.join(p.values)})")
+                elif p.values_from == "ledger_releases" and targets and ledger and services:
+                    live = []
+                    for service in services:
+                        allowed = sorted(ledger_releases(ledger, targets, service))
+                        shown = ", ".join(allowed) or "none, no rollback possible"
+                        live.append(f"for {service}: {shown}")
+                    parts.append(f"`{name}` ({'; '.join(live)})")
                 elif p.values_from == "ledger_releases":
                     parts.append(f"`{name}` (a release from the deploy history)")
                 else:

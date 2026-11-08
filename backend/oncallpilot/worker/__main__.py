@@ -48,7 +48,7 @@ from oncallpilot.agent.state_machine import MAX_TOOL_CALLS
 from oncallpilot.agent.toolbox import ToolBox
 from oncallpilot.agent.tools.clients import LokiClient, PrometheusClient
 from oncallpilot.agent.tools.get_service_health import docker_base_url
-from oncallpilot.catalogue import Catalogue
+from oncallpilot.catalogue import Catalogue, Targets
 from oncallpilot.db import settings as settings_db
 from oncallpilot.db.pool import create_pool
 from oncallpilot.detector.config import load_config, read_config
@@ -232,6 +232,8 @@ async def main() -> None:
                 max_seconds=settings.max_agent_seconds,
                 threshold=settings.confidence_threshold,
                 catalogue=catalogue,
+                targets=Targets.load(settings.targets_path),
+                ledger=settings.ledger_path,
             ).run()
 
         consumer = AgentJobConsumer(

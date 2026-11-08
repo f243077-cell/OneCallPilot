@@ -49,7 +49,7 @@ from oncallpilot.agent.run import Investigation
 from oncallpilot.agent.state_machine import AgentState
 from oncallpilot.agent.toolbox import ToolBox
 from oncallpilot.agent.tools.clients import LokiClient, PrometheusClient
-from oncallpilot.catalogue import Catalogue
+from oncallpilot.catalogue import Catalogue, Targets
 from oncallpilot.db.ingest import ingest_alert
 from oncallpilot.events import EventStream
 from oncallpilot.runner_link import RunnerLink
@@ -334,6 +334,8 @@ async def run(
             effects=effects,
             prompts=FilePrompts(str(scenario.data.get("prompt_version", "v1"))),
             catalogue=Catalogue.load(ROOT / "contracts" / "actions.yaml"),
+            targets=Targets.load(ROOT / "runner" / "targets.yaml"),
+            ledger=ledger,
         ).run()
         requests = list(runner.requests)
     return Outcome(state, opened.incident_id, requests, backends)

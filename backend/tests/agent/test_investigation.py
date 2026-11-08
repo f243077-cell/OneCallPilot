@@ -14,7 +14,7 @@ from oncallpilot.agent.providers.fake import INVALID_JSON, FakeProvider
 from oncallpilot.agent.run import Investigation
 from oncallpilot.agent.tools.registry import ALL_TOOLS, read_tool_specs
 from oncallpilot.agent.untrusted import wrap
-from oncallpilot.catalogue import Catalogue
+from oncallpilot.catalogue import Catalogue, Targets
 from tests.agent.fakes import (
     DISPROOF,
     FakeEffects,
@@ -211,6 +211,21 @@ async def test_the_propose_prompt_names_the_exact_parameters_of_each_action() ->
     )
     assert "run_migration_rollback" not in prompt  # disabled actions are not offered
     assert state.phase == "PROPOSED" and state.llm_calls == 6
+
+
+def test_the_parameter_list_shows_the_rollback_targets_that_exist_now(tmp_path: Path) -> None:
+    # Gate G2, 2026-11-08, scenario 1: the model proposed rolling the worker back to
+    # 2.0.0, a release in the ledger without slots; no worker rollback was possible
+    # at all, and the proposal was refused. The list now shows the live values,
+    # computed exactly as the validator does (CLAUDE.md §5.6).
+    from tests.test_catalogue import ledger
+
+    root = Path(__file__).resolve().parents[3]
+    catalogue = Catalogue.load(root / "contracts" / "actions.yaml")
+    targets = Targets.load(root / "runner" / "targets.yaml")
+    text = catalogue.describe_params(targets, ledger(tmp_path, "1.4.0", "1.5.0"))
+    line = next(x for x in text.splitlines() if x.startswith("- `rollback_deploy`"))
+    assert "`target_release` (for api: 1.4.0; for worker: none, no rollback possible)" in line
 
 
 async def test_all_hypotheses_cite_unknown_refs_escalates() -> None:
