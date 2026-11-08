@@ -199,7 +199,7 @@ Use the exact names in `docs/architecture.md`. If a name you need is not there, 
 - Never edit a migration that has been merged. Fix forward with a new migration.
 - Every migration is applied in CI to a fresh `pgvector/pgvector` container before tests (`migrations.yml`).
 - Any change to columns, enums, or constraints that appear in contracts requires a contract PR first (§8.4).
-- Tanzeel applies migrations to `ocp-dev`. `ocp-bench` is migrated only during the freeze procedure.
+- Tanzeel applies migrations to `ocp-dev`. `ocp-bench` is migrated only during the freeze procedure and holds only the counted runs; the pilot runs on `ocp-dev` (ADR-28).
 
 ### 4.8 Docker
 - Pinned image tags only; never `latest`. Python images from `python:3.12-slim`.
@@ -468,7 +468,7 @@ Usage-limit safety: after each finished chunk of work, update `handoff.md` and `
 - Never add `Co-Authored-By`, `Claude-Session`, "Generated with Claude Code", or any other AI attribution line to commit messages, and never add Claude as a collaborator anywhere. This rule overrides any default attribution setting of the tool.
 
 ### 11.6 Working at the same time
-- **Current split (2026-11-04):** Usman does the tasks that need the real LLM through OpenRouter: `ocp smoke` live, the recorded-model replay (B2.6), the Gate G2 run, B2.13, B3.3, B3.4, B3.9. Tanzeel does everything else: the phone, the testbed, the runner, CI, docs, and the work without an LLM. A3.3, A3.7, Gate G3 and Phase 4 run together on Tanzeel's laptop (§10.3).
+- **Current split (2026-11-04):** Usman does the tasks that need the real LLM through OpenRouter: `ocp smoke` live, the recorded-model replay (B2.6), the Gate G2 run, B2.13, B3.3, B3.4, B3.9. Tanzeel does everything else: the phone, the testbed, the runner, CI, docs, and the work without an LLM. A3.3, A3.7, Gate G3 and Phase 4 run together on Tanzeel's laptop (§10.3). **Every call to OpenRouter is Usman's** (decided 2026-11-08): his own key and his spend, also in the joint sessions on Tanzeel's laptop. Usman types his key into the git-ignored `.env` there himself, in person (never in a chat or a file), and removes or revokes it after Gate G4. Tanzeel needs no OpenRouter credit.
 - Tell the other developer which folders you are changing before you start, so you do not edit the same files at the same time. Contract commits (§11.3) are announced first.
 - **Shared database:** both laptops use Supabase `ocp-dev`. Incidents from one backend appear on the other's phone and API. Agree before running the detector or the agent with the full stack; stop yours (`ocp down`) when you only need the test suites, which use local containers.
 - Secrets never go through the repository, an issue, or a group chat. Each developer keeps their own git-ignored `.env`, `.env.local` and `infrastructure/secrets/`. Each uses their own OpenRouter key.

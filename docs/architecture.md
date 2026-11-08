@@ -39,6 +39,7 @@ The original specification leaves some engineering details open. Each gap is res
 | ADR-25 | **A reset starts the recovery clock** (`docs/adr/ADR-25-a-reset-starts-the-recovery-clock.md`). A signal that triggered before a `chaos reset` counts as normal from the reset on; it recovers 3 minutes later unless it still breaches after the settle period. | Otherwise the signal stayed triggered past the next run's injection, and a run on the same signal and service raised no incident (found by the B2.6 recorder: scenario 5 after 3). | Accepted 2026-11-03 |
 | ADR-26 | **Container events during a reset do not count** (`docs/adr/ADR-26-container-events-during-a-reset-do-not-count.md`). After a `chaos reset`, the `restarts` signal ignores restarts and non-zero exits before the end of the settle period. | Its 5-minute window outlasted the 3-minute warm-up: a slot the reset stopped mid crash loop raised a worker incident with no fault (found 2026-11-04). | Accepted 2026-11-04 |
 | ADR-27 | **The agent's tools do not look back past a reset** (`docs/adr/ADR-27-tools-do-not-look-back-past-a-reset.md`). `query_logs` and `query_metrics` never read earlier than the last `kind=reset` ledger record plus 150 s. | The incident window starts 10 min before the anomaly but a run's reset is only 4 min before its injection, so the previous run's fault was evidence (found by `ocp smoke` and the real-model recordings). | Accepted 2026-11-08 |
+| ADR-28 | **The pilot runs on `ocp-dev`; `ocp-bench` holds only the counted runs** (`docs/adr/ADR-28-the-pilot-runs-on-ocp-dev.md`). `ocp-bench` is migrated at the start of the freeze procedure and verified empty before the tag. | `audit_log` and the backend role forbid deleting rows, so a used `ocp-bench` cannot be cleared; pilot proposals would also count in `bench audit-safety`. | Accepted 2026-11-08 |
 
 ---
 
@@ -1268,7 +1269,8 @@ infrastructure/compose/
 |---|---|---|---|
 | Local dev (Usman) | Usman's laptop | `ocp-dev` | Backend and agent development; can run with `LLM_PROVIDER=fake` |
 | Local dev (Tanzeel) | Tanzeel's laptop | `ocp-dev` | Testbed, runner, app (mock mode or live) |
-| Integration and benchmark | **Tanzeel's laptop (16 GB)** | `ocp-bench` | Friday integration checkpoints, the demo, all 48 benchmark runs |
+| Integration, pilot and demo | **Tanzeel's laptop (16 GB)** | `ocp-dev` | Friday integration checkpoints, the pilot (P4.1), the demo clip |
+| Benchmark (counted runs) | **Tanzeel's laptop (16 GB)** | `ocp-bench` | All 48 benchmark runs, from the freeze on (ADR-28) |
 | CI | GitHub Actions | none (local Postgres container) | All tests; LLM always `fake` |
 
 ### 12.3 Host prerequisites (Windows)

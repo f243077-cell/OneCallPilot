@@ -330,10 +330,10 @@ These drive Tanzeel's mock mode **and** Usman's WebSocket gateway tests.
 
 | ID | Task | Owner |
 |---|---|---|
-| P4.1 | Pilot: each scenario once in each mode (16 runs, **not counted**) | Both (alternating operator and observer) |
+| P4.1 | Pilot: each scenario once in each mode (16 runs, **not counted**, on `ocp-dev`, ADR-28) | Both (alternating operator and observer) |
 | P4.2 | Fix only harness, flow, or reliability bugs found in the pilot. Prompt or detector changes are allowed **only before** the freeze, with a version bump. | Owner of the area |
 | P4.3 | Clean-machine setup test (`ocp up` from a fresh clone on Usman's laptop) | Usman |
-| P4.4 | **Freeze:** tag `bench-freeze`; `BENCHMARK_LOCK=true`; model, prompt, detector config, and catalogue pinned; `ocp-bench` database cleared | Both |
+| P4.4 | **Freeze:** tag `bench-freeze`; `BENCHMARK_LOCK=true`; model, prompt, detector config, and catalogue pinned; `ocp-bench` migrated fresh and verified empty (ADR-28) | Both |
 | P4.5 | README: setup, architecture, safety model, limitations | Usman drafts, Tanzeel reviews |
 
 **Week 8: counted runs and publication (both)**
