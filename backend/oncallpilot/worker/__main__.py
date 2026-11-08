@@ -231,6 +231,7 @@ async def main() -> None:
                 prompts=prompts,
                 max_seconds=settings.max_agent_seconds,
                 threshold=settings.confidence_threshold,
+                catalogue=catalogue,
             ).run()
 
         consumer = AgentJobConsumer(

@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from typing import Literal, Protocol
 
 from oncallpilot.agent.citations import CitationCheck, check_citations
-from oncallpilot.agent.effects import AgentEffects, EvidenceView, IncidentContext, RunMeta
+from oncallpilot.agent.effects import SOURCES, AgentEffects, EvidenceView, IncidentContext, RunMeta
 from oncallpilot.agent.providers.base import (
     InvalidStructuredOutputError,
     LLMProvider,
@@ -53,6 +53,7 @@ from oncallpilot.agent.state_machine import (
     transition,
 )
 from oncallpilot.agent.tools.registry import read_tool_specs
+from oncallpilot.catalogue import Catalogue
 
 log = logging.getLogger(__name__)
 
@@ -82,6 +83,8 @@ class Investigation:
     prompts: Prompts
     max_seconds: float = MAX_AGENT_SECONDS
     threshold: float = CONFIDENCE_THRESHOLD
+    # The action catalogue (C4): its exact parameter names precede the propose prompt.
+    catalogue: Catalogue | None = None
     citation_check: Callable[[HypothesisOut, dict[str, str]], CitationCheck] = check_citations
     clock: Callable[[], float] = time.monotonic
     state: AgentState = field(default_factory=AgentState)
@@ -188,6 +191,12 @@ class Investigation:
             prompt = (
                 f"Evidence added by the detector during the investigation:\n\n{added}\n\n{prompt}"
             )
+        # Which reference came from which source, as the citation rules name them
+        # (prompts v2): code-built from refs and kinds only, no tool output in it.
+        index = ", ".join(
+            f"{ref} ({SOURCES.get(e.kind, 'tool')})" for ref, e in self.evidence.items()
+        )
+        prompt = f"References so far: {index}.\n\n{prompt}"
         reply = await self._structured("hypothesize", HypothesisSetOut, prompt)
         known = set(self.evidence)
         valid = [h for h in reply.hypotheses if set(h.evidence_refs) <= known]
@@ -211,7 +220,10 @@ class Investigation:
         self._apply(ReflectionDone(top_confidence(ranked), self.threshold))
 
     async def _propose(self) -> None:
-        proposal = await self._structured("propose", ProposalOut, self.prompts.propose())
+        prompt = self.prompts.propose()
+        if self.catalogue is not None:
+            prompt = f"{self.catalogue.describe_params()}\n\n{prompt}"
+        proposal = await self._structured("propose", ProposalOut, prompt)
         self._apply(ToolCalled("propose"))
         if proposal.action == "none":
             self._apply(ProposalChecked("none"))

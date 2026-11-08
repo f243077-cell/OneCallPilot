@@ -14,6 +14,7 @@ from oncallpilot.agent.providers.fake import INVALID_JSON, FakeProvider
 from oncallpilot.agent.run import Investigation
 from oncallpilot.agent.tools.registry import ALL_TOOLS, read_tool_specs
 from oncallpilot.agent.untrusted import wrap
+from oncallpilot.catalogue import Catalogue
 from tests.agent.fakes import (
     DISPROOF,
     FakeEffects,
@@ -171,6 +172,45 @@ async def test_seed_evidence_added_during_the_run_can_be_cited() -> None:
     [hypothesize_prompt] = [p for kind, p, _ in effects.llm_calls if kind == "hypothesize"]
     assert late.rendered in hypothesize_prompt  # the model is shown what it may cite
     assert state.llm_calls == 6 and state.tool_calls == 3  # no extra calls (AI-029)
+
+
+async def test_the_hypothesis_prompt_lists_every_reference_with_its_source() -> None:
+    # Gate G2, 2026-11-08: with prompts v2 the model still cited only the detector
+    # signals for a bad deploy (halved below the threshold, AI-014). Its context is
+    # long by then; a code-built index says which reference is which source.
+    effects = FakeEffects()
+    provider = FakeProvider(
+        turns=[tool_turn("query_logs", service="api"), tool_turn("get_recent_deploys")],
+        structured=happy_script(),
+    )
+    state = await investigation(provider, effects).run()
+    [prompt] = [p for kind, p, _ in effects.llm_calls if kind == "hypothesize"]
+    assert "References so far: E1 (detector), E2 (loki), E3 (deploy_ledger)." in prompt
+    assert state.llm_calls == 7  # nothing extra (AI-029)
+
+
+async def test_the_propose_prompt_names_the_exact_parameters_of_each_action() -> None:
+    # Recorded-model runs, 2026-11-08: the model proposed rollback_deploy with
+    # `release` instead of `target_release` twice; the proposal was rejected as
+    # invalid. The catalogue's own parameter names now precede the propose prompt.
+    catalogue = Catalogue.load(Path(__file__).resolve().parents[3] / "contracts" / "actions.yaml")
+    effects = FakeEffects()
+    provider = FakeProvider(
+        turns=[tool_turn("query_logs", service="api")], structured=happy_script()
+    )
+    run = Investigation(
+        provider=provider, effects=effects, prompts=StubPrompts(), catalogue=catalogue
+    )
+    state = await run.run()
+    [prompt] = [p for kind, p, _ in effects.llm_calls if kind == "propose"]
+    assert (
+        "- `rollback_deploy`: `service` (one of api, worker), `target_release` (a release" in prompt
+    )
+    assert (
+        "- `scale_service`: `service` (one of api), `replicas` (an integer from 1 to 5)" in prompt
+    )
+    assert "run_migration_rollback" not in prompt  # disabled actions are not offered
+    assert state.phase == "PROPOSED" and state.llm_calls == 6
 
 
 async def test_all_hypotheses_cite_unknown_refs_escalates() -> None:

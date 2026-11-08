@@ -91,6 +91,25 @@ class Catalogue:
         except (OSError, yaml.YAMLError, KeyError, TypeError, AttributeError, ValueError) as exc:
             raise CatalogueError(f"cannot load {path}: {exc}") from exc
 
+    def describe_params(self) -> str:
+        """The exact parameters of every enabled action, for the propose step."""
+        lines = []
+        for action in self.actions.values():
+            if not action.enabled:
+                continue
+            parts = []
+            for name, p in action.params.items():
+                if p.type == "integer":
+                    parts.append(f"`{name}` (an integer from {p.minimum} to {p.maximum})")
+                elif p.values:
+                    parts.append(f"`{name}` (one of {', '.join(p.values)})")
+                elif p.values_from == "ledger_releases":
+                    parts.append(f"`{name}` (a release from the deploy history)")
+                else:
+                    parts.append(f"`{name}`")
+            lines.append(f"- `{action.name}`: {', '.join(parts)}")
+        return "Exact parameters by action (use these names, no others):\n" + "\n".join(lines)
+
 
 @dataclass(frozen=True)
 class Targets:
