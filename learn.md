@@ -307,3 +307,20 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Pilot*: practice runs that are not counted.
 - *Readiness check*: looking at a system without changing anything, to see that it is ready.
 
+### 2026-11-08 (night) — The gate exam for the AI, and the ghosts of earlier runs
+
+**What Gate G2 is.** The project's checkpoint for "does the AI work?": break the shop in all 8 ways, once each, and the AI must suggest the right fix (or, for the two faults no action can fix, hand the problem to a person) in at least 6 of 8. It passed with 7 of 8. Each suggested fix was approved through the system and really repaired the shop within about two and a half minutes.
+
+**Ghosts of earlier runs.** Most of today's failures were not the AI being wrong, but the AI seeing traces of the *previous* test: its error messages still in the logs, a container that had crashed in the previous scenario and was still lying there. Each time the AI reasoned sensibly from misleading clues. The fix (ADR-27): after the test shop is reset, the AI's tools only look at what happened since the reset.
+
+**Telling the AI the rules it is judged by.** Twice the AI was right but was marked down: once for not citing the deploy history, once for guessing a parameter name. The fix was to show it, right where it decides, which source each clue came from, the exact parameter names, and which releases can actually be rolled back to.
+
+**Why it is slow.** From alarm to suggestion takes about 80 seconds; the AI itself thinks for only about 27 of them. Most of the rest is waiting for the database, which sits in Sydney: every question to it takes two thirds of a second, and each step asks several. A database closer to Pakistan would fix most of it.
+
+**One honest disagreement.** For the memory leak, the AI says "a restart would only hide the leak, a person should look", while the benchmark expects a restart. That is a choice for the team, not a bug.
+
+**Words.**
+- *Gate*: a checkpoint with fixed pass criteria before the project moves on.
+- *Round trip*: one question to a server and its answer; its time adds up when there are many.
+- *Pinning a model*: fixing the exact AI model version, so all measurements use the same one.
+

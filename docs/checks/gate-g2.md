@@ -2,12 +2,12 @@
 
 > Checklist for `docs/phases.md` Phase 2, Gate G2. **Status as of 2026-11-08** (Usman's laptop, Supabase `ocp-dev`). The earlier version of this file (2026-10-10) is in git history.
 
-## Status: **PASSED** (criteria 1–5), with one scenario re-run pending (s1, see below)
+## Status: **PASSED** (criteria 1–5): 7 of 8; scenario 1 is a documented miss (a prompt decision, below)
 
 | # | Criterion | State | Evidence |
 |---|---|---|---|
-| 1 | With the real LLM, each scenario produces a proposal matching `scenarios.yaml`, or an escalation for 7 and 8, in at least 6 of 8 single runs | **Met: 7 of 8** | The run below. Misses: s1 (cause found and fixed, re-run pending). |
-| 2 | Approving through the API (as `ocp smoke` does) executes the action; the two-stage health check resolves scenarios 1–6 | **Met for 2, 3, 4, 5, 6**; s1 pending | Every matching proposal was challenged and approved as the test user with the method the challenge named, and each incident reached `resolved` (`action_succeeded`) 103–148 s after the approval. `ocp smoke` passed too (`docs/checks/smoke.md`, run 12). |
+| 1 | With the real LLM, each scenario produces a proposal matching `scenarios.yaml`, or an escalation for 7 and 8, in at least 6 of 8 single runs | **Met: 7 of 8** | The run below. Miss: s1 (three attempts; final cause is a prompt rule, below). |
+| 2 | Approving through the API (as `ocp smoke` does) executes the action; the two-stage health check resolves scenarios 1–6 | **Met for 2, 3, 4, 5, 6**; s1 had no proposal | Every matching proposal was challenged and approved as the test user with the method the challenge named, and each incident reached `resolved` (`action_succeeded`) 103–148 s after the approval. `ocp smoke` passed too (`docs/checks/smoke.md`, run 12). |
 | 3 | TEST-003, TEST-004, TEST-005 and TEST-015 are green | **Met** | TEST-003: `tests/security/test_prompt_injection.py` (18 tests, `cb9efd3`), in CI (backend, security step). TEST-004: `runner/tests/security/test_forbidden_actions.py` (runner CI). TEST-005: `tests/integration/test_approvals.py` (backend CI, integration step). TEST-015: `socket-proxy-rw` 54/54 (runner CI, `runner-proxy`) and `socket-proxy-ro` (backend CI, `run_ro_proxy_test.sh`). All nine CI jobs green on `main` (`5cbdb87`, `cb9efd3`). |
 | 4 | The agent regression suite is green in CI; `agent_meta` is complete | **Met** | `tests/agent_regression`: 22 cases (8 synthetic, 8 recorded tool outputs, 6 recorded real-model answers), green in backend CI. Every incident of the run has `agent_meta` with `prompt_version`, `provider`, `model`, `catalogue_version`, `agent_config_hash`, `tool_calls`, `llm_calls`, tokens, `duration_ms`, `terminal_state`. |
 | 5 | The LLM model is pinned | **Met** | ADR-13 rule: criterion 1 passed, so the primary stays: **`google/gemini-3.8-flash` through OpenRouter** (ADR-23), pinned 2026-11-08 in `.env.example`, `infrastructure/compose/copilot.yml`, `backend/oncallpilot/settings.py`, `CLAUDE.md` §10.2 and architecture ADR-13 (B2.13). Frozen at `bench-freeze`. |
@@ -18,7 +18,7 @@ Setup: `ocp up` from `main`, prompts v2 with the reference index and parameter l
 
 | Scenario | Incident (s after inject) | Outcome (s after inject) | Top hypothesis | Expected | Match | After approval |
 |---|---|---|---|---|---|---|
-| 1 memory leak | 413.3 (worker restarts) | see below | — | restart worker | **miss** | — |
+| 1 memory leak (3rd attempt) | 204.9 (worker restarts) | 283.9: escalated `no_catalogue_action_fits` | memory_leak 0.85 | restart worker | **miss** | — |
 | 2 bad deploy | 9.0 | 85.1: `rollback_deploy` api → 1.4.0 | bad_deploy 0.95 | same | ✅ | resolved in 144 s |
 | 3 db pool | 17.7 | 96.7: `restart_service` api | db_connection_exhaustion 0.95 | same | ✅ | resolved in 142 s |
 | 4 cache outage | 12.1 | 92.8: `restart_service` redis | cache_failure 0.95 | same | ✅ | resolved in 103 s |
@@ -32,7 +32,8 @@ Setup: `ocp up` from `main`, prompts v2 with the reference index and parameter l
 **Misses and causes**
 - **s5, first attempt:** right diagnosis (`traffic_surge` 0.9) but `scale_service` to 4 replicas instead of 3. Run on the build before `7dcf469`. Re-run on `main` (with `7dcf469`): 3 replicas, resolved. Counted as the re-run's result.
 - **s1, first attempt:** the incident opened only 413 s after the injection (the memory leak needs about 7 minutes to restart the worker), and the driver's 420 s limit counted from the injection, so it stopped before the agent finished: a driver bug, fixed (the limit now counts from the incident).
-- **s1, second attempt** (17:46): escalated `proposal_invalid` after diagnosing a bad deploy: the model blamed `cs-worker-220`, a worker 2.2.0 slot that had crashed in scenario 6 and stays exited through every reset. Container state from an earlier run was evidence: fixed in `0dab289` (ADR-27 amended: a container that stopped before the last reset is left out). Third attempt pending.
+- **s1, second attempt** (17:46): escalated `proposal_invalid` after diagnosing a bad deploy: the model blamed `cs-worker-220`, a worker 2.2.0 slot that had crashed in scenario 6 and stays exited through every reset. Container state from an earlier run was evidence: fixed in `0dab289` (ADR-27 amended: a container that stopped before the last reset is left out). The proposal (rollback to 2.0.0) was also invalid: that release has no slots, and no worker rollback was possible; the parameter list now shows the live valid values (`1b7fbaf`).
+- **s1, third attempt** (18:31, all fixes in): clean evidence and the right diagnosis (`memory_leak` 0.85), then `none` → escalated `no_catalogue_action_fits`. **This is the prompt, not a defect:** `propose.md` (v1 and v2) says to answer `none` when no action addresses the cause, "or one that a restart would only hide"; for a leak, a restart is exactly such a mitigation, while `benchmark/scenarios.yaml` expects `restart_service(worker)`. Resolving it is a decision for Usman and Tanzeel (`handoff.md` 2026-11-08): either a prompt v3 that allows a restart as a mitigation that restores service while a human investigates (general wording, no scenario hint, `CLAUDE.md` §5.8), or accept escalation as a correct outcome for a leak and change the scenario's expectation.
 
 **Model variance:** the same scenario on the same code can give a different answer (s5: 4, then 3 replicas). The counted benchmark has 3 repetitions per scenario and mode for this reason.
 

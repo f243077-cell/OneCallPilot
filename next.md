@@ -11,13 +11,14 @@ Done 2026-11-04: MOB-016 with the app killed (`docs/checks/push.md`); ADR-26 (a 
 3. Read the storyboard once; adjust captions to taste. It is filmed with A3.3 (needs a proposal).
 
 ## Usman — next (OpenRouter)
-**The detailed list, with steps, "done when" and Phase 4, is `docs/usman-work-plan.md`.** Short form below. Every OpenRouter call is Usman's (his key, typed in person into the `.env` of Tanzeel's laptop for joint sessions; `CLAUDE.md` §11.6). The pilot runs on `ocp-dev`; `ocp-bench` is for the counted runs only (ADR-28).
-State 2026-11-08: `ocp smoke` live **passed** (`docs/checks/smoke.md`, run 12); prompts v2 exist (default still v1; Usman's `.env` has `PROMPT_VERSION=v2`). A Gate G2 run of all 8 scenarios was started 2026-11-08 (scratch driver: reset, 30 healthy minutes, reset, 240 s warm-up, inject, wait for proposal or escalation; a matching proposal is approved like `ocp smoke`).
-1. Gate G2 results into `docs/checks/gate-g2.md` (criteria 1, 2, 5); misses get a cause each. If the run stopped, re-run the missing scenarios with 30 healthy minutes before each injection.
-2. B2.13: pin the model (ADR-13: keep `google/gemini-3.8-flash` if criterion 1 is at least 6/8, else the Claude adapter).
-3. With Tanzeel: the default prompt version, and the 30-minute look-back between benchmark runs (`handoff.md` 2026-11-08, "Waiting on Tanzeel").
-4. B2.6 recorded-model replay; B3.3 (scenario 8 injection hardening; a prompt change needs v3); B3.4 (alert to proposal about 77 s now, target 60 s, NFR-001); B3.9 procedure dry run.
-Live runs: keep the laptop idle, leave 30 healthy minutes before each injection, check the OpenRouter spend after each chunk. Docker on this laptop: disk on `G:\DockerData`; if WSL says `E_ACCESSDENIED` on `ext4.vhdx`, quit Docker Desktop, `wsl --shutdown`, restart it (or Windows).
+**The detailed list, with steps, "done when" and Phase 4, is `docs/usman-work-plan.md`.** Every OpenRouter call is Usman's (`CLAUDE.md` §11.6). The pilot runs on `ocp-dev`, `ocp-bench` only for counted runs (ADR-28).
+State 2026-11-08 (night): **Gate G2 passed 7 of 8** (`docs/checks/gate-g2.md`); model pinned (B2.13); prompts v2 are the default; ADR-27 (no look-back past a reset, also for container health); TEST-003 suite in; 6 of 8 real-model recordings (`tests/agent_regression/scenarios/recorded_model/`). Latency: median 81 s, about 40 s of it database round trips to Sydney (`docs/checks/latency.md`).
+1. Decisions with Tanzeel (`handoff.md` 2026-11-08 night): ADR-27 review; `ocp-bench` in `ap-south-1`; scenario 1 (prompt v3 or a changed expectation). Top up the OpenRouter key ($1.85 of $5 used).
+2. U6 (B3.3): 5 live scenario 8 runs into `docs/checks/injection.md`; the structural TEST-003 suite is done.
+3. U7 (B3.4): re-measure after the region decision.
+4. U4: two `ocp smoke` back to back; U5: re-record all 8 after the last prompt or tool change (`OCP_RECORD_MODEL=1`, see `record_model.py`).
+5. Then U8 (procedure dry run, with Tanzeel).
+Live runs on this laptop: keep it idle; the scratch Gate G2 driver is not in the repo (its logic: reset, 240 s warm-up, inject, wait for the run's own incident, then a proposal or escalation; approve a matching proposal like `ocp smoke`). Docker: disk on `G:\DockerData`; on `E_ACCESSDENIED` for `ext4.vhdx`, quit Docker Desktop, `wsl --shutdown`, start again.
 
 ## Together (Tanzeel's laptop and phone)
 A3.3 live biometric approval, A3.7 all 8 scenarios from the phone, Gate G3, Phase 4.

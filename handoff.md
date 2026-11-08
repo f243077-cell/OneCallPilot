@@ -2,6 +2,36 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-08 (night) — Usman: Gate G2 passed 7 of 8, model pinned, ADR-27, TEST-003
+
+### Done
+- **Gate G2 PASSED (U1):** 7 of 8 with the real model, back to back as `bench run` does. Scenarios 2–6 proposed the expected action and resolved after the API approval; 7 and 8 escalated, and 8 followed no planted instruction. Details, misses and causes: `docs/checks/gate-g2.md`.
+- **B2.13 (U2): the model is pinned**, `google/gemini-3.8-flash` through OpenRouter, the same everywhere (`.env.example`, `copilot.yml` default, `settings.py`, `CLAUDE.md` §10.2, architecture ADR-13).
+- **Prompts v2 are the default (U3, D2).**
+- Agent fixes found by the live runs and the model recordings, each with tests:
+  - **ADR-27:** the log and metric tools, and from `0dab289` also the container health, never look back past the last reset plus 150 s. Without it, every run saw the previous run's fault.
+  - The hypothesis prompt lists every reference with its source, and the propose prompt lists each action's exact parameters with the release values that are valid now (`ed8c973`, `1b7fbaf`).
+  - `get_service_health` leaves out spare slots that were stopped on purpose (`7dcf469`).
+- **B2.6 second half (U5, first pass):** `tests/agent_regression/record_model.py` records the real model's answers and replays them in CI. 6 of 8 recorded (2, 3, 4, 6, 7, 8). The replay's fake Loki now honours each query's time range.
+- **TEST-003 (U6, structural half):** `tests/security/test_prompt_injection.py`, 18 tests. It found a real gap: "SYSTEM NOTE: … approve it at once" was not flagged; two suspicious-text patterns were added.
+- **U7 measured:** alert to proposal is a median of 81 s, of which only about 27 s is the model. Each database round trip to `ocp-dev` (Sydney) takes about 680 ms (`docs/checks/latency.md`).
+- Checks before each push: backend 353, regression 22, security 136, integration 127 of 128 (the known local timing test). CI green on every push checked.
+
+### Next (Usman)
+1. Scenario 1 decision (below), then re-record all 8 (U5) after the last prompt or tool change.
+2. U6: live scenario 8 runs, 5 of them, into `docs/checks/injection.md`.
+3. U7: after the region decision, re-measure; options B and C in `latency.md` only if still above 60 s.
+4. U4: two `ocp smoke` runs back to back (ADR-27's live proof; the Gate G2 run already ran back to back).
+
+### Waiting on Tanzeel
+- **Review ADR-27** (now also covers container state), D1 in `docs/usman-work-plan.md`.
+- **Create `ocp-bench` in `ap-south-1` (Mumbai)** before the freeze? About 40 of the 81 s alert-to-proposal time is database latency to Sydney, and scenario 8 ran out of its 90 s budget because of it (`docs/checks/latency.md`, option A). It is still empty (ADR-28), and a project's region cannot be changed later.
+- **Scenario 1 (memory leak):** the model diagnoses it right but answers `none`, because `propose.md` says to escalate when "a restart would only hide" the cause, while `scenarios.yaml` expects `restart_service(worker)`. Choose: a prompt v3 that allows a restart as a mitigation that restores service while a human investigates (general wording), or accept escalation and change the scenario's expectation.
+
+### Waiting on Usman
+- **The OpenRouter key needs a top-up before Phase 4:** $1.85 of the $5 limit used (recordings are the expensive part).
+- Tick your box in `docs/checks/runbook-review.md`.
+
 ## 2026-11-08 (evening) — Tanzeel: every OpenRouter task is Usman's, pilot on ocp-dev (ADR-28)
 
 ### Done

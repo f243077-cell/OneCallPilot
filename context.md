@@ -1,7 +1,7 @@
 # Context — current state
 
 > Rewritten at the end of every session (or chunk) so it matches reality (`CLAUDE.md` §11.4). Read it right after `CLAUDE.md`, then the newest `handoff.md` entry, then **`next.md`**.
-> **Last updated:** 2026-11-08, Usman's session on his laptop (Stream B line, Usman's laptop notes and two decisions changed; the rest is Tanzeel's 2026-11-04 text).
+> **Last updated:** 2026-11-08 (night), Usman's session (Stream B line and decisions; the rest as before).
 
 ## Who and where
 - **Two developers since 2026-11-04:** Tanzeel (alone from 2026-10-21 to 2026-11-03) and Usman, who is back. Both may edit every folder; a session works for the developer who started it.
@@ -16,7 +16,7 @@
 
 ## Phase
 - **Stream A (testbed, runner, app):** Phase 2, Phase 2 done, A2.1–A2.9 (A2.1–A2.5: `docs/checks/week-3.md`, `gate-g2.md`; A2.6–A2.9 from 2026-10-21); Phase 3: A3.1, A3.4, A3.5 done; A3.6 done; S3.1 done (runner live crash test); A3.2 done 2026-11-03 (push on the real phone, `docs/checks/push.md`; the app-killed case passed 2026-11-04); Gate G3 criterion 2 (Wi‑Fi off) passed on the device 2026-11-04 (`docs/checks/gate-g3.md`); A3.3 needs a proposal (OpenRouter credit); A3.7/A3.8 later.
-- **Stream B (backend, agent, DB, observability, benchmark):** Phase 1 done (B1.1–B1.8); Phase 2 B2.1–B2.5 and B2.7–B2.11 done, plus FR-011 auto-resolve and the worker entry point (`python -m oncallpilot.worker`). B2.6 (recorded fixtures) needs the live testbed; B3.2 endpoints, B2.12 (regression suite, synthetic fixtures) B3.8 (Claude adapter) and B3.6–B3.7 (benchmark harness, `benchmark/`) B3.5 (copilot metrics), the backend Compose services and the README (S3.2 draft, SEC-018) done too; B3.1 tests done 2026-11-04; B2.6 tool recordings done 2026-11-03 (`tests/agent_regression/scenarios/recorded/`, `record.py`); **`ocp smoke` live passed 2026-11-07/08 on Usman's laptop with prompts v2** (S2.1, TEST-014; `docs/checks/smoke.md`); the Gate G2 run of all 8 scenarios started 2026-11-08; the recorded-model replay, B2.13, B3.3, B3.4 and B3.9 are next (Usman's own OpenRouter key). See `next.md`.
+- **Stream B (backend, agent, DB, observability, benchmark):** Phase 1 done (B1.1–B1.8); Phase 2 B2.1–B2.5 and B2.7–B2.11 done, plus FR-011 auto-resolve and the worker entry point (`python -m oncallpilot.worker`). B2.6 (recorded fixtures) needs the live testbed; B3.2 endpoints, B2.12 (regression suite, synthetic fixtures) B3.8 (Claude adapter) and B3.6–B3.7 (benchmark harness, `benchmark/`) B3.5 (copilot metrics), the backend Compose services and the README (S3.2 draft, SEC-018) done too; B3.1 tests done 2026-11-04; B2.6 tool recordings done 2026-11-03 (`tests/agent_regression/scenarios/recorded/`, `record.py`); **`ocp smoke` live passed 2026-11-07/08 on Usman's laptop with prompts v2** (S2.1, TEST-014; `docs/checks/smoke.md`); the Gate G2 run of all 8 scenarios started 2026-11-08; the recorded-model replay, B2.13, B3.3, B3.4 and B3.9 are next (Usman's own OpenRouter key). See `next.md`. **2026-11-08:** Gate G2 passed 7 of 8 (`docs/checks/gate-g2.md`); B2.13 done (model pinned: `google/gemini-3.8-flash` via OpenRouter); prompts v2 default; ADR-27; TEST-003 suite; B2.6 real-model replay 6 of 8; B3.4 measured (median 81 s, database latency to Sydney, `docs/checks/latency.md`). Open: B3.3 live runs, B3.4, B3.9, the scenario 1 decision.
 - Phase 0: done. S0.7 (c) embeddings (through OpenRouter) and (d) Supabase JWKS passed on 2026-11-02 (`docs/checks/proxy.md`); `contracts-v0.1.0` is tagged.
 - **Supabase `ocp-dev`** is live and migrated (2026-11-02); the LLM and embeddings go through OpenRouter (ADR-23, `LLM_PROVIDER=openrouter`, `google/gemini-3.8-flash`).
 
@@ -48,6 +48,8 @@
 - `git push --delete` is refused by the session proxy (403). There is no `gh` CLI; use the GitHub MCP tools for CI status.
 
 ## Decisions (and where they are written)
+- ADR-27 (2026-11-08): the log, metric and container-health tools never look back past the last `kind=reset` plus 150 s.
+- Model pinned (B2.13, 2026-11-08): `google/gemini-3.8-flash` through OpenRouter; prompts v2 are the default.
 - Prompts v2 (2026-11-07): v1 plus the citation rules in `hypothesize.md`; a test keeps the table equal to `reflection_rules.yaml`. Default still v1 until Tanzeel and Usman decide.
 - Evidence that a deduplicated alert adds during an investigation is shown to the model before the hypothesis step (`late_evidence`, 2026-11-07).
 - Every OpenRouter call is Usman's (his own key, entered in person on Tanzeel's laptop for joint sessions); Tanzeel needs no credit (2026-11-08, `CLAUDE.md` §11.6).
