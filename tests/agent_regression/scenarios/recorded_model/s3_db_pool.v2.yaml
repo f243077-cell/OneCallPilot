@@ -1,5 +1,5 @@
 # db-pool: the real model's answers to the tool outputs of
-# scenarios/recorded/s3_db_pool.yaml, recorded 2026-11-08 15:50 UTC
+# scenarios/recorded/s3_db_pool.yaml, recorded 2026-11-08 16:22 UTC
 # by tests/agent_regression/record_model.py (B2.6): google/gemini-3.8-flash, prompts v2.
 # Replayed with FakeProvider by test_scenarios.py; regenerate only on purpose.
 name: db-pool
@@ -1889,20 +1889,20 @@ model:
         service: postgres
   - - tool: query_metrics
       args:
-        template: db_pool_in_use
         service: api
+        template: db_pool_in_use
   - - tool: search_runbooks
       args:
-        query: api DatabasePoolTimeout db_pool_in_use postgres
+        query: DatabasePoolTimeout db pool exhausted
   - - tool: query_logs
       args:
-        service: postgres
         level: ANY
+        service: postgres
   hypotheses:
     hypotheses:
     - rank: 1
-      summary: The API service exhausted its database connection pool, leading to DatabasePoolTimeout
-        errors and 503 HTTP responses across multiple endpoints.
+      summary: The API service exhausted its database connection pool, leading to recurring DatabasePoolTimeout
+        errors across multiple endpoints (/orders, /cart, /checkout).
       root_cause_category: db_connection_exhaustion
       confidence: 0.95
       evidence_refs:
@@ -1911,34 +1911,33 @@ model:
       - E5
   disproof:
     target_rank: 1
-    tool: query_logs
+    tool: query_metrics
     params:
       service: api
-      contains: DatabasePoolTimeout
-    expectation_if_true: Repeated DatabasePoolTimeout log entries starting around 15:07:50Z coinciding
-      with the db_pool_in_use metric maxing out.
+      template: p95_latency
+    expectation_if_true: Requests should show latency spikes or timeouts corresponding with the database
+      connection pool exhaustion starting around 15:07:50Z.
   reflection:
     items:
     - rank: 1
       citations_supported: true
-      adjusted_confidence: 0.98
-      note: Logs directly confirm widespread DatabasePoolTimeout exceptions aligning with pool exhaustion
-        at 5 connections.
+      adjusted_confidence: 0.95
+      note: Lack of p95 latency data does not contradict the confirmed pool exhaustion and DatabasePoolTimeout
+        errors.
     top_verdict: survived
   proposal:
     action: restart_service
     params:
       service: api
-    expected_effect: db_pool_in_use drops to 0, clearing stuck/leaked connections and stopping DatabasePoolTimeout
-      errors.
-    rationale: The API service exhausted its database connection pool (E5), producing DatabasePoolTimeout
-      errors (E3, E8) and triggering stack trace alerts (E1). Restarting the API service releases the
-      held database connections and restores availability.
+    expected_effect: Release all held database pool connections, dropping db_pool_in_use from 5 to normal
+      baseline and resolving DatabasePoolTimeout errors.
+    rationale: Logs in E3 show persistent DatabasePoolTimeout errors across API requests, and metrics
+      in E5 confirm the API connection pool has reached its max capacity (5/5) since 15:07:50Z. Restarting
+      the API service clears the connection pool and unblocks requests.
     evidence_refs:
     - E1
     - E3
     - E5
-    - E8
 expect:
   phase: PROPOSED
   action: restart_service

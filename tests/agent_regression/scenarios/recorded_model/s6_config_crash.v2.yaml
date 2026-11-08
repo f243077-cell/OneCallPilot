@@ -1,5 +1,5 @@
 # config-crash: the real model's answers to the tool outputs of
-# scenarios/recorded/s6_config_crash.yaml, recorded 2026-11-08 15:51 UTC
+# scenarios/recorded/s6_config_crash.yaml, recorded 2026-11-08 16:24 UTC
 # by tests/agent_regression/record_model.py (B2.6): google/gemini-3.8-flash, prompts v2.
 # Replayed with FakeProvider by test_scenarios.py; regenerate only on purpose.
 name: config-crash
@@ -702,61 +702,76 @@ model:
       args:
         service: worker
         level: ERROR
-  - - tool: search_runbooks
-      args:
-        query: ConfigError worker service failed to start rollback
-  - - tool: search_runbooks
-      args:
-        query: worker
   - - tool: query_logs
       args:
-        level: ANY
         contains: ConfigError
         service: worker
+  - - tool: search_runbooks
+      args:
+        query: worker ConfigError restart release
+  - - tool: search_runbooks
+      args:
+        query: worker rollback
   hypotheses:
     hypotheses:
     - rank: 1
-      summary: Deploy of worker release 2.2.0 introduced a configuration error (ConfigError) causing the
-        worker container cs-worker-220 to crash-loop upon startup.
+      summary: Deploy of worker release 2.2.0 introduced a configuration error reading the queue batch
+        size, crashing container cs-worker-220 on startup with ConfigError and triggering continuous restarts.
       root_cause_category: config_error
-      confidence: 0.95
+      confidence: 0.85
       evidence_refs:
       - E1
       - E2
       - E3
       - E4
+      - E5
+    - rank: 2
+      summary: Worker release 2.2.0 deployed by CI failed to start due to a bad release deployment containing
+        breaking startup configuration logic.
+      root_cause_category: bad_deploy
+      confidence: 0.15
+      evidence_refs:
+      - E1
+      - E2
+      - E3
+      - E4
+      - E5
   disproof:
     target_rank: 1
     tool: query_logs
     params:
       service: worker
-      level: INFO
-    expectation_if_true: Worker logs will show no successful job processing after the 2.2.0 deploy at
-      15:55:51Z, confirming continuous startup failure.
+      contains: queue
+    expectation_if_true: Worker logs will show failure details or context related to reading queue configuration
+      or batch size during container initialization.
   reflection:
     items:
     - rank: 1
       citations_supported: true
-      adjusted_confidence: 0.98
-      note: Logs confirm worker release 2.2.0 continuously fails on startup due to ConfigError immediately
-        after the deploy.
+      adjusted_confidence: 0.8
+      note: Logs confirm recurring ConfigError preventing startup immediately after deploy 2.2.0, even
+        though specific text queue was absent in message field.
+    - rank: 2
+      citations_supported: true
+      adjusted_confidence: 0.2
+      note: Remains a valid alternate framing of a faulty release rollout.
     top_verdict: survived
   proposal:
     action: rollback_deploy
     params:
       service: worker
       target_release: 2.1.0
-    expected_effect: Worker service starts successfully without ConfigError, restarts cease, and container
-      health returns to healthy.
-    rationale: Deploy of worker release 2.2.0 at 15:55:51Z (E3) introduced a ConfigError causing continuous
-      startup crashes and container restarts (E1, E2, E4, E8). Rolling back to the prior stable release
-      2.1.0 (E3) restores a working configuration.
+    expected_effect: Worker service will return to a healthy running state without ConfigError crash loops
+      or repeated container restarts.
+    rationale: Evidence E2 and E3 indicate release 2.2.0 deployed at 15:55:51Z caused container cs-worker-220
+      to crash loop with 6 restarts. Evidence E4 and E5 confirm critical ConfigError failures preventing
+      startup. Rolling back to previous stable release 2.1.0 resolves the configuration failure.
     evidence_refs:
     - E1
     - E2
     - E3
     - E4
-    - E8
+    - E5
 expect:
   phase: PROPOSED
   action: rollback_deploy

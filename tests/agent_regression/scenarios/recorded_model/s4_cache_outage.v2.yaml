@@ -1,5 +1,5 @@
 # cache-outage: the real model's answers to the tool outputs of
-# scenarios/recorded/s4_cache_outage.yaml, recorded 2026-11-08 15:50 UTC
+# scenarios/recorded/s4_cache_outage.yaml, recorded 2026-11-08 16:23 UTC
 # by tests/agent_regression/record_model.py (B2.6): google/gemini-3.8-flash, prompts v2.
 # Replayed with FakeProvider by test_scenarios.py; regenerate only on purpose.
 name: cache-outage
@@ -2305,78 +2305,63 @@ runner:
   replicas: 0
 model:
   gather:
+  - - tool: get_recent_deploys
+      args: {}
   - - tool: query_logs
       args:
-        service: api
         level: ERROR
+        service: api
   - - tool: get_service_health
       args:
         service: redis
-  - - tool: get_recent_deploys
-      args: {}
   - - tool: search_runbooks
       args:
-        query: redis cache unavailable restart
+        query: redis exited restart
   - - tool: search_runbooks
       args:
         query: redis
-  - - tool: query_logs
+  - - tool: search_runbooks
       args:
-        service: redis
+        query: cache
   hypotheses:
     hypotheses:
     - rank: 1
-      summary: The Redis container (cs-redis) exited and is in an unhealthy state, causing CacheUnavailable
-        exceptions across the API service when accessing the catalog and pricing caches as well as job
-        queueing.
+      summary: The Redis cache service container (cs-redis) has exited, causing CacheUnavailable exceptions
+        across api requests and checkout job queueing failures resulting in 503 errors.
       root_cause_category: cache_failure
       confidence: 0.95
       evidence_refs:
       - E1
-      - E2
       - E3
-    - rank: 2
-      summary: Redis service is unavailable due to an exited container, causing dependent API operations
-        to fail with CacheUnavailable errors.
-      root_cause_category: dependency_unavailable
-      confidence: 0.85
-      evidence_refs:
-      - E1
-      - E2
-      - E3
+      - E4
   disproof:
     target_rank: 1
-    tool: query_metrics
+    tool: query_logs
     params:
-      metric: container_cpu_usage_seconds_total
       service: redis
-    expectation_if_true: Redis container metrics will show zero or absent CPU activity around the incident
-      onset since the container has exited.
+    expectation_if_true: Redis logs will show termination, shutdown, or error events around the time api
+      began reporting cache unavailable exceptions.
   reflection:
     items:
     - rank: 1
       citations_supported: true
       adjusted_confidence: 0.95
-      note: Redis container exit and unhealthy state directly explain all CacheUnavailable errors observed
-        in the API service.
-    - rank: 2
-      citations_supported: true
-      adjusted_confidence: 0.85
-      note: Supported by the same direct evidence showing Redis service container has exited.
+      note: Container cs-redis is exited and api explicitly logs CacheUnavailable errors, confirming Redis
+        unavailability despite empty redis log output.
     top_verdict: survived
   proposal:
     action: restart_service
     params:
       service: redis
-    expected_effect: The Redis container will start, restoring cache and job queue availability and eliminating
-      CacheUnavailable stack traces in API logs.
-    rationale: Evidence E3 shows the Redis container cs-redis has exited with health state 'unhealthy'.
-      API error logs in E2 show continuous CacheUnavailable exceptions and failed checkouts due to Redis
-      unavailability. Restarting the Redis service brings it back online and resolves the failures.
+    expected_effect: The Redis container starts running, resolving CacheUnavailable exceptions and restoring
+      /checkout functionality in the api service.
+    rationale: Evidence E4 shows container cs-redis in an exited state, which directly causes the CacheUnavailable
+      errors and checkout failures observed in E3 and alerted in E1. Restarting the redis service brings
+      the cache container back online.
     evidence_refs:
     - E1
-    - E2
     - E3
+    - E4
 expect:
   phase: PROPOSED
   action: restart_service

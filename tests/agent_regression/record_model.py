@@ -145,7 +145,8 @@ async def test_record_model(
             data["expect"] = got
             Path(misses).mkdir(parents=True, exist_ok=True)
             miss = Path(misses) / f"{path.stem}.{version}.miss.yaml"
-            miss.write_text(yaml.safe_dump(data, sort_keys=False, width=100), encoding="utf-8")
+            text = yaml.safe_dump(data, sort_keys=False, width=100)
+            miss.write_text(text, "utf-8", newline="\n")
         pytest.fail(f"{path.stem}: the real model reached {got}, expected {expect}")
     if expect["phase"] == "ESCALATED":
         expect["escalation_reason"] = got["escalation_reason"]
@@ -162,4 +163,4 @@ async def test_record_model(
     )
     RECORDED_MODEL.mkdir(exist_ok=True)
     body = yaml.safe_dump(data, sort_keys=False, allow_unicode=True, width=100)
-    target.write_text(header + body, encoding="utf-8")
+    target.write_text(header + body, "utf-8", newline="\n")

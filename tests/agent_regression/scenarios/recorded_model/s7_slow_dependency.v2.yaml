@@ -1,0 +1,1467 @@
+# slow-dependency: the real model's answers to the tool outputs of
+# scenarios/recorded/s7_slow_dependency.yaml, recorded 2026-11-08 16:24 UTC
+# by tests/agent_regression/record_model.py (B2.6): google/gemini-3.8-flash, prompts v2.
+# Replayed with FakeProvider by test_scenarios.py; regenerate only on purpose.
+name: slow-dependency
+now_offset_s: 43
+alert:
+  service: api
+  observed_at: '2026-11-03T15:32:08.260946Z'
+  signals:
+  - name: p95_latency
+    value: 3.620000000000001
+    baseline: 0.15462670694800268
+    zscore: 117.49
+    first_anomalous_at: '2026-11-03T15:31:58.259461Z'
+ledger:
+- deploy_id: c81bf747-8b60-4301-8289-2759a211b073
+  kind: deploy
+  service: api
+  release: 1.2.0
+  commit_sha: ad7fe550f520d3422c3b0876a964f60973a88e9e
+  commit_message: 'orders: add pagination to order history'
+  image_tag: chaos-shop/api:1.2.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-14T10:20:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 0c7dc1a0-d7e2-4cf8-98e0-8f53ed845714
+  kind: deploy
+  service: worker
+  release: 2.0.0
+  commit_sha: 10a2829e09250668d2ef5d99256c74a95564fee3
+  commit_message: 'jobs: move receipts to the job queue'
+  image_tag: chaos-shop/worker:2.0.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-09-21T13:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 2063814e-7190-4318-a2d7-242735587f7d
+  kind: deploy
+  service: api
+  release: 1.3.0
+  commit_sha: 3e0cc25e2fbaaca6def8ac985a3dee8d0e161ce5
+  commit_message: 'catalog: paginate product listing'
+  image_tag: chaos-shop/api:1.3.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-28T09:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 3b675b11-483d-4997-a4c6-cc57ab1de1a9
+  kind: deploy
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-10-01T14:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: a6379e19-f139-4d7e-8183-f584d662de46
+  kind: deploy
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-10-05T09:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: a281d920-7b25-4fbe-a9e6-c4f4c07d5c53
+  kind: reset
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-11-03T15:26:02Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+- deploy_id: f4829370-ad6f-47f9-bacb-e38b6ad24b75
+  kind: reset
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-11-03T15:26:02Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+logs:
+- match: service="api"
+  lines:
+  - ts: '2026-11-03T15:32:51.436Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 21.1
+    request_id: fe2332f9360446549d3b1405a20d7761
+    route: /cart
+  - ts: '2026-11-03T15:32:51.218Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 4.1
+    request_id: 5d861c02e95bed10eeb351d5134f9f05
+    route: /orders
+  - ts: '2026-11-03T15:32:51.120Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 108.3
+    request_id: c93826a0de3777060a5b4cd049b590f2
+    route: /cart
+  - ts: '2026-11-03T15:32:50.883Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 73.0
+    request_id: 7ba2b0b3967b1d1cd724f076abb28a50
+    route: /cart
+  - ts: '2026-11-03T15:32:50.622Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 12.3
+    request_id: 2f77317378cf84a33d04f6b5615ee52e
+    route: /products
+  - ts: '2026-11-03T15:32:50.497Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2636.3
+    request_id: 638f03b974c5c643395c290a95e428a2
+    route: /checkout
+  - ts: '2026-11-03T15:32:50.468Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 45.7
+    request_id: f9bd2e39c794db536fbd9dd56c42ee17
+    route: /cart
+  - ts: '2026-11-03T15:32:50.214Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 3.0
+    request_id: 9195631374684b9d1b4a31f46aa925ab
+    route: /products
+  - ts: '2026-11-03T15:32:50.012Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.2
+    request_id: 4f59105b70de3f4aad1056a9b6093e40
+    route: /products
+  - ts: '2026-11-03T15:32:49.810Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.9
+    request_id: aa730d8da9533b784cb21088de7dd34a
+    route: /products
+  - ts: '2026-11-03T15:32:49.613Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 3.6
+    request_id: 310e691cf1dacfec4cf3add2b83ec643
+    route: /cart
+  - ts: '2026-11-03T15:32:49.414Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.4
+    request_id: 14e390675fe93055960f9a623a51ba83
+    route: /products
+  - ts: '2026-11-03T15:32:49.211Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.9
+    request_id: 121b46fe1a9ea031504c2f61356f22a9
+    route: /products
+  - ts: '2026-11-03T15:32:49.010Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.8
+    request_id: 89c2932dc02f6a98dbc890671e2f5af8
+    route: /products
+  - ts: '2026-11-03T15:32:48.810Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.9
+    request_id: 75482e86c145a7d4c92ef0a7e8f27fc0
+    route: /products
+  - ts: '2026-11-03T15:32:48.611Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.0
+    request_id: 70cea14e1e70b7845e35462fe4019320
+    route: /products
+  - ts: '2026-11-03T15:32:48.439Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 27.5
+    request_id: 019de808d2c9480a43b3f254c21e086e
+    route: /cart
+  - ts: '2026-11-03T15:32:48.212Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 3.5
+    request_id: 7290625cb770927bcda559d79315e1e0
+    route: /cart
+  - ts: '2026-11-03T15:32:48.061Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 53.3
+    request_id: 9eac434fbd975123ea1e4a84729f9acc
+    route: /orders
+  - ts: '2026-11-03T15:32:47.864Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: checkout with coupon SPRING-15
+    request_id: 638f03b974c5c643395c290a95e428a2
+    route: /checkout
+  - ts: '2026-11-03T15:32:47.797Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2777.7
+    request_id: 31a5ab07de29e69cd97c85b2b0912509
+    route: /checkout
+  - ts: '2026-11-03T15:32:47.763Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 153.6
+    request_id: 2893e546e3bd6e879d93f95ff492ff03
+    route: /cart
+  - ts: '2026-11-03T15:32:47.484Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 64.9
+    request_id: 1a2c7db8118eaed5002edacd29fb312e
+    route: /cart
+  - ts: '2026-11-03T15:32:47.464Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2654.0
+    request_id: f9a0bb2c8924cf4bc282e8413553e34b
+    route: /checkout
+  - ts: '2026-11-03T15:32:47.210Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.7
+    request_id: f7c5b3a4d830ef52452598ef280e5c76
+    route: /products
+  - ts: '2026-11-03T15:32:47.062Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.8
+    request_id: 321316b9c52f7c98b3c2a77b6985b1d9
+    route: /products
+  - ts: '2026-11-03T15:32:46.961Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 100.5
+    request_id: d5b2fcf105e046ef5d932260401da1aa
+    route: /cart
+  - ts: '2026-11-03T15:32:46.661Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 51.1
+    request_id: d6133739fd10b59f0c2e742cdf7b7992
+    route: /orders
+  - ts: '2026-11-03T15:32:46.467Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 58.7
+    request_id: 12bb349893d4144084408f67e297f04e
+    route: /cart
+  - ts: '2026-11-03T15:32:46.261Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 52.3
+    request_id: bf94237874112b0467d253bf038d425e
+    route: /products
+  - ts: '2026-11-03T15:32:46.076Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 56.3
+    request_id: c99dfdb24b058bcaf445d4d9285aaf4e
+    route: /cart
+  - ts: '2026-11-03T15:32:45.938Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 71.8
+    request_id: c280a01088b1e72c7b0210a9e8753ee4
+    route: /cart
+  - ts: '2026-11-03T15:32:45.760Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 151.1
+    request_id: 7e66d5220c33827e840ccfe6137241e6
+    route: /cart
+  - ts: '2026-11-03T15:32:45.461Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 52.0
+    request_id: 0355d25dab86f8f81f2b70cafe24d373
+    route: /products
+  - ts: '2026-11-03T15:32:45.262Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 200
+    status: 200
+    duration_ms: 53.8
+    request_id: 747f47db0c9fec9085dbe1a87fec5aa8
+    route: /orders
+  - ts: '2026-11-03T15:32:44.866Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2618.4
+    request_id: ca88d2cfa8c95d2be5796817db11f935
+    route: /checkout
+  - ts: '2026-11-03T15:32:44.627Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 18.2
+    request_id: c7227c8ac7c9e62a44cdedd66606d227
+    route: /cart
+  - ts: '2026-11-03T15:32:44.411Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.6
+    request_id: b9e38a123d248e711dd40467026f3228
+    route: /products
+  - ts: '2026-11-03T15:32:44.297Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 87.0
+    request_id: d9ea8c0f2dc5c049215b4b9d626e6533
+    route: /cart
+  - ts: '2026-11-03T15:32:44.018Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 8.8
+    request_id: 17a08039bf90861817545a2254e13be1
+    route: /cart
+  - ts: '2026-11-03T15:32:43.858Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2607.4
+    request_id: 5a547a9ce551aa3ab256d6c1f659d619
+    route: /checkout
+  - ts: '2026-11-03T15:32:43.810Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.7
+    request_id: f6f6188d0e1d713eacd6a1baaec15b2e
+    route: /products
+  - ts: '2026-11-03T15:32:43.718Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2682.0
+    request_id: 03aac0aef9b2e5a7e7fd3603598bbb31
+    route: /checkout
+  - ts: '2026-11-03T15:32:43.623Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 201
+    status: 201
+    duration_ms: 14.0
+    request_id: 4f0639ed9a190428117e94dac3401ae0
+    route: /cart
+  - ts: '2026-11-03T15:32:43.411Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.7
+    request_id: 59c255b73a53ab1b98b42bbd52c46b3e
+    route: /products
+  - ts: '2026-11-03T15:32:43.214Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 5.0
+    request_id: ef90b97aa1dfcb2423cae948b97d063f
+    route: /products
+  - ts: '2026-11-03T15:32:43.009Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.7
+    request_id: c8c1b5827766cfae6789f8266dab324d
+    route: /products
+  - ts: '2026-11-03T15:32:42.812Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 200
+    status: 200
+    duration_ms: 3.6
+    request_id: cbf200a043c0bc37a236aa0835864997
+    route: /cart
+  - ts: '2026-11-03T15:32:42.615Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 6.4
+    request_id: 1e0ee9f1a4ecd23250fd7fcf040a55aa
+    route: /products
+  - ts: '2026-11-03T15:32:42.435Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 201
+    status: 201
+    duration_ms: 2626.4
+    request_id: f1af8609111f9d25f6d5066ba11b3b15
+    route: /checkout
+  - ts: '2026-11-03T15:22:07.068Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 14367.9
+    request_id: 6bef2054a9af27311e04f50c5d046b3b
+    route: /checkout
+  - ts: '2026-11-03T15:22:07.031Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not mark order 1f0a3359-ce94-40c7-a175-85dab78cc12f as paid
+    request_id: 6bef2054a9af27311e04f50c5d046b3b
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 294, in checkout\n    await store.set_order_status(order.id, \"paid\"\
+      )\n  File \"/app/api/pg.py\", line 171, in set_order_status\n    async with self._connection() as\
+      \ conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\",\
+      \ line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.999Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10128.2
+    request_id: 8af6e6e2896e5baaa121ac50b9ea936b
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.991Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10115.4
+    request_id: a63d4282b27932cdefefb9672e09aefc
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.990Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10118.2
+    request_id: 004e78d7d4c5fd764fc3519c2474c8ac
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.976Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10115.3
+    request_id: 0f2eb97efedf742b7fb006bb5e21d831
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.976Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 15422.5
+    request_id: ee6525319e9d9795865f1c3f256b137c
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.976Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10572.6
+    request_id: c247c965fa3953273e8aecf6bd5facad
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.959Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not create the order
+    request_id: 8af6e6e2896e5baaa121ac50b9ea936b
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 273, in checkout\n    order = await store.create_order(body.cart_id,\
+      \ total)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\",\
+      \ line 157, in create_order\n    async with self._connection() as conn, conn.transaction():\n  \
+      \             ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\", line 210,\
+      \ in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\"\
+      , line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out\
+      \ after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.953Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not create the order
+    request_id: a63d4282b27932cdefefb9672e09aefc
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 273, in checkout\n    order = await store.create_order(body.cart_id,\
+      \ total)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\",\
+      \ line 157, in create_order\n    async with self._connection() as conn, conn.transaction():\n  \
+      \             ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\", line 210,\
+      \ in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\"\
+      , line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out\
+      \ after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.944Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not create the order
+    request_id: 004e78d7d4c5fd764fc3519c2474c8ac
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 273, in checkout\n    order = await store.create_order(body.cart_id,\
+      \ total)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\",\
+      \ line 157, in create_order\n    async with self._connection() as conn, conn.transaction():\n  \
+      \             ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\", line 210,\
+      \ in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\"\
+      , line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out\
+      \ after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.938Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10766.0
+    request_id: 35aeeafa7b59e225fe4f92e85d85338a
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.923Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 503
+    status: 503
+    duration_ms: 5317.5
+    request_id: 451a28610345258c3ca6aa954212f63a
+    route: /orders
+  - ts: '2026-11-03T15:22:06.914Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not create the order
+    request_id: 0f2eb97efedf742b7fb006bb5e21d831
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 273, in checkout\n    order = await store.create_order(body.cart_id,\
+      \ total)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\",\
+      \ line 157, in create_order\n    async with self._connection() as conn, conn.transaction():\n  \
+      \             ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\", line 210,\
+      \ in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\"\
+      , line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out\
+      \ after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.905Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not mark order 60a994e8-4b74-41a1-a1db-17701e8838fc as paid
+    request_id: ee6525319e9d9795865f1c3f256b137c
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 294, in checkout\n    await store.set_order_status(order.id, \"paid\"\
+      )\n  File \"/app/api/pg.py\", line 171, in set_order_status\n    async with self._connection() as\
+      \ conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\",\
+      \ line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.873Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not mark order 090ebfff-f48c-4155-8708-ab60aaf74323 as paid
+    request_id: c247c965fa3953273e8aecf6bd5facad
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 294, in checkout\n    await store.set_order_status(order.id, \"paid\"\
+      )\n  File \"/app/api/pg.py\", line 171, in set_order_status\n    async with self._connection() as\
+      \ conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\",\
+      \ line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.835Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10466.0
+    request_id: e7ba417b644b642732e5af9b5d47aa37
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.833Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10856.5
+    request_id: 12cc71558b05ed6ecf3bce43e9498649
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.828Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 16357.7
+    request_id: 42605c45bd00381ea59a240bdb1f0df8
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.826Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not mark order cde603fb-f393-4144-99cf-f21e3fa22de1 as paid
+    request_id: 35aeeafa7b59e225fe4f92e85d85338a
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 294, in checkout\n    await store.set_order_status(order.id, \"paid\"\
+      )\n  File \"/app/api/pg.py\", line 171, in set_order_status\n    async with self._connection() as\
+      \ conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\",\
+      \ line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:22:06.824Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5638.1
+    request_id: 37b53269d2591d0102281a6b05105fda
+    route: /cart
+  - ts: '2026-11-03T15:22:06.823Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 10641.4
+    request_id: 53b3817799b909e481aceeb3e36b7490
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.823Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 16351.6
+    request_id: 52ddbd4277ad23e2f8b29fe4c17bc7de
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.823Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 16351.6
+    request_id: dda7e67afd9a725c5156cb75ddf00e78
+    route: /checkout
+  - ts: '2026-11-03T15:22:06.822Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 5841.7
+    request_id: a17c089f5d85e1161b6a0c2a767b57a3
+    route: /checkout
+metrics:
+- match: histogram_quantile(0.95, sum by (le) (rate(upstream_request_duration_seconds_bucket{service="api",upstream="payments"}[1m])))
+  points:
+  - - 1793717828.261
+    - 0.099028
+  - - 1793717843.261
+    - 0.1775
+  - - 1793717858.261
+    - 0.16
+  - - 1793717873.261
+    - 0.1375
+  - - 1793717888.261
+    - 0.1675
+  - - 1793717903.261
+    - 0.14
+  - - 1793717918.261
+    - 0.14
+  - - 1793717933.261
+    - 0.1475
+  - - 1793717948.261
+    - 0.098
+  - - 1793717963.261
+    - 0.098421
+  - - 1793717978.261
+    - 0.098333
+  - - 1793717993.261
+    - 0.1075
+  - - 1793718008.261
+    - 0.098333
+  - - 1793718023.261
+    - 0.099514
+  - - 1793718038.261
+    - 0.097656
+  - - 1793718053.261
+    - 0.0976
+  - - 1793718068.261
+    - 0.09775
+  - - 1793718083.261
+    - 0.098125
+  - - 1793718098.261
+    - 0.1525
+  - - 1793718113.261
+    - 0.163271
+  - - 1793718128.261
+    - 0.179619
+  - - 1793718143.261
+    - 0.094534
+  - - 1793718158.261
+    - 0.095664
+  - - 1793718173.261
+    - 0.095455
+  - - 1793718188.261
+    - 0.095909
+  - - 1793718203.261
+    - 0.096272
+  - - 1793718218.261
+    - 0.139552
+  - - 1793718233.261
+    - 0.145
+  - - 1793718248.261
+    - 0.16982
+  - - 1793718263.261
+    - 0.1
+  - - 1793718278.261
+    - 0.11875
+  - - 1793718293.261
+    - 0.0999
+  - - 1793718308.261
+    - 0.1
+  - - 1793718323.261
+    - 0.097632
+  - - 1793718338.261
+    - 0.099844
+  - - 1793718353.261
+    - 0.099868
+  - - 1793718368.261
+    - 0.097614
+  - - 1793718383.261
+    - 0.165625
+  - - 1793718398.261
+    - 0.14
+  - - 1793718413.261
+    - 0.158125
+  - - 1793718428.261
+    - 0.14
+  - - 1793718443.261
+    - 0.169375
+  - - 1793718458.261
+    - 0.199
+  - - 1793718473.261
+    - 0.203125
+  - - 1793718488.261
+    - 0.1075
+  - - 1793718503.261
+    - 0.145
+  - - 1793718518.261
+    - 0.1525
+  - - 1793718533.261
+    - 0.205
+  - - 1793718548.261
+    - 0.2125
+  - - 1793718563.261
+    - 0.225625
+  - - 1793718578.261
+    - 0.225
+  - - 1793718593.261
+    - 0.35
+  - - 1793718608.261
+    - 0.375
+  - - 1793718623.261
+    - 0.4375
+  - - 1793718638.261
+    - 0.3375
+  - - 1793718653.261
+    - 0.099444
+  - - 1793718668.261
+    - 0.203125
+  - - 1793718683.261
+    - 0.199
+  - - 1793718698.261
+    - 0.236875
+  - - 1793718713.261
+    - 0.236875
+  - - 1793718728.261
+    - 0.25
+  - - 1793718743.261
+    - 0.2485
+  - - 1793718758.261
+    - 0.19
+  - - 1793718773.261
+    - 0.145
+  - - 1793718788.261
+    - 0.097738
+  - - 1793718803.261
+    - 0.097857
+  - - 1793718818.261
+    - 0.098214
+  - - 1793718833.261
+    - 0.098269
+  - - 1793718848.261
+    - 0.097941
+  - - 1793718863.261
+    - 0.0975
+  - - 1793718878.261
+    - 0.0954
+  - - 1793718893.261
+    - 0.093824
+  - - 1793718908.261
+    - 0.094559
+  - - 1793718923.261
+    - 0.095217
+  - - 1793718938.261
+    - 0.096204
+  - - 1793718953.261
+    - 0.096645
+  - - 1793718968.261
+    - 0.096466
+  - - 1793718983.261
+    - 0.096771
+  - - 1793718998.261
+    - 0.099265
+  - - 1793719013.261
+    - 0.1075
+  - - 1793719028.261
+    - 0.095111
+  - - 1793719043.261
+    - 0.095087
+  - - 1793719058.261
+    - 0.095104
+  - - 1793719073.261
+    - 0.094773
+  - - 1793719088.261
+    - 0.093947
+  - - 1793719103.261
+    - 0.093929
+  - - 1793719118.261
+    - 0.094687
+  - - 1793719133.261
+    - 0.097381
+  - - 1793719148.261
+    - 0.0978
+  - - 1793719163.261
+    - 0.099352
+  - - 1793719178.261
+    - 0.099423
+  - - 1793719193.261
+    - 0.099231
+  - - 1793719208.261
+    - 0.099318
+  - - 1793719223.261
+    - 0.1
+  - - 1793719238.261
+    - 0.097742
+  - - 1793719253.261
+    - 0.20875
+  - - 1793719268.261
+    - 0.285417
+  - - 1793719283.261
+    - 0.39
+  - - 1793719298.261
+    - 0.455921
+  - - 1793719313.261
+    - 0.493452
+  - - 1793719328.261
+    - 0.8
+  - - 1793719343.261
+    - 1.0
+  - - 1793719358.261
+    - 0.491667
+  - - 1793719373.261
+    - 0.3825
+  - - 1793719388.261
+    - 0.16
+  - - 1793719403.261
+    - 0.099286
+  - - 1793719418.261
+    - 0.2005
+  - - 1793719433.261
+    - 0.220937
+  - - 1793719448.261
+    - 0.216667
+  - - 1793719463.261
+    - 0.214375
+  - - 1793719478.261
+    - 0.180625
+  - - 1793719493.261
+    - 0.09875
+  - - 1793719508.261
+    - 0.13
+  - - 1793719523.261
+    - 0.758333
+  - - 1793719538.261
+    - 0.222463
+  - - 1793719553.261
+    - 0.235322
+  - - 1793719568.261
+    - 0.233528
+  - - 1793719583.261
+    - 0.275
+  - - 1793719598.261
+    - 0.233929
+  - - 1793719613.261
+    - 0.245714
+  - - 1793719628.261
+    - 0.18625
+  - - 1793719643.261
+    - 0.20125
+  - - 1793719658.261
+    - 0.175
+  - - 1793719673.261
+    - 0.1375
+  - - 1793719688.261
+    - 0.1225
+  - - 1793719703.261
+    - 0.1075
+  - - 1793719718.261
+    - 0.2075
+  - - 1793719733.261
+    - 0.203125
+  - - 1793719748.261
+    - 0.214
+  - - 1793719763.261
+    - 0.20125
+  - - 1793719778.261
+    - 0.205
+  - - 1793719793.261
+    - 0.203125
+  - - 1793719808.261
+    - 0.178
+  - - 1793719823.261
+    - 0.11875
+  - - 1793719838.261
+    - 0.09663
+  - - 1793719853.261
+    - 0.165
+  - - 1793719868.261
+    - 0.16
+  - - 1793719883.261
+    - 0.1375
+  - - 1793719898.261
+    - 0.0956
+  - - 1793719913.261
+    - 4.402778
+  - - 1793719928.261
+    - 4.75
+  - - 1793719943.261
+    - 4.860294
+  - - 1793719958.261
+    - 4.875
+  - - 1793719973.261
+    - 4.875
+  - - 1793719988.261
+    - 4.875
+  - - 1793720003.261
+    - 4.875
+  - - 1793720018.261
+    - 4.875
+  - - 1793720033.261
+    - 4.875
+containers:
+- name: cs-api-150-1
+  service: api
+  release: 1.5.0
+  restarts: 0
+  oom_killed: false
+  state: exited
+  exit_code: 0
+  health: unhealthy
+- name: cs-api-140-1
+  service: api
+  release: 1.4.0
+  restarts: 0
+  oom_killed: false
+  state: running
+  exit_code: 0
+  health: healthy
+probes_ok: true
+runner:
+  active_release: 1.4.0
+  replicas: 1
+model:
+  gather:
+  - - tool: get_recent_deploys
+      args: {}
+  - - tool: query_logs
+      args:
+        level: ERROR
+        service: api
+  - - tool: query_logs
+      args:
+        service: api
+        level: WARNING
+  - - tool: query_metrics
+      args:
+        template: upstream_latency_p95
+        service: api
+  - - tool: get_service_health
+      args:
+        service: payments
+  - - tool: query_logs
+      args:
+        service: payments
+  hypotheses:
+    hypotheses:
+    - rank: 1
+      summary: Upstream latency for the api service surged significantly starting at 15:32:02Z, indicating
+        an upstream dependency or backend resource slowdown.
+      root_cause_category: dependency_slow
+      confidence: 0.65
+      evidence_refs:
+      - E1
+      - E5
+    - rank: 2
+      summary: The cause of elevated API latency remains undetermined as logs show successful 200/201
+        responses without errors, and no deployments immediately preceded the jump.
+      root_cause_category: unknown
+      confidence: 0.35
+      evidence_refs:
+      - E1
+      - E4
+      - E5
+  disproof:
+    target_rank: 1
+    tool: query_metrics
+    params:
+      service: postgres
+      template: query_latency_p95
+    expectation_if_true: Database query latency p95 would show a matching latency spike starting around
+      15:32:00Z.
+  reflection:
+    items:
+    - rank: 1
+      citations_supported: true
+      adjusted_confidence: 0.5
+      note: Upstream latency metric confirmed elevated upstream delay, but specific dependency could not
+        be verified.
+    - rank: 2
+      citations_supported: true
+      adjusted_confidence: 0.5
+      note: Root cause remains uncertain given incomplete visibility into backend dependencies.
+    top_verdict: survived
+expect:
+  phase: ESCALATED
+  escalation_reason: low_confidence
+prompt_version: v2

@@ -1,5 +1,5 @@
 # bad-deploy: the real model's answers to the tool outputs of
-# scenarios/recorded/s2_bad_deploy.yaml, recorded 2026-11-08 15:49 UTC
+# scenarios/recorded/s2_bad_deploy.yaml, recorded 2026-11-08 16:22 UTC
 # by tests/agent_regression/record_model.py (B2.6): google/gemini-3.8-flash, prompts v2.
 # Replayed with FakeProvider by test_scenarios.py; regenerate only on purpose.
 name: bad-deploy
@@ -2083,67 +2083,63 @@ model:
       args: {}
   - - tool: query_logs
       args:
-        service: api
         level: ERROR
-  - - tool: search_runbooks
-      args:
-        query: POST /checkout 500 IndexError deploy rollback
-  - - tool: search_runbooks
-      args:
-        query: rollback
+        service: api
   - - tool: get_service_health
       args:
         service: api
-  - - tool: query_metrics
+  - - tool: search_runbooks
       args:
-        service: api
-        template: error_rate
+        query: api rollback deploy
+  - - tool: search_runbooks
+      args:
+        query: checkout
+  - []
   hypotheses:
     hypotheses:
     - rank: 1
-      summary: Release 1.5.0 deployed to api introduced a regression in checkout price rounding, causing
-        unhandled IndexError exceptions on POST /checkout requests.
+      summary: Release 1.5.0 of the api service introduced an unhandled IndexError during checkout processing,
+        causing POST /checkout requests to fail with HTTP 500 errors and trigger stack trace alerts.
       root_cause_category: bad_deploy
       confidence: 0.95
       evidence_refs:
       - E1
       - E2
       - E3
-      - E5
-      - E6
+      - E4
   disproof:
     target_rank: 1
     tool: query_logs
     params:
       service: api
-      contains: checkout
-    expectation_if_true: Errors and IndexError stack traces on checkout requests started occurring only
-      after release 1.5.0 was deployed at 15:01:29Z, with no such errors prior to this deploy.
+      contains: IndexError
+      start_time: '2026-11-03T14:50:00Z'
+      end_time: '2026-11-03T15:01:28Z'
+    expectation_if_true: No IndexError logs should appear before the 1.5.0 deploy at 15:01:29Z, confirming
+      the regression started precisely with release 1.5.0.
   reflection:
     items:
     - rank: 1
       citations_supported: true
-      adjusted_confidence: 0.98
-      note: Logs confirm IndexError exceptions on checkout requests started immediately after deploy 1.5.0
-        at 15:01:29Z.
+      adjusted_confidence: 0.95
+      note: Deploy records, stack trace logs, and container health directly corroborate that release 1.5.0
+        introduced the failing IndexError.
     top_verdict: survived
   proposal:
     action: rollback_deploy
     params:
       service: api
       target_release: 1.4.0
-    expected_effect: IndexError exceptions on POST /checkout will stop and the api error rate will return
-      to zero.
-    rationale: Deploy 1.5.0 at 15:01:29Z (E2) introduced code changes to checkout total calculation that
-      cause unhandled IndexError exceptions on checkout requests (E3, E8), driving up error rates (E6)
-      and opening alert E1. Rolling back to 1.4.0 will restore the previously healthy api state (E2, E5).
+    expected_effect: The 500 errors and IndexError stack traces on POST /checkout will stop, returning
+      the stack_traces signal to zero.
+    rationale: Release 1.5.0 deployed at 15:01:29Z (E2) introduced checkout rounding changes that immediately
+      produced IndexError stack traces and 500 responses on POST /checkout (E1, E3). Rolling back api
+      to 1.4.0 (E2, E4) restores the known working checkout logic.
     evidence_refs:
     - E1
     - E2
     - E3
-    - E5
-    - E6
-    - E8
+    - E4
 expect:
   phase: PROPOSED
   action: rollback_deploy
