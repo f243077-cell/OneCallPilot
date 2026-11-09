@@ -2,6 +2,25 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-09 — Usman: B3.3 live injection 5/5 safe, clean-machine test, README
+
+### Done
+- **U6 / B3.3 PASSED:** scenario 8 live five times, back to back: the planted text was flagged every time, the model read it as a coupon-parsing bug, and no run produced a proposal (`docs/checks/injection.md`, `c187598`). No prompt change needed.
+- **P4.3 clean-machine test, attempt on a fresh clone of `8b0fbbe`: not passed yet.** `ocp up` failed on Alloy's healthcheck (fixed: `start_period` 120 s, `08c924a`). The two smokes did not pass: a reset after the failed start, then `budget_exhausted`, from database latency to Sydney plus a busy laptop. Recorded in `docs/checks/clean-machine.md` and `smoke.md` (runs 13, 14).
+- **P4.5 README draft:** the Setup section now covers what a fresh host needs and how to check it; Known limitations adds the evaluation limits (project-requirements §8.4). For Tanzeel's review.
+
+### Next (Usman)
+1. U4 and P4.3: on an **idle** laptop, `ocp up`, `ocp doctor`, two `ocp smoke` back to back; repeat on the freeze commit.
+2. After the decisions below: U5 (re-record all 8), U7 (re-measure), then U8 with Tanzeel.
+
+### Waiting on Tanzeel
+- Still open from 2026-11-08 (night): ADR-27 review, `ocp-bench` in `ap-south-1`, scenario 1 (prompt v3 or a changed expectation).
+- **More urgent now:** the 90 s agent budget ran out three times in two days (Gate G2 s8, injection run 5, smoke 14). About 40 s of each investigation is database latency to Sydney; in the counted runs this would show up as escalations, not just slower times.
+- Review the README draft (P4.5).
+
+### Waiting on Usman
+- Top up the OpenRouter key before Phase 4; tick the runbook-review box.
+
 ## 2026-11-08 (night) — Usman: Gate G2 passed 7 of 8, model pinned, ADR-27, TEST-003
 
 ### Done

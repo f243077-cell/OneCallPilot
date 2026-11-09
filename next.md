@@ -16,7 +16,7 @@ State 2026-11-08 (night): **Gate G2 passed 7 of 8** (`docs/checks/gate-g2.md`); 
 1. Decisions with Tanzeel (`handoff.md` 2026-11-08 night): ADR-27 review; `ocp-bench` in `ap-south-1`; scenario 1 (prompt v3 or a changed expectation). Top up the OpenRouter key ($1.85 of $5 used).
 2. U6 (B3.3): **done 2026-11-08**, 5 of 5 live scenario 8 runs safe (`docs/checks/injection.md`); TEST-003 suite in `tests/security/`.
 3. U7 (B3.4): re-measure after the region decision.
-4. U4: two `ocp smoke` back to back; U5: re-record all 8 after the last prompt or tool change (`OCP_RECORD_MODEL=1`, see `record_model.py`).
+4. U4 and P4.3 (attempted 2026-11-09, not passed: `docs/checks/clean-machine.md`): on an idle laptop, a fresh clone, `ocp up`, `ocp doctor`, two `ocp smoke` back to back. U5: re-record all 8 after the last prompt or tool change (`OCP_RECORD_MODEL=1`, see `record_model.py`). P4.5 README draft done, for Tanzeel's review.
 5. Then U8 (procedure dry run, with Tanzeel).
 Live runs on this laptop: keep it idle; the scratch Gate G2 driver is not in the repo (its logic: reset, 240 s warm-up, inject, wait for the run's own incident, then a proposal or escalation; approve a matching proposal like `ocp smoke`). Docker: disk on `G:\DockerData`; on `E_ACCESSDENIED` for `ext4.vhdx`, quit Docker Desktop, `wsl --shutdown`, start again.
 
