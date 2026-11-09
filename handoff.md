@@ -17,6 +17,7 @@
 - Still open from 2026-11-08 (night): ADR-27 review, `ocp-bench` in `ap-south-1`, scenario 1 (prompt v3 or a changed expectation).
 - **More urgent now:** the 90 s agent budget ran out three times in two days (Gate G2 s8, injection run 5, smoke 14). About 40 s of each investigation is database latency to Sydney; in the counted runs this would show up as escalations, not just slower times.
 - Review the README draft (P4.5).
+- **Scenario 1, data for the decision** (a local experiment, not committed): a prompt v3 that changes one line of `propose.md`. The current v2 line is "Answer `none` when no catalogue action addresses the cause (for example a problem in a third-party dependency, or one that a restart would only hide)." The v3 line would be: "A restart that clears a condition built up inside the service itself restores service while a human fixes the defect, so it addresses the cause. Answer `none` when the problem lies outside the service (for example a slow or failing third-party dependency) or when no catalogue action changes it." Recorded against the B2.6 tool recordings with the real model: **scenario 1 proposed `restart_service(worker)` 3 of 3 times; scenario 7 still escalated 3 of 3; scenarios 3 and 8 unchanged (restart api; escalate).** If you agree, Usman adds v3 (new folder and manifest), makes it the default, and re-records all 8 (U5).
 
 ### Waiting on Usman
 - Top up the OpenRouter key before Phase 4; tick the runbook-review box.
