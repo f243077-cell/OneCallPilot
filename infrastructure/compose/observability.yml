@@ -119,7 +119,9 @@ services:
       interval: 10s
       timeout: 3s
       retries: 6
-      start_period: 15s
+      # A busy laptop needed more than 15 s + 6 tries for Alloy to get ready, and
+      # `ocp up --wait` failed (clean-machine test, 2026-11-09). Ready is ready.
+      start_period: 120s
 
   # View-only for the manual-baseline operator at the host: anonymous Viewer,
   # no login form, dashboards and data sources provisioned from git.

@@ -45,6 +45,8 @@ OpenRouter spend for runs 8–11: about $0.11 (2–3 cents per run).
 
 Alert to proposal took about 77 s: over the 60 s of NFR-001, so B3.4 has real work.
 
+**Runs 13 and 14 (2026-11-09, fresh clone at `8b0fbbe`, U4 attempt):** run 13 stopped at `chaos reset` after an `ocp up` whose Alloy healthcheck had failed; run 14 opened its incident at +24.4 s and escalated `budget_exhausted` (90 s): database latency to Sydney plus a busy laptop. U4 (two passing smokes back to back) is still open; see `docs/checks/clean-machine.md`.
+
 ### Lessons for live runs
 - Keep the laptop otherwise idle (run 7).
 - Leave 30 healthy minutes between a fault and the next injection: the tools look back 30 minutes (`tools/window.py`), so an earlier fault's errors read as a contradiction (run 11). `bench run` waits only 4 minutes between runs; raised for a decision before the pilot (`handoff.md`, 2026-11-08).

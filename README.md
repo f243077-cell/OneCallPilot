@@ -35,10 +35,20 @@ Storage: Supabase Postgres (schema `ocp`, pgvector) and a private Redis (`copilo
 
 ## Setup
 
-1. Docker with Compose ≥ 2.20, Python 3.12 and `uv` on the host.
-2. `cp .env.example .env` and fill in real values (never commit `.env`). Each variable has a one-line comment in `.env.example`.
-3. `uv run --project tools/ocp ocp up` starts the testbed, observability, copilot-redis and the runner profile and resets the testbed; `ocp doctor` checks ports, health and versions.
-4. `ocp up` also starts backend-api and backend-worker (profile `backend`), which need the Supabase project (`DATABASE_URL`, `SUPABASE_URL`) and an LLM key (`OPENROUTER_API_KEY`, ADR-23). Without Supabase, use `ocp up --no-backend`.
+**You need**
+- Docker with Compose ≥ 2.20, Python 3.12, `uv` (CI uses 0.12.7) and Git. On Windows: Docker Desktop with the WSL 2 backend (`wsl --install --no-distribution`, then restart), and run the commands below in Git Bash. Docker's disk image needs room: put it on a drive with 20 GB or more free (Docker Desktop → Settings → Resources → Advanced). A full C: drive makes Docker's disk read-only.
+- A Supabase project: an **asymmetric** JWT signing key (ECC or RSA; with the legacy shared secret the JWKS has no public key and the backend cannot verify logins), new-user sign-ups switched off, the schema from `supabase/migrations/`, and a test user created by hand.
+- An OpenRouter API key with a spend limit (the agent's model and the runbook embeddings, ADR-23). A live investigation costs about 2–3 US cents.
+
+**Configure.** `cp .env.example .env` and fill in the real values; each variable has a one-line comment. `ocp smoke` and `bench` also read a git-ignored `.env.local` with `SUPABASE_ANON_KEY`, `OCP_TEST_EMAIL` and `OCP_TEST_PASSWORD`. Never commit either file.
+
+**Start and check.**
+1. `uv run --project tools/ocp ocp up` builds the images (about 5 minutes the first time), starts the testbed, observability, copilot-redis, the runner and backend-api plus backend-worker, and resets the testbed. Without a Supabase project, use `ocp up --no-backend`.
+2. `uv run --project tools/ocp ocp doctor` checks ports, health, versions and the published-port policy; `curl http://127.0.0.1:8000/healthz` reports `db` and `redis`.
+3. `uv run --project tools/ocp ocp smoke` runs scenario 2 end to end through the API (inject, incident, proposal, challenge and approval as the test user, resolution). It takes about 8 minutes.
+4. `uv run --project tools/ocp ocp down` stops everything.
+
+Live runs need an otherwise idle laptop: under heavy load the testbed's healthchecks time out and the reset fails.
 
 Checks, per package (`backend/`, `runner/`, `contracts/python/`, `chaos-shop/`, `tools/ocp/`, `benchmark/`): `uv sync --locked`, `uv run ruff check .`, `uv run mypy`, `uv run pytest -q`. The backend's database, integration, regression and security suites need throwaway Postgres (`pgvector/pgvector`) and Redis containers (`OCP_TEST_DATABASE_URL`, `OCP_TEST_REDIS_URL`).
 
@@ -63,6 +73,12 @@ These are accepted for v1 and listed in full in [`docs/architecture.md` §7.12](
 6. **`socket-proxy-rw` also allows `GET /containers/{id}/attach/ws`** (stdio of a running container). The monitored containers do not read commands from stdin; a security test fails if the endpoint's behaviour changes.
 7. **Container inspect exposes environment variables** to a compromised runner. The agent's health tool never reads them, and secrets held in mounted files are not exposed.
 8. **The Claude fallback model cannot run at temperature 0** (current Claude models reject sampling parameters), so a benchmark that falls back to it (ADR-13) is less repeatable than one on the primary model.
+
+Limits of the evaluation (`docs/project-requirements.md` §8.4):
+- Eight scenarios on one testbed is a small sample.
+- The manual baseline depends on who performs it, and our operators built the scenarios. That probably makes the manual baseline faster than a stranger's, which understates the copilot's advantage.
+- Results apply to the frozen model (`google/gemini-3.8-flash`) and prompt version only. At temperature 0 the model is still not fully deterministic: the same scenario can get a different answer, which is why every scenario runs three times per mode.
+- Alert-to-proposal time includes the database round trips to the Supabase region, about 40 of 81 s on the 2026-11-08 measurements (`docs/checks/latency.md`).
 
 ## Results
 
