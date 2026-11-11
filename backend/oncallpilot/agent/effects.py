@@ -246,15 +246,10 @@ class DbEffects:
         suspicious = looks_suspicious(payload)
         async with self.pool.acquire() as conn, conn.transaction():
             await db.lock_incident(conn, self.incident_id)
-            ref = await db.next_ref(conn, self.incident_id)
-            evidence_id = await db.insert_evidence(
-                conn, self.incident_id, ref, result.kind, purpose, name, params, summary,
+            evidence_id, ref, version = await db.add_evidence(
+                conn, self.incident_id, result.kind, purpose, name, params, summary,
                 payload, suspicious, now,
-            )  # fmt: skip
-            version = await db.bump(conn, self.incident_id, now)
-            await db.audit(
-                conn, "agent", "evidence.added", self.incident_id, "evidence", evidence_id,
-                {"ref": ref, "tool": name, "purpose": purpose, "suspicious": suspicious},
+                {"tool": name, "purpose": purpose, "suspicious": suspicious},
             )  # fmt: skip
         self._evidence_ids[ref] = evidence_id
         cut, truncated = cut_evidence_payload(result.kind, payload)

@@ -69,18 +69,9 @@ async def evidence_rows(conn: DbConn, incident_id: UUID) -> list[Any]:
     )
 
 
-async def next_ref(conn: DbConn, incident_id: UUID) -> str:
-    last = await conn.fetchval(
-        "select max(substring(ref from 2)::int) from ocp.evidence where incident_id = $1",
-        incident_id,
-    )
-    return f"E{(last or 0) + 1}"
-
-
-async def insert_evidence(
+async def add_evidence(
     conn: DbConn,
     incident_id: UUID,
-    ref: str,
     kind: str,
     purpose: str,
     tool_name: str,
@@ -89,16 +80,37 @@ async def insert_evidence(
     payload: dict[str, Any],
     suspicious: bool,
     now: datetime,
-) -> UUID:
+    audit_payload: dict[str, Any],
+) -> tuple[UUID, str, int]:
+    """Next ref, evidence row, ``state_version`` bump and audit row in one statement.
+
+    One round trip instead of four (B3.4, ``docs/checks/latency.md``). The
+    caller must hold the incident's row lock (``lock_incident``) from an earlier
+    statement of the same transaction: this statement's snapshot is then taken
+    after every other writer of the incident's evidence (the detector's
+    ``ingest``, another tool call) has committed, so the next ref is unique.
+    The audit payload gets ``ref``. Returns (evidence id, ref, new state version).
+    """
     evidence_id = uuid.uuid4()
-    await conn.execute(
-        "insert into ocp.evidence (id, incident_id, ref, kind, purpose, tool_name, params,"
+    row = await conn.fetchrow(
+        "with nr as ("
+        " select 'E' || (coalesce(max(substring(ref from 2)::int), 0) + 1) as ref"
+        " from ocp.evidence where incident_id = $2),"
+        " ev as ("
+        " insert into ocp.evidence (id, incident_id, ref, kind, purpose, tool_name, params,"
         " summary, payload, suspicious_content, created_at)"
-        " values ($1, $2, $3, $4::text::ocp.evidence_kind, $5::text::ocp.evidence_purpose,"
-        " $6, $7, $8, $9, $10, $11)",
+        " select $1, $2, nr.ref, $3::text::ocp.evidence_kind, $4::text::ocp.evidence_purpose,"
+        " $5, $6, $7, $8, $9, $10 from nr returning ref),"
+        " v as ("
+        " update ocp.incidents set state_version = state_version + 1, updated_at = $10"
+        " where id = $2 returning state_version),"
+        " a as ("
+        " insert into ocp.audit_log (actor, event, ref_type, ref_id, incident_id, payload)"
+        " select 'agent', 'evidence.added', 'evidence', $1, $2,"
+        " $11::jsonb || jsonb_build_object('ref', nr.ref) from nr)"
+        " select ev.ref, v.state_version from ev, v",
         evidence_id,
         incident_id,
-        ref,
         kind,
         purpose,
         tool_name,
@@ -107,8 +119,11 @@ async def insert_evidence(
         payload,
         suspicious,
         now,
+        audit_payload,
     )
-    return evidence_id
+    if row is None:
+        raise LookupError(f"incident {incident_id} not found")
+    return evidence_id, row["ref"], row["state_version"]
 
 
 async def insert_hypothesis(

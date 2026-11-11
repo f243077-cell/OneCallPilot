@@ -3,6 +3,7 @@ SEC-008, AI-028, FR-010, FR-019)."""
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import uuid
@@ -300,6 +301,52 @@ async def test_seed_evidence_from_a_repeated_alert_reaches_the_agent(
         "select cardinality(evidence_ids) from ocp.hypotheses where incident_id = $1", incident_id
     )
     assert cited == 2
+
+
+async def test_concurrent_evidence_writes_get_distinct_refs_and_audit_rows(
+    setup: Any, pool: asyncpg.Pool, redis_client: Redis
+) -> None:
+    # B3.4 put the ref, the insert, the bump and the audit row into one statement;
+    # the incident lock taken before it must still serialise every writer (AI-010).
+    incident_id, effects = setup
+    await effects.load_context()
+    outcomes = await asyncio.gather(
+        *(
+            effects.run_tool("query_logs", {"service": "api", "level": "ERROR"}, "gather")
+            for _ in range(3)
+        ),
+        open_incident(pool, signal="stack_traces"),
+    )
+    assert outcomes[-1] == incident_id  # deduplicated: the detector added seed evidence
+    refs = await pool.fetch(
+        "select ref, id from ocp.evidence where incident_id = $1"
+        " order by substring(ref from 2)::int",
+        incident_id,
+    )
+    assert [r["ref"] for r in refs] == ["E1", "E2", "E3", "E4", "E5"]
+
+    audited = await pool.fetch(
+        "select ref_id, payload from ocp.audit_log where incident_id = $1"
+        " and event = 'evidence.added' and actor = 'agent' order by id",
+        incident_id,
+    )
+    by_id = {r["id"]: r["ref"] for r in refs}
+    assert len(audited) == 3
+    for row in audited:
+        assert row["payload"] == {
+            "ref": by_id[row["ref_id"]],
+            "tool": "query_logs",
+            "purpose": "gather",
+            "suspicious": True,
+        }
+
+    events = await EventStream(redis_client).read_after("0-0", block_ms=None, count=100)
+    versions = [e["state_version"] for e in events if e["event"] == "evidence.added"]
+    assert len(versions) == 3 and len(set(versions)) == 3
+    final = await pool.fetchval(
+        "select state_version from ocp.incidents where id = $1", incident_id
+    )
+    assert max(versions) <= final
 
 
 def _parsed(hypothesis_set: dict[str, Any]) -> list[Any]:

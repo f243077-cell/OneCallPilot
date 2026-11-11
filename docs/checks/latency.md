@@ -2,7 +2,7 @@
 
 > Target (NFR-001): the **median** from `incident.opened_at` to `proposal.created_at` is at most 60 s. Measured on Usman's laptop against Supabase `ocp-dev`, `google/gemini-3.8-flash` through OpenRouter, prompts v2. Method: the incident's audit trail (`GET /audit?incident_id=…`): every `llm.call` row carries its own latency; the time between rows is everything else.
 
-## Status: **not met yet** (2026-11-08): about 72 s, of which about 40 s is waiting for the database
+## Status: **not met yet** (2026-11-08): about 72 s, of which about 40 s is waiting for the database. Two round-trip cuts since (2026-11-11, below); not re-measured live yet
 
 ## Where the time goes: `ocp smoke` run 12 (scenario 2, 2026-11-07)
 
@@ -45,6 +45,17 @@ So roughly **40 of the 72 s are database latency**, not the model and not the to
 | D. Parallel tool calls in one gather turn; fewer gather turns. | Up to a few seconds. | Depends on the model; budgets unchanged. |
 
 **Recommendation:** A first (no code, biggest effect), then measure again. B and C only if the median is still above 60 s afterwards.
+
+## Done 2026-11-11: fewer round trips, same writes (no region change needed)
+
+Two changes that keep every write, every audit row and every lock, and need no decision:
+
+| Change | Round trips saved | Test |
+|---|---|---|
+| **E. No reset query when a connection goes back to the pool** (`db/pool.py`). asyncpg sent `RESET ALL; UNLISTEN *; …` on every release; the code keeps no session state, and asyncpg still rolls back a transaction left open. | 1 per pool use: every `llm.call` audit row, every evidence write, every context load (about 25 per investigation) | `tests/integration/test_pool.py` |
+| **B, the safe half. One statement for the next ref, the evidence row, the version bump and the audit row** (`db.agent.add_evidence`). The incident lock stays its own statement before it, so the detector's concurrent seed evidence still cannot take the same ref. | 3 per evidence item (7 → 4) | `test_concurrent_evidence_writes_get_distinct_refs_and_audit_rows` (fails 3 of 3 without the lock) |
+
+Measured from Usman's laptop to `ocp-dev` (2026-11-11, `select 1` through the pool, six times each): **598–604 ms with the reset query, 315–320 ms without**. For a run like smoke run 12 (5 evidence writes, 11 LLM calls) that is about 40 round trips fewer, roughly 12 s at that day's 300 ms per round trip and about 25 s at the 680 ms measured from the worker on 2026-11-08. To be confirmed by the next live measurement (5 runs).
 
 ## Gate G2 run (2026-11-08, back to back, ADR-27)
 
