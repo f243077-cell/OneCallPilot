@@ -324,3 +324,14 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Round trip*: one question to a server and its answer; its time adds up when there are many.
 - *Pinning a model*: fixing the exact AI model version, so all measurements use the same one.
 
+### 2026-11-11 — Asking the far-away database fewer questions
+
+**The problem.** The database is in Sydney, so each question to it takes a third to two thirds of a second. One investigation asked it well over a hundred questions, so a good part of its 90-second time limit went on waiting.
+
+**Two cuts, nothing removed.** First, every time the program finished with a database connection, the library sent one extra "clean up this connection" message, even though the program never leaves anything behind to clean. That message is gone. Second, saving one piece of evidence used seven separate questions; now it uses four. The step that stops two writers from picking the same evidence number stays exactly as it was, and a new test proves it: with that step removed, the test fails every time.
+
+**Why it matters.** About 40 fewer questions per investigation, roughly 12 to 25 seconds saved, so fewer runs should hit the time limit. Moving the database closer (Mumbai) would still help more.
+
+**Words.**
+- *Connection pool*: a few open connections to the database that the program reuses instead of opening a new one each time.
+- *Mutation check*: breaking the code on purpose to see that a test notices.

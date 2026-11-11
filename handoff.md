@@ -2,6 +2,23 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-11 — Usman: about 40 database round trips fewer per investigation (B3.4)
+
+### Done
+- **B3.4, without a region change:** `7ca25be`. (1) The pool no longer sends asyncpg's reset query (`RESET ALL; UNLISTEN *; …`) on every release; the code keeps no session state and an open transaction is still rolled back. Measured to `ocp-dev`: 598–604 ms per pool use before, 315–320 ms after. (2) Storing a tool result is 4 round trips instead of 7: one statement takes the next ref, inserts the evidence, bumps the version and writes the audit row, after the incident lock as before. A new test runs three tool calls and a detector alert at once and checks distinct refs and one audit row each; it fails 3 of 3 with the lock removed. Details: `docs/checks/latency.md`.
+- Checks: backend 353, regression 22, security 136, db 70, integration 132 of 133 (the known local timing test, same failure without the change).
+- No OpenRouter spend this session.
+
+### Next (Usman)
+1. Re-measure alert to proposal on 5 live runs (U7), on an idle laptop; together with U4 (two smokes back to back) to save spend.
+2. After the decisions below: U5 (re-record all 8), then U8 with Tanzeel.
+
+### Waiting on Tanzeel
+- Unchanged from 2026-11-09: `ocp-bench` in `ap-south-1`, ADR-27 review, scenario 1 (prompt v3 or a changed expectation), README review. The round-trip cut lowers the risk of `budget_exhausted` but does not replace the region move: the counted runs still make several round trips per step.
+
+### Waiting on Usman
+- Top up the OpenRouter key before Phase 4 (about $2–3 of live runs are left in the plan); tick the runbook-review box.
+
 ## 2026-11-09 — Usman: B3.3 live injection 5/5 safe, clean-machine test, README
 
 ### Done
