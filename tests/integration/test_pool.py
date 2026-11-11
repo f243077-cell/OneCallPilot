@@ -6,18 +6,24 @@ import asyncpg
 import pytest
 from asyncpg.connection import LoggedQuery
 
+from oncallpilot.db.pool import create_pool
 
-async def test_release_sends_no_query_when_no_transaction_is_open(pool: asyncpg.Pool) -> None:
+
+async def test_release_sends_no_query_when_no_transaction_is_open(database_url: str) -> None:
     sent: list[str] = []
 
     def log(q: LoggedQuery) -> None:
         sent.append(q.query)
 
-    async with pool.acquire() as conn:
-        raw = conn._con  # the connection under the proxy keeps the logger after release
-        raw.add_query_logger(log)
-        await conn.execute("select 1")
-    raw.remove_query_logger(log)
+    single = await create_pool(database_url, max_size=1)  # the same connection comes back
+    try:
+        async with single.acquire() as conn:
+            conn.add_query_logger(log)
+            await conn.execute("select 1")
+        async with single.acquire() as conn:
+            conn.remove_query_logger(log)
+    finally:
+        await single.close()
 
     assert sent == ["select 1"]
 
