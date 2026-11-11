@@ -335,3 +335,13 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 **Words.**
 - *Connection pool*: a few open connections to the database that the program reuses instead of opening a new one each time.
 - *Mutation check*: breaking the code on purpose to see that a test notices.
+
+### 2026-11-12 — Moving the database next door, and keeping the target where it was
+
+**Moving the database.** The database sat in Sydney while both laptops are in Pakistan, so every question to it took a third to two thirds of a second, and some investigations ran out of their 90-second limit. A Supabase project cannot change its region, so both projects are made again in Mumbai. The test database for the counted runs is still left empty until the freeze; the everyday one moves too, so the rehearsal (the pilot) and the speed measurement see the same delay as the real runs.
+
+**Not moving the target.** For the memory-leak scenario the AI said "a restart would only hide the problem", but the project's own requirements say the right first step is a restart that gets the service working while a person fixes the leak. Changing the expected answer after seeing the AI's answer would be moving the goalposts. Instead one general sentence of the instructions changes (prompt v3), and it is kept only if no other scenario gets worse.
+
+**Words.**
+- *Region*: the city of the data centre that hosts a cloud service; the farther away, the slower each round trip.
+- *Moving the goalposts*: changing what counts as success after seeing the result.

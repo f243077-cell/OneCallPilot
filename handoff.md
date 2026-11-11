@@ -2,6 +2,26 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-12 — Tanzeel: decisions on the Supabase region, ADR-27, scenario 1 and the README
+
+### Done
+- **Supabase region:** both projects move to `ap-south-1` (Mumbai). `ocp-bench` is recreated empty and still migrated only at the freeze (ADR-28 unchanged). `ocp-dev` moves too, so the pilot and U7 see the same database delay as the counted runs; ADR-28 forbids writes to `ocp-bench` before the freeze, so a Mumbai measurement needs a Mumbai `ocp-dev`. `MAX_AGENT_SECONDS` stays 90.
+- **ADR-27 accepted** after a review of `window.py`, `toolbox._settled_reset` and the container rule: same 150 s as the detector (ADR-24, ADR-26), no effect without reset records, a crash after the floor still shows. Usman adds the review to the status line and one sentence on the warm-up margin (reset + 180 s versus the 150 s floor).
+- **Scenario 1: prompt v3** (Usman's one-line `propose.md` change), because project-requirements sets `restart_service(worker)` as the expected fix; `scenarios.yaml` is not changed. Back to v2 and a reported miss if any of 2–8 gets worse on the U5 re-recordings or live.
+- **README approved with additions** (Usman: Supabase region, `ocp_backend` login, session pooler, Data API, `ruff format --check`, final latency numbers). This session added the "Phone app" paragraph to `README.md` and corrected the stale live-mode note in `mobile/README.md`.
+- All four written into `docs/usman-work-plan.md` §2 (D1, D3 items 6–8) and `context.md`. Message with the same content sent to Usman.
+- CI on `ce0efc4` green on all six workflows.
+
+### Next
+1. Tanzeel: `ocp-bench` in `ap-south-1` (not migrated); then the `ocp-dev` switch with Usman in person (`next.md`, Tanzeel 2–4).
+2. Usman: v3, the ADR-27 edits and the README edits; U5 (re-record all 8, no live database needed); after the switch U4 + U7 on an idle laptop, P4.3, then U8 with Tanzeel.
+
+### Waiting on Tanzeel
+- Deleting and creating the two Supabase projects, the migrations of the new `ocp-dev`, the `ocp_backend` password in both `.env` files (in person), the APK rebuild; the runbook-review box; the DHCP reservation.
+
+### Waiting on Usman
+- Whether anything on the Sydney `ocp-dev` is still needed, and whether he can open the Supabase org; the OpenRouter top-up; his runbook-review box.
+
 ## 2026-11-11 — Usman: about 40 database round trips fewer per investigation (B3.4)
 
 ### Done

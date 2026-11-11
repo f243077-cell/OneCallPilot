@@ -50,6 +50,8 @@ Storage: Supabase Postgres (schema `ocp`, pgvector) and a private Redis (`copilo
 
 Live runs need an otherwise idle laptop: under heavy load the testbed's healthchecks time out and the reset fails.
 
+**Phone app** (Android, Flutter; `mobile/README.md`). Build it on a machine with the Flutter SDK (CI uses 3.44.2), with the phone on the same Wi‑Fi as the host (Windows Firewall: inbound TCP 8000 on the private profile only). The live build takes its settings from `--dart-define`: `DATA_SOURCE=live`, `API_BASE_URL=http://<host LAN IP>:8000`, `WS_URL=ws://<host LAN IP>:8000/ws/incidents`, and the same `SUPABASE_URL` and public `SUPABASE_ANON_KEY` as the backend; rebuild it when the Supabase project changes. Push notifications need the git-ignored `mobile/android/app/google-services.json` from the Firebase console; without it the app runs without push. `DATA_SOURCE=mock` needs no backend. Checks: `flutter analyze` (zero warnings) and `flutter test`.
+
 Checks, per package (`backend/`, `runner/`, `contracts/python/`, `chaos-shop/`, `tools/ocp/`, `benchmark/`): `uv sync --locked`, `uv run ruff check .`, `uv run mypy`, `uv run pytest -q`. The backend's database, integration, regression and security suites need throwaway Postgres (`pgvector/pgvector`) and Redis containers (`OCP_TEST_DATABASE_URL`, `OCP_TEST_REDIS_URL`).
 
 ## Safety model

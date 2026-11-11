@@ -5,10 +5,14 @@
 > **Rewrite your own developer's section** after every finished chunk of work, so a session that stops at a usage limit can be resumed from here alone (`CLAUDE.md` §11.4).
 
 ## Tanzeel — next (no LLM needed)
-Done 2026-11-04: MOB-016 with the app killed (`docs/checks/push.md`); ADR-26 (a false worker `restarts` incident after a reset); Gate G3 criterion 2 on the phone (`docs/checks/gate-g3.md`); B3.1 tests; proxy security test 54/54 (`docs/checks/proxy.md`); A3.8 storyboard drafted (`docs/demo-storyboard.md`); runbook review (`docs/checks/runbook-review.md`, no blockers); device rows are disabled, never deleted (DB-011 kept; contracts 0.2.1); `ocp-bench` exists (empty; migrated only during the freeze, `CLAUDE.md` §4.7).
-1. **Tomorrow, with Usman: manual half of the pilot** (P4.1, not counted): 8 runs with `AGENT_ENABLED=false` in `.env`, then `ocp up`; one injects, the other diagnoses (`benchmark/PROCEDURE.md`). Harness bugs found may be fixed before the freeze (P4.2). Tell each other first: both use `ocp-dev`.
-2. Tick the two boxes in `docs/checks/runbook-review.md` (Tanzeel, Usman).
-3. Read the storyboard once; adjust captions to taste. It is filmed with A3.3 (needs a proposal).
+Done 2026-11-12: decisions sent to Usman (region, ADR-27, scenario 1, README; `docs/usman-work-plan.md` §2 D3 items 6–8, `handoff.md` 2026-11-12); README phone app paragraph. Earlier: MOB-016 app killed, ADR-26, Gate G3 criterion 2, B3.1, proxy 54/54, A3.8 storyboard, runbook review, DB-011 kept (contracts 0.2.1).
+1. **Before the joint session:** wait for Usman's answer on (a) anything he needs from the Sydney `ocp-dev`, (b) whether he can open the Supabase org (if not, invite him by email from the org's Team settings).
+2. **`ocp-bench` (can be done alone, any time):** delete the empty Sydney `ocp-bench`; create `ocp-bench` in `ap-south-1`; B0.1 settings (sign-ups off, asymmetric JWT key, `ocp` not in the Data API's exposed schemas, users Tanzeel, Usman and a test user). **Do not migrate it** (ADR-28: only at the freeze).
+3. **`ocp-dev` switch, together with Usman in person:** both stacks `ocp down`; delete the Sydney `ocp-dev`; create `ocp-dev` in `ap-south-1` with the B0.1 settings; apply all migrations with the setup script (it records them in `supabase_migrations.schema_migrations`); `alter role ocp_backend with login password '…'`; put the session-pooler URL in `.env` as `DATABASE_URL` and the new `SUPABASE_URL`; the new `SUPABASE_ANON_KEY`, `OCP_TEST_*` and `SUPABASE_DB_ADMIN_URL` in `.env.local`; check DB-012 (an anon REST call fails). Type the `ocp_backend` password into Usman's `.env` yourself, in person. Usman's first `ocp up` embeds the runbooks (his key).
+4. Rebuild the APK with the new `SUPABASE_URL` and anon key (README "Phone app"); both operators sign in; the phone re-registers its device.
+5. Tick your box in `docs/checks/runbook-review.md`.
+6. Then, with Usman: the manual half of the pilot (P4.1) on the Mumbai `ocp-dev`, after U8.
+7. Still open: the DHCP reservation for 192.168.0.105; seating and whose fingerprint approves (D3 items 1 and 2).
 
 ## Usman — next (OpenRouter)
 **The detailed list, with steps, "done when" and Phase 4, is `docs/usman-work-plan.md`.** Every OpenRouter call is Usman's (`CLAUDE.md` §11.6). The pilot runs on `ocp-dev`, `ocp-bench` only for counted runs (ADR-28).

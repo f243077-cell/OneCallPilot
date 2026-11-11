@@ -28,8 +28,10 @@ flutter run --dart-define=DATA_SOURCE=live \
   --dart-define=SUPABASE_ANON_KEY=<public anon key>
 ```
 
-Sign-in works in live mode; the incident screens need `LiveIncidentRepository`
-(task A3.1).
+Use the same `SUPABASE_URL` and anon key as the backend, and rebuild after a
+change of Supabase project. Push needs the git-ignored
+`android/app/google-services.json` from the Firebase console; without it the app
+runs without push.
 
 ## Checks
 
