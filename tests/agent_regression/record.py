@@ -11,11 +11,14 @@ what the scenario's scripted tool calls would read:
 
 - ``alert``: the incident's real trigger (service, signals, observed_at);
 - ``ledger``: the real deploy ledger;
-- ``logs``: the newest 50 real log lines per queried service, plus the newest
+- ``logs``: the newest 50 real log lines per service, plus the newest
   50 ERROR/CRITICAL ones (Loki, the same LogQL selector as ``query_logs``);
-- ``metrics``: the real series of every queried template, as ``points``
-  (Prometheus, the same PromQL as ``query_metrics``);
-- ``containers``: the real state of the queried services' containers.
+- ``metrics``: the real series of every template that applies to a service, as
+  ``points`` (Prometheus, the same PromQL as ``query_metrics``);
+- ``containers``: the real state of the services' containers.
+
+The services are the incident's own and every one the scripted calls name, so
+the real model's own questions (``record_model.py``) get real answers too.
 
 The scripted model, the runner's dry run and the expectation are kept from the
 synthetic file. The result goes to ``scenarios/recorded/<same name>.yaml``.
@@ -36,7 +39,7 @@ import httpx
 import yaml
 
 from oncallpilot.agent.tools.logql import selector
-from oncallpilot.agent.tools.promql import render
+from oncallpilot.agent.tools.promql import TEMPLATES, render
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -236,12 +239,16 @@ def record(number: int, api: Api, http: httpx.Client, secrets: list[str]) -> Pat
     trigger = detail["trigger"]
     observed = datetime.fromisoformat(trigger["observed_at"].replace("Z", "+00:00"))
 
-    services_logged = sorted({c["args"]["service"] for c in calls(data["model"])
-                              if c["tool"] == "query_logs"})  # fmt: skip
-    templates = sorted({(c["args"]["template"], c["args"]["service"])
-                        for c in calls(data["model"]) if c["tool"] == "query_metrics"})  # fmt: skip
-    services_health = sorted({c["args"]["service"] for c in calls(data["model"])
-                              if c["tool"] == "get_service_health"})  # fmt: skip
+    # Every query the agent could make about the incident's service and the services
+    # the scripted calls touch: the real model (record_model.py) asks its own
+    # questions, and an unrecorded one would read as "no data", unlike the live run
+    # (scenario 5 with prompts v2 and v3, 2026-11-13).
+    services = {detail["service"]} | {c["args"]["service"] for c in calls(data["model"])
+                                      if "service" in c.get("args", {})}  # fmt: skip
+    services_logged = sorted(services)
+    templates = sorted((t, s) for t, (_, applies) in TEMPLATES.items() for s in applies
+                       if s in services)  # fmt: skip
+    services_health = sorted(services)
     now = datetime.now(UTC)
     recorded: dict[str, Any] = {
         "name": name,
@@ -257,7 +264,7 @@ def record(number: int, api: Api, http: httpx.Client, secrets: list[str]) -> Pat
             {"match": render(t, s), "points": series(http, render(t, s), observed)}
             for t, s in templates
         ],  # fmt: skip
-        "containers": [c for s in services_health or [detail["service"]] for c in containers(s)],
+        "containers": [c for s in services_health for c in containers(s)],
         "probes_ok": data.get("probes_ok", True),
         "runner": data["runner"],
         "model": data["model"],

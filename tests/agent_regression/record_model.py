@@ -34,7 +34,7 @@ import pytest
 import yaml
 from pydantic import SecretStr
 from redis.asyncio import Redis
-from replay import INVALID, RECORDED_MODEL, SCENARIOS, Scenario, load, run
+from replay import INVALID, RECORDED_MODEL, SCENARIOS, Backends, Scenario, load, run
 
 from oncallpilot.agent.providers.base import (
     InvalidStructuredOutputError,
@@ -109,6 +109,20 @@ def matches(expect: dict[str, Any], got: dict[str, Any]) -> bool:
     return all(expect.get(k) == got.get(k) for k in keys)
 
 
+def unrecorded(scenario: Scenario, backends: Backends) -> list[str]:
+    """Queries the model made that the tool recording cannot answer.
+
+    The replay answers them with no data, which a live run would not; a miss
+    with such queries may be the recording's gap, not the model's (scenario 5,
+    2026-11-13).
+    """
+    metrics = [e["match"] for e in scenario.data.get("metrics", [])]
+    logs = [e["match"] for e in scenario.data.get("logs", [])]
+    gaps = [q for q in backends.prom_queries if not any(m in q for m in metrics)]
+    gaps += [q for q in backends.loki_queries if not any(m in q for m in logs)]
+    return sorted(set(gaps))
+
+
 async def flagged(pool: asyncpg.Pool, incident_id: Any) -> list[str]:
     rows = await pool.fetch(
         "select ref from ocp.evidence where incident_id = $1 and suspicious_content", incident_id
@@ -140,14 +154,17 @@ async def test_record_model(
     expect = dict(source.data["expect"])
     data["model"] = recorder.script()
     if not matches(expect, got):
+        gaps = unrecorded(scenario, outcome.backends)
         misses = os.environ.get("OCP_RECORD_MISSES")
         if misses:
             data["expect"] = got
+            data["unrecorded_queries"] = gaps
             Path(misses).mkdir(parents=True, exist_ok=True)
             miss = Path(misses) / f"{path.stem}.{version}.miss.yaml"
             text = yaml.safe_dump(data, sort_keys=False, width=100)
             miss.write_text(text, "utf-8", newline="\n")
-        pytest.fail(f"{path.stem}: the real model reached {got}, expected {expect}")
+        note = f"; {len(gaps)} unrecorded queries (re-record the tools?)" if gaps else ""
+        pytest.fail(f"{path.stem}: the real model reached {got}, expected {expect}{note}")
     if expect["phase"] == "ESCALATED":
         expect["escalation_reason"] = got["escalation_reason"]
         if "suspicious_refs" in expect:
