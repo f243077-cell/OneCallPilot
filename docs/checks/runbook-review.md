@@ -23,4 +23,4 @@ Each of the 8 scenarios is covered by generic guidance, without naming it: memor
 
 ## Decision
 - [ ] Tanzeel: confirmed / changes wanted
-- [ ] Usman: confirmed / changes wanted
+- [x] Usman: confirmed (2026-11-13)
