@@ -1,0 +1,762 @@
+# memory-leak: the real model's answers to the tool outputs of
+# scenarios/recorded/s1_memory_leak.yaml, recorded 2026-11-13 13:18 UTC
+# by tests/agent_regression/record_model.py (B2.6): google/gemini-3.8-flash, prompts v3.
+# Replayed with FakeProvider by test_scenarios.py; regenerate only on purpose.
+name: memory-leak
+now_offset_s: 46
+alert:
+  service: worker
+  observed_at: '2026-11-03T14:55:49.964021Z'
+  signals:
+  - name: restarts
+    value: 2.0
+    baseline: null
+    zscore: null
+    first_anomalous_at: '2026-11-03T14:55:49.964021Z'
+ledger:
+- deploy_id: f79ff320-cf1d-4ad4-ba80-a2c1ecf1221c
+  kind: deploy
+  service: api
+  release: 1.2.0
+  commit_sha: ad7fe550f520d3422c3b0876a964f60973a88e9e
+  commit_message: 'orders: add pagination to order history'
+  image_tag: chaos-shop/api:1.2.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-14T10:20:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 9f2e0e7f-0834-4276-8df2-dac2a16ce996
+  kind: deploy
+  service: worker
+  release: 2.0.0
+  commit_sha: 10a2829e09250668d2ef5d99256c74a95564fee3
+  commit_message: 'jobs: move receipts to the job queue'
+  image_tag: chaos-shop/worker:2.0.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-09-21T13:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 23bd8507-b6f4-4423-b302-613a26a0d328
+  kind: deploy
+  service: api
+  release: 1.3.0
+  commit_sha: 3e0cc25e2fbaaca6def8ac985a3dee8d0e161ce5
+  commit_message: 'catalog: paginate product listing'
+  image_tag: chaos-shop/api:1.3.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-28T09:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: c556b259-6fb7-4b32-b11b-472271913637
+  kind: deploy
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-10-01T14:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 27845f1f-3236-408a-85ae-d043100daf70
+  kind: deploy
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-10-05T09:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: dac34d96-78b3-4f63-8a6f-f11215cca989
+  kind: reset
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-11-03T14:44:00Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+- deploy_id: 38dc5f49-e590-4d75-8cd3-c0eccf3a1c1c
+  kind: reset
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-11-03T14:44:00Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+logs:
+- match: service="worker"
+  lines:
+  - ts: '2026-11-03T14:56:01.054Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T14:56:01.054Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T14:56:00.864Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T14:56:00.863Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T14:56:00.863Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T14:52:16.996Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T14:52:16.995Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T14:52:16.960Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T14:52:16.884Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T14:52:16.883Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T14:44:20.373Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T14:44:20.372Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T14:44:20.367Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T14:44:20.366Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T14:44:20.366Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T14:44:05.650Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Finished server process [1]
+  - ts: '2026-11-03T14:44:05.649Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application shutdown complete.
+  - ts: '2026-11-03T14:44:05.649Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.worker
+    msg: job loop stopped
+  - ts: '2026-11-03T14:44:05.631Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application shutdown.
+  - ts: '2026-11-03T14:44:05.530Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Shutting down
+  - ts: '2026-11-03T14:42:54.793Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+  - ts: '2026-11-03T14:42:54.791Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application startup complete.
+  - ts: '2026-11-03T14:42:54.755Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: job loop started (batch size 10)
+  - ts: '2026-11-03T14:42:54.752Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application startup.
+  - ts: '2026-11-03T14:42:54.751Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Started server process [1]
+  - ts: '2026-11-03T14:42:29.262Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Finished server process [1]
+  - ts: '2026-11-03T14:42:29.261Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Application shutdown complete.
+  - ts: '2026-11-03T14:42:29.223Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.worker
+    msg: job loop stopped
+  - ts: '2026-11-03T14:42:29.186Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Waiting for application shutdown.
+  - ts: '2026-11-03T14:42:29.077Z'
+    level: INFO
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: uvicorn.error
+    msg: Shutting down
+  - ts: '2026-11-03T14:41:52.616Z'
+    level: ERROR
+    service: worker
+    release: 2.1.0
+    instance: cs-worker-210
+    logger: shop.jobs
+    msg: could not read the job queue
+    exc_type: DependencyUnavailable
+    exc_message: cache server unavailable
+    stacktrace: "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1286, in read_response\n    response = await self._read_response_from_parser(\n         \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\"\
+      , line 1335, in _read_response_from_parser\n    return await self._parser.read_response(\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\"\
+      , line 185, in read_response\n    response = await self._read_response(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/resp3.py\", line 197, in _read_response\n\
+      \    raw = await self._readline()\n          ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/_parsers/base.py\"\
+      , line 587, in _readline\n    data = await self._stream.readline()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/streams.py\", line 568, in readline\n    line = await\
+      \ self.readuntil(sep)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
+      , line 660, in readuntil\n    await self._wait_for_data('readuntil')\n  File \"/usr/local/lib/python3.12/asyncio/streams.py\"\
+      , line 545, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n\nThe\
+      \ above exception was the direct cause of the following exception:\n\nTraceback (most recent call\
+      \ last):\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1283,\
+      \ in read_response\n    async with timeout_context as active_timeout:\n               ^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\", line 115, in __aexit__\n    raise TimeoutError\
+      \ from exc_val\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\
+      \nTraceback (most recent call last):\n  File \"/app/worker/backends.py\", line 29, in _call\n  \
+      \  return await pending\n           ^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
+      , line 946, in execute_command\n    result = await conn.retry.call_with_retry(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line 81, in call_with_retry\n\
+      \    raise error\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/retry.py\", line\
+      \ 69, in call_with_retry\n    return await do()\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
+      , line 871, in _send_command_parse_response\n    return await self.parse_response(conn, command_name,\
+      \ **options)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/client.py\"\
+      , line 993, in parse_response\n    response = await connection.read_response()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/opt/venv/lib/python3.12/site-packages/redis/asyncio/connection.py\", line 1310, in read_response\n\
+      \    raise TimeoutError(f\"Timeout reading from {host_error}\")\nredis.exceptions.TimeoutError:\
+      \ Timeout reading from cs-redis:6379\n\nThe above exception was the direct cause of the following\
+      \ exception:\n\nTraceback (most recent call last):\n  File \"/app/worker/jobs.py\", line 119, in\
+      \ run_once\n    batch = await self._source.pop_batch(self._batch_size)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/worker/backends.py\", line 34, in pop_batch\n    first = await self._call(self._redis.brpop([JOB_QUEUE_KEY],\
+      \ timeout=1))\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File\
+      \ \"/app/worker/backends.py\", line 31, in _call\n    raise DependencyUnavailable(\"cache server\
+      \ unavailable\") from exc\nworker.jobs.DependencyUnavailable: cache server unavailable"
+metrics:
+- match: max(process_resident_memory_bytes{service="worker"})
+  points:
+  - - 1793715649.964
+    - 64352256.0
+  - - 1793715664.964
+    - 64352256.0
+  - - 1793715679.964
+    - 64352256.0
+  - - 1793715694.964
+    - 64352256.0
+  - - 1793715709.964
+    - 64352256.0
+  - - 1793715724.964
+    - 64352256.0
+  - - 1793715739.964
+    - 64352256.0
+  - - 1793715754.964
+    - 64352256.0
+  - - 1793715769.964
+    - 64352256.0
+  - - 1793715784.964
+    - 64352256.0
+  - - 1793715799.964
+    - 64352256.0
+  - - 1793715814.964
+    - 64352256.0
+  - - 1793715829.964
+    - 64352256.0
+  - - 1793715844.964
+    - 64352256.0
+  - - 1793715859.964
+    - 64352256.0
+  - - 1793715874.964
+    - 64352256.0
+  - - 1793715889.964
+    - 64352256.0
+  - - 1793715904.964
+    - 64352256.0
+  - - 1793715919.964
+    - 64352256.0
+  - - 1793715934.964
+    - 64352256.0
+  - - 1793715949.964
+    - 64352256.0
+  - - 1793715964.964
+    - 64352256.0
+  - - 1793715979.964
+    - 64352256.0
+  - - 1793715994.964
+    - 64352256.0
+  - - 1793716009.964
+    - 64352256.0
+  - - 1793716024.964
+    - 64352256.0
+  - - 1793716039.964
+    - 64352256.0
+  - - 1793716054.964
+    - 64352256.0
+  - - 1793716069.964
+    - 64352256.0
+  - - 1793716084.964
+    - 64352256.0
+  - - 1793716099.964
+    - 64352256.0
+  - - 1793716114.964
+    - 64352256.0
+  - - 1793716129.964
+    - 64352256.0
+  - - 1793716144.964
+    - 64352256.0
+  - - 1793716159.964
+    - 64352256.0
+  - - 1793716174.964
+    - 64352256.0
+  - - 1793716189.964
+    - 64352256.0
+  - - 1793716204.964
+    - 64352256.0
+  - - 1793716219.964
+    - 64352256.0
+  - - 1793716234.964
+    - 64352256.0
+  - - 1793716249.964
+    - 64352256.0
+  - - 1793716264.964
+    - 64352256.0
+  - - 1793716279.964
+    - 64352256.0
+  - - 1793716294.964
+    - 64352256.0
+  - - 1793716309.964
+    - 64352256.0
+  - - 1793716324.964
+    - 64352256.0
+  - - 1793716339.964
+    - 64352256.0
+  - - 1793716354.964
+    - 64352256.0
+  - - 1793716369.964
+    - 64352256.0
+  - - 1793716384.964
+    - 64352256.0
+  - - 1793716399.964
+    - 64352256.0
+  - - 1793716414.964
+    - 64352256.0
+  - - 1793716429.964
+    - 64352256.0
+  - - 1793716444.964
+    - 64352256.0
+  - - 1793716459.964
+    - 64352256.0
+  - - 1793716474.964
+    - 64352256.0
+  - - 1793716489.964
+    - 64352256.0
+  - - 1793716504.964
+    - 64352256.0
+  - - 1793716519.964
+    - 64352256.0
+  - - 1793716534.964
+    - 64352256.0
+  - - 1793716549.964
+    - 64352256.0
+  - - 1793716564.964
+    - 64352256.0
+  - - 1793716579.964
+    - 64352256.0
+  - - 1793716594.964
+    - 64352256.0
+  - - 1793716609.964
+    - 64352256.0
+  - - 1793716624.964
+    - 64352256.0
+  - - 1793716639.964
+    - 64352256.0
+  - - 1793716654.964
+    - 64352256.0
+  - - 1793716669.964
+    - 64352256.0
+  - - 1793716684.964
+    - 64352256.0
+  - - 1793716699.964
+    - 64352256.0
+  - - 1793716714.964
+    - 64352256.0
+  - - 1793716729.964
+    - 64352256.0
+  - - 1793716744.964
+    - 64352256.0
+  - - 1793716759.964
+    - 64352256.0
+  - - 1793716774.964
+    - 64352256.0
+  - - 1793716789.964
+    - 64352256.0
+  - - 1793716849.964
+    - 62750720.0
+  - - 1793716864.964
+    - 62750720.0
+  - - 1793716879.964
+    - 63012864.0
+  - - 1793716894.964
+    - 63012864.0
+  - - 1793716909.964
+    - 63012864.0
+  - - 1793716924.964
+    - 63537152.0
+  - - 1793716939.964
+    - 63537152.0
+  - - 1793716984.964
+    - 63049728.0
+  - - 1793716999.964
+    - 63574016.0
+  - - 1793717014.964
+    - 63574016.0
+  - - 1793717029.964
+    - 63574016.0
+  - - 1793717044.964
+    - 63574016.0
+  - - 1793717074.964
+    - 63844352.0
+  - - 1793717089.964
+    - 63844352.0
+  - - 1793717104.964
+    - 63975424.0
+  - - 1793717119.964
+    - 63975424.0
+  - - 1793717134.964
+    - 63975424.0
+  - - 1793717149.964
+    - 63975424.0
+  - - 1793717164.964
+    - 63975424.0
+  - - 1793717179.964
+    - 64106496.0
+  - - 1793717194.964
+    - 64106496.0
+  - - 1793717209.964
+    - 64106496.0
+  - - 1793717224.964
+    - 64237568.0
+  - - 1793717239.964
+    - 64237568.0
+  - - 1793717254.964
+    - 64237568.0
+  - - 1793717269.964
+    - 64237568.0
+  - - 1793717284.964
+    - 64237568.0
+  - - 1793717299.964
+    - 64237568.0
+  - - 1793717314.964
+    - 64237568.0
+  - - 1793717329.964
+    - 78917632.0
+  - - 1793717344.964
+    - 94777344.0
+  - - 1793717359.964
+    - 110505984.0
+  - - 1793717374.964
+    - 126365696.0
+  - - 1793717389.964
+    - 142094336.0
+  - - 1793717404.964
+    - 157954048.0
+  - - 1793717419.964
+    - 168439808.0
+  - - 1793717434.964
+    - 184168448.0
+  - - 1793717449.964
+    - 199897088.0
+  - - 1793717464.964
+    - 215756800.0
+  - - 1793717479.964
+    - 231616512.0
+  - - 1793717494.964
+    - 247345152.0
+  - - 1793717509.964
+    - 263204864.0
+  - - 1793717554.964
+    - 74555392.0
+  - - 1793717569.964
+    - 90546176.0
+  - - 1793717584.964
+    - 106405888.0
+  - - 1793717599.964
+    - 122265600.0
+  - - 1793717614.964
+    - 137994240.0
+  - - 1793717629.964
+    - 153722880.0
+  - - 1793717644.964
+    - 169582592.0
+  - - 1793717659.964
+    - 185442304.0
+  - - 1793717674.964
+    - 195928064.0
+  - - 1793717689.964
+    - 211787776.0
+  - - 1793717704.964
+    - 227516416.0
+  - - 1793717719.964
+    - 242196480.0
+  - - 1793717734.964
+    - 258056192.0
+  - - 1793717749.964
+    - 273915904.0
+  - - 1793717764.964
+    - 66355200.0
+  - - 1793717779.964
+    - 82083840.0
+  - - 1793717794.964
+    - 92569600.0
+  - - 1793717809.964
+    - 97812480.0
+  - - 1793717824.964
+    - 97812480.0
+  - - 1793717839.964
+    - 97812480.0
+  - - 1793717854.964
+    - 97812480.0
+  - - 1793717869.964
+    - 97812480.0
+  - - 1793717884.964
+    - 97812480.0
+  - - 1793717899.964
+    - 97812480.0
+  - - 1793717914.964
+    - 97812480.0
+  - - 1793717929.964
+    - 97812480.0
+  - - 1793717944.964
+    - 97812480.0
+  - - 1793717959.964
+    - 97812480.0
+  - - 1793717974.964
+    - 97812480.0
+  - - 1793717989.964
+    - 97812480.0
+  - - 1793718004.964
+    - 97812480.0
+  - - 1793718019.964
+    - 97812480.0
+  - - 1793718034.964
+    - 97812480.0
+  - - 1793718049.964
+    - 97812480.0
+containers:
+- name: cs-worker-210
+  service: worker
+  release: 2.1.0
+  restarts: 2
+  oom_killed: false
+  state: running
+  exit_code: 0
+  health: healthy
+probes_ok: true
+runner:
+  active_release: 2.1.0
+  replicas: 1
+model:
+  gather:
+  - - tool: get_service_health
+      args:
+        service: worker
+  - - tool: get_recent_deploys
+      args:
+        service: worker
+  - - tool: query_logs
+      args:
+        service: worker
+        level: ERROR
+  - - tool: query_logs
+      args:
+        service: worker
+        level: ANY
+  - - tool: query_metrics
+      args:
+        template: memory_rss
+        service: worker
+  - - tool: search_runbooks
+      args:
+        query: worker memory leak restart oom
+  hypotheses:
+    hypotheses:
+    - rank: 1
+      summary: The worker service experiences a rapid memory leak during its job processing loop, steadily
+        accumulating memory until reaching a peak around 260-274 MB and crashing/restarting.
+      root_cause_category: memory_leak
+      confidence: 0.9
+      evidence_refs:
+      - E1
+      - E2
+      - E5
+      - E6
+    - rank: 2
+      summary: The worker service suffers from container resource saturation where memory exceeds container
+        limits, triggering process restarts.
+      root_cause_category: resource_saturation
+      confidence: 0.1
+      evidence_refs:
+      - E1
+      - E2
+      - E6
+  disproof:
+    target_rank: 1
+    tool: query_logs
+    params:
+      service: worker
+      contains: batch
+    expectation_if_true: Worker logs will show repeated batch job processing occurring during the saw-tooth
+      memory climb intervals before each restart.
+  reflection:
+    items:
+    - rank: 1
+      citations_supported: true
+      adjusted_confidence: 0.95
+      note: Evidence confirms memory monotonically climbs after startup until worker process terminates
+        and restarts.
+    - rank: 2
+      citations_supported: true
+      adjusted_confidence: 0.05
+      note: Resource saturation is secondary to the primary memory leak pattern causing repeated restarts.
+    top_verdict: survived
+  proposal:
+    action: restart_service
+    params:
+      service: worker
+    expected_effect: Worker memory usage drops back to initial baseline levels, temporarily halting crash-loop
+      restarts while engineers investigate the memory leak.
+    rationale: Memory metrics show RSS climbing linearly until the worker restarts (E6, E1). Restarting
+      the worker resets memory state and provides transient stability (E2, E6).
+    evidence_refs:
+    - E1
+    - E2
+    - E6
+expect:
+  phase: PROPOSED
+  action: restart_service
+  params:
+    service: worker
+prompt_version: v3

@@ -1,0 +1,1946 @@
+# db-pool: the real model's answers to the tool outputs of
+# scenarios/recorded/s3_db_pool.yaml, recorded 2026-11-13 13:19 UTC
+# by tests/agent_regression/record_model.py (B2.6): google/gemini-3.8-flash, prompts v3.
+# Replayed with FakeProvider by test_scenarios.py; regenerate only on purpose.
+name: db-pool
+now_offset_s: 103
+alert:
+  service: api
+  observed_at: '2026-11-03T15:07:52.469198Z'
+  signals:
+  - name: stack_traces
+    value: 22.0
+    baseline: null
+    zscore: null
+    first_anomalous_at: '2026-11-03T15:07:52.469198Z'
+ledger:
+- deploy_id: 65c1c988-acf6-416d-99a4-5db8da9c4092
+  kind: deploy
+  service: api
+  release: 1.2.0
+  commit_sha: ad7fe550f520d3422c3b0876a964f60973a88e9e
+  commit_message: 'orders: add pagination to order history'
+  image_tag: chaos-shop/api:1.2.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-14T10:20:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: e1103cdb-022a-4b2b-9d1d-dd9b93b409a5
+  kind: deploy
+  service: worker
+  release: 2.0.0
+  commit_sha: 10a2829e09250668d2ef5d99256c74a95564fee3
+  commit_message: 'jobs: move receipts to the job queue'
+  image_tag: chaos-shop/worker:2.0.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-09-21T13:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: e696dadf-3d94-4875-81c3-c8d55b812799
+  kind: deploy
+  service: api
+  release: 1.3.0
+  commit_sha: 3e0cc25e2fbaaca6def8ac985a3dee8d0e161ce5
+  commit_message: 'catalog: paginate product listing'
+  image_tag: chaos-shop/api:1.3.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-09-28T09:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 6f29cda0-2421-41b7-b4be-e65c9cf51343
+  kind: deploy
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-10-01T14:40:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: 1b7a6578-ce87-4918-b766-a26453d901e8
+  kind: deploy
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-10-05T09:05:00Z'
+  deployed_by: setup
+  reason: scheduled release
+- deploy_id: c0c98473-7a55-4229-81ac-cf059eab2625
+  kind: reset
+  service: api
+  release: 1.4.0
+  commit_sha: 606c2674b8e32ec226c88019db05b426594a08f6
+  commit_message: 'cart: cache price lookups'
+  image_tag: chaos-shop/api:1.4.0
+  config_hash: 294e0928183d9d197f854752e2d37233818ad07a3175da4377cad971eab06324
+  replicas: 1
+  deployed_at: '2026-11-03T15:02:50Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+- deploy_id: 72429627-26f6-44b4-bdca-b2c3d6a8eb90
+  kind: reset
+  service: worker
+  release: 2.1.0
+  commit_sha: 69bbb70d749ccfe3a5a7a79bbb2c687ed478fb45
+  commit_message: 'jobs: batch receipt emails'
+  image_tag: chaos-shop/worker:2.1.0
+  config_hash: d2e5278787c833d2fd6804524895898b9910f3c7c81c36859ca0ed161be05adb
+  replicas: 1
+  deployed_at: '2026-11-03T15:02:50Z'
+  deployed_by: setup
+  reason: environment restored to baseline
+logs:
+- match: service="api"
+  lines:
+  - ts: '2026-11-03T15:09:35.627Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5019.6
+    request_id: d35ffbfc22c8d59dca0bf99d20257944
+    route: /cart
+  - ts: '2026-11-03T15:09:35.625Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: d35ffbfc22c8d59dca0bf99d20257944
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:35.411Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 503
+    status: 503
+    duration_ms: 5003.6
+    request_id: d742034420a8a0862a788c5f472b0b5b
+    route: /orders
+  - ts: '2026-11-03T15:09:35.409Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.orders
+    msg: could not list orders
+    request_id: d742034420a8a0862a788c5f472b0b5b
+    route: /orders
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 309, in orders\n    recent = await store.list_orders(limit)\n      \
+      \       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 175, in list_orders\n  \
+      \  async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:35.211Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 4.2
+    request_id: 422c935ee32a64646565e78dc3500a24
+    route: /products
+  - ts: '2026-11-03T15:09:35.003Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 503
+    status: 503
+    duration_ms: 5002.2
+    request_id: b51136ef6985ed6ca1f979daa58f8df4
+    route: /orders
+  - ts: '2026-11-03T15:09:35.002Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.orders
+    msg: could not list orders
+    request_id: b51136ef6985ed6ca1f979daa58f8df4
+    route: /orders
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 309, in orders\n    recent = await store.list_orders(limit)\n      \
+      \       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 175, in list_orders\n  \
+      \  async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:34.821Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 5008.0
+    request_id: d077e2e05934f9a1c445f923063c7e02
+    route: /checkout
+  - ts: '2026-11-03T15:09:34.820Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not read the cart
+    request_id: d077e2e05934f9a1c445f923063c7e02
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 261, in checkout\n    lines = await store.get_cart(body.cart_id)\n \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n\
+      \    async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:34.444Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 503
+    status: 503
+    duration_ms: 5007.1
+    request_id: d94038e018d20ac9546b3a4af76f2833
+    route: /cart
+  - ts: '2026-11-03T15:09:34.440Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not read the cart
+    request_id: d94038e018d20ac9546b3a4af76f2833
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 249, in get_cart\n    lines = await store.get_cart(cart_id)\n      \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n    async\
+      \ with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:34.016Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 503
+    status: 503
+    duration_ms: 5010.5
+    request_id: a562bae5fcafb716df6cffc6010d6889
+    route: /orders
+  - ts: '2026-11-03T15:09:34.009Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.orders
+    msg: could not list orders
+    request_id: a562bae5fcafb716df6cffc6010d6889
+    route: /orders
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 309, in orders\n    recent = await store.list_orders(limit)\n      \
+      \       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 175, in list_orders\n  \
+      \  async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:33.605Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5004.7
+    request_id: 9399d72d384cc2857d803dc13d59233c
+    route: /cart
+  - ts: '2026-11-03T15:09:33.603Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: 9399d72d384cc2857d803dc13d59233c
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:33.406Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5005.1
+    request_id: a79d2addc264d0069aa68ff745cfd868
+    route: /cart
+  - ts: '2026-11-03T15:09:33.404Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: a79d2addc264d0069aa68ff745cfd868
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:33.212Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 7.9
+    request_id: e9e5a9147595c09761c9517b8880fbb7
+    route: /products
+  - ts: '2026-11-03T15:09:33.010Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /cart 503
+    status: 503
+    duration_ms: 5003.9
+    request_id: dd23b03305274228734f46951ce46a47
+    route: /cart
+  - ts: '2026-11-03T15:09:33.009Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not read the cart
+    request_id: dd23b03305274228734f46951ce46a47
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 249, in get_cart\n    lines = await store.get_cart(cart_id)\n      \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n    async\
+      \ with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:32.424Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 16.2
+    request_id: 3114f5345732655898cbd241fa8b20ca
+    route: /products
+  - ts: '2026-11-03T15:09:32.421Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5017.0
+    request_id: e0cb9fec0aaa5fd6e34179be2181b144
+    route: /cart
+  - ts: '2026-11-03T15:09:32.410Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: e0cb9fec0aaa5fd6e34179be2181b144
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:32.202Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.4
+    request_id: 984b0ca66cdf55ef401558849d89856e
+    route: /products
+  - ts: '2026-11-03T15:09:31.938Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /healthz 200
+    status: 200
+    duration_ms: 0.5
+    request_id: b1737ede4f9640ac9431f607b38440a0
+    route: /healthz
+  - ts: '2026-11-03T15:09:31.825Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 5014.0
+    request_id: ae1f2aad793345e24eec6c23d3a84383
+    route: /checkout
+  - ts: '2026-11-03T15:09:31.818Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not read the cart
+    request_id: ae1f2aad793345e24eec6c23d3a84383
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 261, in checkout\n    lines = await store.get_cart(body.cart_id)\n \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n\
+      \    async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:31.611Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 3.7
+    request_id: dabd5848a929c6980355cfd00a63bd32
+    route: /products
+  - ts: '2026-11-03T15:09:31.408Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5008.3
+    request_id: 372e1839ebe52801009e51f702b86ab3
+    route: /cart
+  - ts: '2026-11-03T15:09:31.407Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 7.1
+    request_id: 9928eef4cb405c29af946ebc1f1909fa
+    route: /products
+  - ts: '2026-11-03T15:09:31.406Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: 372e1839ebe52801009e51f702b86ab3
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:31.208Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 503
+    status: 503
+    duration_ms: 5005.0
+    request_id: d6d78443763c695d5a48fb57ce1a5732
+    route: /orders
+  - ts: '2026-11-03T15:09:31.206Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.orders
+    msg: could not list orders
+    request_id: d6d78443763c695d5a48fb57ce1a5732
+    route: /orders
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 309, in orders\n    recent = await store.list_orders(limit)\n      \
+      \       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 175, in list_orders\n  \
+      \  async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:31.016Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 5011.3
+    request_id: cc8cf14fda5694d4e734e6f86e2ef36f
+    route: /checkout
+  - ts: '2026-11-03T15:09:31.011Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not read the cart
+    request_id: cc8cf14fda5694d4e734e6f86e2ef36f
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 261, in checkout\n    lines = await store.get_cart(body.cart_id)\n \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n\
+      \    async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:31.007Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 5.1
+    request_id: d15938062cddeb969beac3ebea6d3dc0
+    route: /products
+  - ts: '2026-11-03T15:09:30.807Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 5005.9
+    request_id: 73e7586dc419e4697f1468c01e43d1b0
+    route: /checkout
+  - ts: '2026-11-03T15:09:30.806Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not read the cart
+    request_id: 73e7586dc419e4697f1468c01e43d1b0
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 261, in checkout\n    lines = await store.get_cart(body.cart_id)\n \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n\
+      \    async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:30.419Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 5015.0
+    request_id: 8132b770d3d79c5aef0f63bf8fd99ddc
+    route: /checkout
+  - ts: '2026-11-03T15:09:30.409Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not read the cart
+    request_id: 8132b770d3d79c5aef0f63bf8fd99ddc
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 261, in checkout\n    lines = await store.get_cart(body.cart_id)\n \
+      \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 144, in get_cart\n\
+      \    async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:30.215Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5012.3
+    request_id: b50dab690743c0848c2fe235d44663b6
+    route: /cart
+  - ts: '2026-11-03T15:09:30.207Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: b50dab690743c0848c2fe235d44663b6
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:30.206Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.9
+    request_id: 747399b6eead9437bc6d1d02582ce9ea
+    route: /products
+  - ts: '2026-11-03T15:09:29.603Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 1.9
+    request_id: c0bc957d18251ea618fa3d5e0719a8ba
+    route: /products
+  - ts: '2026-11-03T15:09:29.435Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5023.3
+    request_id: e87cbb58b1b5ee7ca15f141461902ea7
+    route: /cart
+  - ts: '2026-11-03T15:09:29.404Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: e87cbb58b1b5ee7ca15f141461902ea7
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:29.203Z'
+    level: INFO
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /products 200
+    status: 200
+    duration_ms: 2.2
+    request_id: 1bd0be53ba0b8f7387964cc3e982b3b1
+    route: /products
+  - ts: '2026-11-03T15:09:28.395Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5010.3
+    request_id: affcf13cb0eaf8fde349ee841f6f7453
+    route: /cart
+  - ts: '2026-11-03T15:09:28.390Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: affcf13cb0eaf8fde349ee841f6f7453
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:28.195Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5005.7
+    request_id: 2ac8fdec4260900da709bf717d0273f0
+    route: /cart
+  - ts: '2026-11-03T15:09:28.193Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: 2ac8fdec4260900da709bf717d0273f0
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:27.549Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5009.5
+    request_id: 9cf609b4f286421c932249710601040a
+    route: /cart
+  - ts: '2026-11-03T15:09:27.547Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: 9cf609b4f286421c932249710601040a
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:27.457Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 25724.6
+    request_id: f6642fd323d9180e5d6b3350165e8563
+    route: /checkout
+  - ts: '2026-11-03T15:09:27.454Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not mark order 942637db-fbca-42c4-afee-ed47abec0b2a as paid
+    request_id: f6642fd323d9180e5d6b3350165e8563
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 294, in checkout\n    await store.set_order_status(order.id, \"paid\"\
+      )\n  File \"/app/api/pg.py\", line 171, in set_order_status\n    async with self._connection() as\
+      \ conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\",\
+      \ line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:27.381Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /checkout 503
+    status: 503
+    duration_ms: 6047.7
+    request_id: c6e9885f705ddedb91e5ee4742c7f85b
+    route: /checkout
+  - ts: '2026-11-03T15:09:27.369Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.checkout
+    msg: could not create the order
+    request_id: c6e9885f705ddedb91e5ee4742c7f85b
+    route: /checkout
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 273, in checkout\n    order = await store.create_order(body.cart_id,\
+      \ total)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\",\
+      \ line 157, in create_order\n    async with self._connection() as conn, conn.transaction():\n  \
+      \             ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\", line 210,\
+      \ in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\"\
+      , line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out\
+      \ after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:22.143Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: GET /orders 503
+    status: 503
+    duration_ms: 5004.1
+    request_id: 08f4136cfa04789b37c50cacf1747c28
+    route: /orders
+  - ts: '2026-11-03T15:09:22.141Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.orders
+    msg: could not list orders
+    request_id: 08f4136cfa04789b37c50cacf1747c28
+    route: /orders
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 309, in orders\n    recent = await store.list_orders(limit)\n      \
+      \       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 175, in list_orders\n  \
+      \  async with self._connection() as conn:\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/contextlib.py\"\
+      , line 210, in __aenter__\n    return await anext(self.gen)\n           ^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/app/api/pg.py\", line 106, in _connection\n    raise DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout:\
+      \ timed out after 5s waiting for a database connection"
+  - ts: '2026-11-03T15:09:21.952Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.access
+    msg: POST /cart 503
+    status: 503
+    duration_ms: 5013.9
+    request_id: 4ad7f3f408ce0b357249813d4832cef4
+    route: /cart
+  - ts: '2026-11-03T15:09:21.944Z'
+    level: ERROR
+    service: api
+    release: 1.4.0
+    instance: cs-api-140-1
+    logger: shop.cart
+    msg: could not create the cart
+    request_id: 4ad7f3f408ce0b357249813d4832cef4
+    route: /cart
+    exc_type: DatabasePoolTimeout
+    exc_message: timed out after 5s waiting for a database connection
+    stacktrace: "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/asyncio/tasks.py\"\
+      , line 520, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 996, in _acquire_impl\n    ch = await self._queue.get()  # type: PoolConnectionHolder\n \
+      \        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/queues.py\", line 158,\
+      \ in get\n    await getter\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct\
+      \ cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/app/api/pg.py\"\
+      , line 102, in _connection\n    conn = await pool.acquire(timeout=self._acquire_timeout)\n     \
+      \      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/asyncpg/pool.py\"\
+      , line 1016, in _acquire\n    return await compat.wait_for(\n           ^^^^^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/asyncio/tasks.py\", line 519, in wait_for\n    async with timeouts.timeout(timeout):\n\
+      \               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/asyncio/timeouts.py\"\
+      , line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception\
+      \ was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File\
+      \ \"/app/api/app.py\", line 239, in create_cart\n    cart_id = await store.create_cart(lines)\n\
+      \              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 135, in create_cart\n\
+      \    async with self._connection() as conn, conn.transaction():\n               ^^^^^^^^^^^^^^^^^^\n\
+      \  File \"/usr/local/lib/python3.12/contextlib.py\", line 210, in __aenter__\n    return await anext(self.gen)\n\
+      \           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/api/pg.py\", line 106, in _connection\n    raise\
+      \ DatabasePoolTimeout(\napi.pg.DatabasePoolTimeout: timed out after 5s waiting for a database connection"
+metrics:
+- match: sum(db_pool_connections{service="api",state="in_use"})
+  points:
+  - - 1793716372.469
+    - 0.0
+  - - 1793716387.469
+    - 0.0
+  - - 1793716402.469
+    - 0.0
+  - - 1793716417.469
+    - 0.0
+  - - 1793716432.469
+    - 0.0
+  - - 1793716447.469
+    - 0.0
+  - - 1793716462.469
+    - 0.0
+  - - 1793716477.469
+    - 0.0
+  - - 1793716492.469
+    - 0.0
+  - - 1793716507.469
+    - 0.0
+  - - 1793716522.469
+    - 0.0
+  - - 1793716537.469
+    - 0.0
+  - - 1793716552.469
+    - 0.0
+  - - 1793716567.469
+    - 0.0
+  - - 1793716582.469
+    - 0.0
+  - - 1793716597.469
+    - 0.0
+  - - 1793716612.469
+    - 0.0
+  - - 1793716627.469
+    - 0.0
+  - - 1793716642.469
+    - 0.0
+  - - 1793716657.469
+    - 0.0
+  - - 1793716672.469
+    - 0.0
+  - - 1793716687.469
+    - 0.0
+  - - 1793716702.469
+    - 0.0
+  - - 1793716717.469
+    - 0.0
+  - - 1793716732.469
+    - 0.0
+  - - 1793716747.469
+    - 0.0
+  - - 1793716762.469
+    - 0.0
+  - - 1793716777.469
+    - 0.0
+  - - 1793716792.469
+    - 0.0
+  - - 1793716867.469
+    - 0.0
+  - - 1793716882.469
+    - 0.0
+  - - 1793716897.469
+    - 2.0
+  - - 1793716912.469
+    - 0.0
+  - - 1793716927.469
+    - 0.0
+  - - 1793716942.469
+    - 1.0
+  - - 1793716987.469
+    - 0.0
+  - - 1793717002.469
+    - 0.0
+  - - 1793717017.469
+    - 0.0
+  - - 1793717032.469
+    - 0.0
+  - - 1793717077.469
+    - 0.0
+  - - 1793717092.469
+    - 0.0
+  - - 1793717107.469
+    - 0.0
+  - - 1793717122.469
+    - 0.0
+  - - 1793717137.469
+    - 0.0
+  - - 1793717152.469
+    - 0.0
+  - - 1793717167.469
+    - 0.0
+  - - 1793717182.469
+    - 0.0
+  - - 1793717197.469
+    - 0.0
+  - - 1793717212.469
+    - 0.0
+  - - 1793717227.469
+    - 0.0
+  - - 1793717242.469
+    - 0.0
+  - - 1793717257.469
+    - 0.0
+  - - 1793717272.469
+    - 0.0
+  - - 1793717287.469
+    - 1.0
+  - - 1793717302.469
+    - 0.0
+  - - 1793717317.469
+    - 0.0
+  - - 1793717332.469
+    - 0.0
+  - - 1793717347.469
+    - 0.0
+  - - 1793717362.469
+    - 0.0
+  - - 1793717377.469
+    - 0.0
+  - - 1793717392.469
+    - 0.0
+  - - 1793717407.469
+    - 0.0
+  - - 1793717422.469
+    - 0.0
+  - - 1793717437.469
+    - 0.0
+  - - 1793717452.469
+    - 0.0
+  - - 1793717467.469
+    - 0.0
+  - - 1793717482.469
+    - 0.0
+  - - 1793717497.469
+    - 0.0
+  - - 1793717512.469
+    - 0.0
+  - - 1793717527.469
+    - 0.0
+  - - 1793717542.469
+    - 0.0
+  - - 1793717557.469
+    - 0.0
+  - - 1793717572.469
+    - 0.0
+  - - 1793717587.469
+    - 0.0
+  - - 1793717602.469
+    - 1.0
+  - - 1793717617.469
+    - 1.0
+  - - 1793717632.469
+    - 0.0
+  - - 1793717647.469
+    - 0.0
+  - - 1793717662.469
+    - 0.0
+  - - 1793717677.469
+    - 0.0
+  - - 1793717692.469
+    - 0.0
+  - - 1793717707.469
+    - 0.0
+  - - 1793717722.469
+    - 0.0
+  - - 1793717737.469
+    - 0.0
+  - - 1793717752.469
+    - 0.0
+  - - 1793717767.469
+    - 0.0
+  - - 1793717782.469
+    - 1.0
+  - - 1793717797.469
+    - 0.0
+  - - 1793717812.469
+    - 0.0
+  - - 1793717842.469
+    - 0.0
+  - - 1793717857.469
+    - 0.0
+  - - 1793717872.469
+    - 0.0
+  - - 1793717887.469
+    - 0.0
+  - - 1793717902.469
+    - 0.0
+  - - 1793717917.469
+    - 0.0
+  - - 1793717932.469
+    - 0.0
+  - - 1793717947.469
+    - 0.0
+  - - 1793717962.469
+    - 0.0
+  - - 1793717977.469
+    - 0.0
+  - - 1793717992.469
+    - 0.0
+  - - 1793718007.469
+    - 0.0
+  - - 1793718022.469
+    - 0.0
+  - - 1793718037.469
+    - 0.0
+  - - 1793718052.469
+    - 0.0
+  - - 1793718067.469
+    - 0.0
+  - - 1793718082.469
+    - 0.0
+  - - 1793718097.469
+    - 0.0
+  - - 1793718112.469
+    - 0.0
+  - - 1793718127.469
+    - 0.0
+  - - 1793718142.469
+    - 0.0
+  - - 1793718157.469
+    - 0.0
+  - - 1793718172.469
+    - 0.0
+  - - 1793718202.469
+    - 0.0
+  - - 1793718217.469
+    - 0.0
+  - - 1793718232.469
+    - 0.0
+  - - 1793718247.469
+    - 0.0
+  - - 1793718262.469
+    - 0.0
+  - - 1793718277.469
+    - 0.0
+  - - 1793718292.469
+    - 0.0
+  - - 1793718307.469
+    - 0.0
+  - - 1793718322.469
+    - 0.0
+  - - 1793718337.469
+    - 0.0
+  - - 1793718352.469
+    - 0.0
+  - - 1793718367.469
+    - 0.0
+  - - 1793718382.469
+    - 0.0
+  - - 1793718397.469
+    - 0.0
+  - - 1793718412.469
+    - 0.0
+  - - 1793718427.469
+    - 0.0
+  - - 1793718442.469
+    - 0.0
+  - - 1793718457.469
+    - 3.0
+  - - 1793718472.469
+    - 5.0
+  - - 1793718487.469
+    - 5.0
+  - - 1793718502.469
+    - 5.0
+  - - 1793718517.469
+    - 5.0
+  - - 1793718532.469
+    - 5.0
+  - - 1793718547.469
+    - 5.0
+  - - 1793718562.469
+    - 5.0
+  - - 1793718577.469
+    - 5.0
+  - - 1793718592.469
+    - 5.0
+  - - 1793718607.469
+    - 5.0
+  - - 1793718622.469
+    - 5.0
+  - - 1793718637.469
+    - 5.0
+  - - 1793718652.469
+    - 5.0
+  - - 1793718667.469
+    - 5.0
+  - - 1793718682.469
+    - 5.0
+  - - 1793718697.469
+    - 5.0
+  - - 1793718712.469
+    - 5.0
+  - - 1793718727.469
+    - 5.0
+  - - 1793718742.469
+    - 5.0
+  - - 1793718757.469
+    - 5.0
+  - - 1793718772.469
+    - 5.0
+- match: histogram_quantile(0.95, sum by (le) (rate(db_pool_wait_seconds_bucket{service="api"}[1m])))
+  points:
+  - - 1793716372.469
+    - 0.00095
+  - - 1793716387.469
+    - 0.000954
+  - - 1793716402.469
+    - 0.000964
+  - - 1793716417.469
+    - 0.000965
+  - - 1793716432.469
+    - 0.000961
+  - - 1793716447.469
+    - 0.000963
+  - - 1793716462.469
+    - 0.000958
+  - - 1793716477.469
+    - 0.000958
+  - - 1793716492.469
+    - 0.000958
+  - - 1793716507.469
+    - 0.000954
+  - - 1793716522.469
+    - 0.000954
+  - - 1793716537.469
+    - 0.000954
+  - - 1793716552.469
+    - 0.000954
+  - - 1793716567.469
+    - 0.000962
+  - - 1793716582.469
+    - 0.000963
+  - - 1793716597.469
+    - 0.000959
+  - - 1793716612.469
+    - 0.000959
+  - - 1793716627.469
+    - 0.000958
+  - - 1793716642.469
+    - 0.000957
+  - - 1793716657.469
+    - 0.000957
+  - - 1793716672.469
+    - 0.000954
+  - - 1793716687.469
+    - 0.000954
+  - - 1793716702.469
+    - 0.000962
+  - - 1793716717.469
+    - 0.000962
+  - - 1793716732.469
+    - 0.000977
+  - - 1793716747.469
+    - 0.000986
+  - - 1793716762.469
+    - 0.000993
+  - - 1793716777.469
+    - 0.000995
+  - - 1793716792.469
+    - 0.000984
+  - - 1793716807.469
+    - 0.000993
+  - - 1793716822.469
+    - 0.000972
+  - - 1793716837.469
+    - 0.016
+  - - 1793716867.469
+    - 0.00095
+  - - 1793716882.469
+    - 0.0028
+  - - 1793716897.469
+    - 0.033
+  - - 1793716912.469
+    - 0.0316
+  - - 1793716927.469
+    - 1.620455
+  - - 1793716942.469
+    - 1.756818
+  - - 1793716957.469
+    - 2.036364
+  - - 1793716972.469
+    - 2.056818
+  - - 1793716987.469
+    - 0.000997
+  - - 1793717002.469
+    - 0.000989
+  - - 1793717017.469
+    - 0.000969
+  - - 1793717032.469
+    - 0.000962
+  - - 1793717047.469
+    - 0.000954
+  - - 1793717062.469
+    - 0.00095
+  - - 1793717077.469
+    - 0.00095
+  - - 1793717092.469
+    - 0.000957
+  - - 1793717107.469
+    - 0.000967
+  - - 1793717122.469
+    - 0.000974
+  - - 1793717137.469
+    - 0.000978
+  - - 1793717152.469
+    - 0.000971
+  - - 1793717167.469
+    - 0.000958
+  - - 1793717182.469
+    - 0.000954
+  - - 1793717197.469
+    - 0.000954
+  - - 1793717212.469
+    - 0.000954
+  - - 1793717227.469
+    - 0.000958
+  - - 1793717242.469
+    - 0.000958
+  - - 1793717257.469
+    - 0.000958
+  - - 1793717272.469
+    - 0.000964
+  - - 1793717287.469
+    - 0.000959
+  - - 1793717302.469
+    - 0.000995
+  - - 1793717317.469
+    - 0.000987
+  - - 1793717332.469
+    - 0.000986
+  - - 1793717347.469
+    - 0.000984
+  - - 1793717362.469
+    - 0.000954
+  - - 1793717377.469
+    - 0.000962
+  - - 1793717392.469
+    - 0.000959
+  - - 1793717407.469
+    - 0.00096
+  - - 1793717422.469
+    - 0.00096
+  - - 1793717437.469
+    - 0.000959
+  - - 1793717452.469
+    - 0.000962
+  - - 1793717467.469
+    - 0.000958
+  - - 1793717482.469
+    - 0.000962
+  - - 1793717497.469
+    - 0.000966
+  - - 1793717512.469
+    - 0.000961
+  - - 1793717527.469
+    - 0.000961
+  - - 1793717542.469
+    - 0.000963
+  - - 1793717557.469
+    - 0.000967
+  - - 1793717572.469
+    - 0.000973
+  - - 1793717587.469
+    - 0.000968
+  - - 1793717602.469
+    - 0.000971
+  - - 1793717617.469
+    - 0.000968
+  - - 1793717632.469
+    - 0.000976
+  - - 1793717647.469
+    - 0.000986
+  - - 1793717662.469
+    - 0.000979
+  - - 1793717677.469
+    - 0.000966
+  - - 1793717692.469
+    - 0.000958
+  - - 1793717707.469
+    - 0.000957
+  - - 1793717722.469
+    - 0.000961
+  - - 1793717737.469
+    - 0.000965
+  - - 1793717752.469
+    - 0.000964
+  - - 1793717767.469
+    - 0.000961
+  - - 1793717782.469
+    - 0.000954
+  - - 1793717797.469
+    - 0.000954
+  - - 1793717812.469
+    - 0.00095
+  - - 1793717827.469
+    - 0.00095
+  - - 1793717842.469
+    - 0.000967
+  - - 1793717857.469
+    - 0.000965
+  - - 1793717872.469
+    - 0.000971
+  - - 1793717887.469
+    - 0.000979
+  - - 1793717902.469
+    - 0.000971
+  - - 1793717917.469
+    - 0.000966
+  - - 1793717932.469
+    - 0.000954
+  - - 1793717947.469
+    - 0.000958
+  - - 1793717962.469
+    - 0.000954
+  - - 1793717977.469
+    - 0.000958
+  - - 1793717992.469
+    - 0.000966
+  - - 1793718007.469
+    - 0.000969
+  - - 1793718022.469
+    - 0.00097
+  - - 1793718037.469
+    - 0.000974
+  - - 1793718052.469
+    - 0.000958
+  - - 1793718067.469
+    - 0.000963
+  - - 1793718082.469
+    - 0.000958
+  - - 1793718097.469
+    - 0.000954
+  - - 1793718112.469
+    - 0.00096
+  - - 1793718127.469
+    - 0.000955
+  - - 1793718142.469
+    - 0.000956
+  - - 1793718157.469
+    - 0.000976
+  - - 1793718172.469
+    - 0.000977
+  - - 1793718187.469
+    - 0.000993
+  - - 1793718202.469
+    - 0.000999
+  - - 1793718217.469
+    - 0.000983
+  - - 1793718232.469
+    - 0.000972
+  - - 1793718247.469
+    - 0.000965
+  - - 1793718262.469
+    - 0.000964
+  - - 1793718277.469
+    - 0.000969
+  - - 1793718292.469
+    - 0.000969
+  - - 1793718307.469
+    - 0.000977
+  - - 1793718322.469
+    - 0.000967
+  - - 1793718337.469
+    - 0.000959
+  - - 1793718352.469
+    - 0.000966
+  - - 1793718367.469
+    - 0.000958
+  - - 1793718382.469
+    - 0.000961
+  - - 1793718397.469
+    - 0.000957
+  - - 1793718412.469
+    - 0.000954
+  - - 1793718427.469
+    - 0.000957
+  - - 1793718442.469
+    - 0.000954
+  - - 1793718457.469
+    - 0.000966
+  - - 1793718472.469
+    - 7.545455
+  - - 1793718487.469
+    - 9.15
+  - - 1793718502.469
+    - 9.456395
+  - - 1793718517.469
+    - 9.64916
+  - - 1793718532.469
+    - 9.62069
+  - - 1793718547.469
+    - 9.479381
+  - - 1793718562.469
+    - 9.484375
+  - - 1793718577.469
+    - 9.455729
+  - - 1793718592.469
+    - 9.408088
+  - - 1793718607.469
+    - 9.505319
+  - - 1793718622.469
+    - 9.75
+containers:
+- name: cs-api-150-1
+  service: api
+  release: 1.5.0
+  restarts: 0
+  oom_killed: false
+  state: exited
+  exit_code: 0
+  health: unhealthy
+- name: cs-api-140-1
+  service: api
+  release: 1.4.0
+  restarts: 0
+  oom_killed: false
+  state: running
+  exit_code: 0
+  health: healthy
+probes_ok: true
+runner:
+  active_release: 1.4.0
+  replicas: 1
+model:
+  gather:
+  - - tool: get_recent_deploys
+      args: {}
+  - - tool: query_logs
+      args:
+        level: ERROR
+        service: api
+  - - tool: get_service_health
+      args:
+        service: postgres
+  - - tool: query_metrics
+      args:
+        template: db_pool_in_use
+        service: api
+  - - tool: search_runbooks
+      args:
+        query: DatabasePoolTimeout api db pool exhausted
+  - - tool: query_logs
+      args:
+        level: ERROR
+        service: postgres
+  hypotheses:
+    hypotheses:
+    - rank: 1
+      summary: The API service exhausted its database connection pool, leading to recurring DatabasePoolTimeout
+        errors and HTTP 503 responses across requests.
+      root_cause_category: db_connection_exhaustion
+      confidence: 0.95
+      evidence_refs:
+      - E1
+      - E3
+      - E5
+  disproof:
+    target_rank: 1
+    tool: query_metrics
+    params:
+      service: api
+      template: p95_latency
+    expectation_if_true: If API database pool exhaustion is occurring, request latency should spike around
+      2026-11-03T15:07:50Z as requests wait for available pool connections before timing out.
+  reflection:
+    items:
+    - rank: 1
+      citations_supported: true
+      adjusted_confidence: 0.95
+      note: The disproof query returned no data, while E3 and E5 confirm maxed-out pool connections and
+        resulting DatabasePoolTimeout errors.
+    top_verdict: survived
+  proposal:
+    action: restart_service
+    params:
+      service: api
+    expected_effect: Reset the API service connection pool, releasing leaked or held connections so that
+      db_pool_in_use drops and DatabasePoolTimeout errors cease.
+    rationale: The API service's database pool became saturated at peak capacity (E5), causing persistent
+      DatabasePoolTimeout exceptions and 503 errors (E1, E3). Restarting the API container clears stalled
+      pool connections and restores normal operation while underlying connection leaks are investigated.
+    evidence_refs:
+    - E1
+    - E3
+    - E5
+expect:
+  phase: PROPOSED
+  action: restart_service
+  params:
+    service: api
+prompt_version: v3
