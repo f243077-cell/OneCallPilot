@@ -19,9 +19,10 @@ Done 2026-11-12: decisions sent to Usman (region, ADR-27, scenario 1, README; `d
 State 2026-11-13: Gate G2 passed 7 of 8; model pinned (B2.13); **prompts v3 are the default** (scenario 1 decision); ADR-27 accepted; U5 done with v3 (7 of 8 recordings; scenario 5 does not record in v2 or v3, `docs/checks/gate-g2.md`); round-trip cut in the pool and evidence writes (`7ca25be`). Decisions D1–D4 in `handoff.md` 2026-11-12.
 1. **Together, in person:** the switch to the new `ocp-dev` in `ap-south-1` (Tanzeel types the `ocp_backend` password into `.env`; the first `ocp up` embeds the runbooks with Usman's key). Both stacks down during the switch.
 2. After the switch, idle laptop: `ocp up`, `ocp doctor`; time `select 1` through the pool into `latency.md`; then U4 + U7: two `ocp smoke` back to back, then 5 live runs for alert to proposal (target median ≤ 60 s; option D is allowed, option C needs Tanzeel). Then replace the README's latency limitation with the final numbers and region.
-3. P4.3: the clean-machine test on an idle laptop, again on the freeze candidate.
-4. Top up OpenRouter before step 2; tick the runbook-review box.
-5. Then U8 (procedure dry run, with Tanzeel) and Phase 4 (`docs/usman-work-plan.md` §4), the pilot on the Mumbai `ocp-dev`.
+3. Scenario 5's tool recording, with the fixed recorder (`record.py 5`, `AGENT_ENABLED=false`), then its v3 model recording (`handoff.md` 2026-11-13 later).
+4. P4.3: the clean-machine test on an idle laptop, again on the freeze candidate.
+5. Top up OpenRouter before step 2; tick the runbook-review box.
+6. Then U8 (procedure dry run, with Tanzeel) and Phase 4 (`docs/usman-work-plan.md` §4), the pilot on the Mumbai `ocp-dev`.
 Live runs on this laptop: keep it idle. Docker: disk on `G:\DockerData`; on `E_ACCESSDENIED` for `ext4.vhdx`, quit Docker Desktop, `wsl --shutdown`, start again; a Store update of WSL stops Docker mid-run (2026-11-11).
 
 ## Together (Tanzeel's laptop and phone)

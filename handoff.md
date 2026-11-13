@@ -2,6 +2,18 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-13 (later) — Usman: why scenario 5 never records
+
+### Done
+- **Cause found, no spend:** scenario 5's tool recording held only the old scripted model's queries (no logs, two metrics). The real model asked for pool and upstream latency and the api logs, got no data where a live run returns real values, and ran out of gather calls. Replaying its saved answers offline lists 8 such queries. Not a model or prompt problem (`docs/checks/gate-g2.md`).
+- **Tooling fixed** (`c9c44b5`): `record.py` records every metric template, the logs and the containers of the incident's service and every service the scripted calls name; `record_model.py` names a miss's unrecorded queries. Regression 29/29.
+
+### Next (Usman)
+1. After the `ocp-dev` switch: `uv run python ../tests/agent_regression/record.py 5` from `backend/` (live stack, about 10 minutes, no model cost; set `AGENT_ENABLED=false` so the detector's incident does not start a paid investigation), then the v3 model recording of scenario 5 (about 3 cents). Then the steps of the entry below.
+
+### Waiting on Tanzeel / Usman
+- Unchanged (entry below).
+
 ## 2026-11-13 — Usman: prompts v3, ADR-27 and README edits, U5 recordings with v3
 
 ### Done
