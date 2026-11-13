@@ -40,7 +40,7 @@ Storage: Supabase Postgres (schema `ocp`, pgvector) and a private Redis (`copilo
 - A Supabase project in a **region close to the host**: every investigation makes many database round trips, and a far region costs tens of seconds per run ([`docs/checks/latency.md`](docs/checks/latency.md)). It needs:
   - an **asymmetric** JWT signing key (ECC or RSA; with the legacy shared secret the JWKS has no public key and the backend cannot verify logins);
   - new-user sign-ups switched off;
-  - the schema from `supabase/migrations/`, then a login password for the `ocp_backend` role, set by hand (`alter role ocp_backend with password '…'`); it goes only into `.env`;
+  - the schema from `supabase/migrations/`, then a login password for the `ocp_backend` role, set by hand (`alter role ocp_backend with login password '…'`; the migration creates it without login); it goes only into `.env`;
   - the `ocp` schema left out of the Data API's exposed schemas;
   - a test user created by hand.
 
