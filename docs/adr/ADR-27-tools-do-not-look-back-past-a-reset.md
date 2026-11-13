@@ -1,6 +1,6 @@
 # ADR-27 — The agent's tools do not look back past a reset
 
-- **Status:** Accepted, 2026-11-08 (Usman); for Tanzeel's review before the pilot (P4.1)
+- **Status:** Accepted, 2026-11-08 (Usman); reviewed by Tanzeel, 2026-11-12
 - **Changes:** architecture §6.3 (the `window` of `query_logs` and `query_metrics`). AI-005 still holds: the window stays inside the incident window ± 30 min, it only gets a later lower bound.
 - **Code:** `backend/oncallpilot/agent/tools/window.py` (`RESET_SETTLE`, `clamp(not_before=…)`), `toolbox.py` (`_settled_reset`); tests in `backend/tests/agent/test_query_tools.py` and `test_summaries_toolbox.py`
 
@@ -18,6 +18,7 @@ The lower bound of every `query_logs` and `query_metrics` window is also never e
 **Amended 2026-11-08 (container state).** The same floor applies to `get_service_health`: while another container of the service runs, a stopped container whose Docker `FinishedAt` is before the floor is left out. Found in the Gate G2 run: scenario 6's crashed worker 2.2.0 slot (exit code 1) stays exited through every later reset, and in the next scenario 1 the model diagnosed it as a bad deploy. A crash after the floor is always shown. (`backend/oncallpilot/agent/tools/get_service_health.py`; also, the same file leaves out spare slots that were never started or were stopped cleanly, `7dcf469`.)
 
 ## Consequences
+- The detector's 180 s warm-up opens no incident before reset + 180 s, so an investigation always starts after the 150 s floor; a query that lies wholly before the floor is refused and counts against the budget.
 - A run's evidence only holds what happened after its own reset settled. With the 240 s warm-up, that leaves 90 s of healthy baseline before an injection for metric baselines.
 - A query that lies wholly before the floor is refused as an empty window (`WindowError`) and still counts against the budget, like any other refused call.
 - Benchmark runs keep their 4-minute spacing (no 30-minute gaps needed).
