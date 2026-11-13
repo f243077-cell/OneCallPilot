@@ -345,3 +345,14 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 **Words.**
 - *Region*: the city of the data centre that hosts a cloud service; the farther away, the slower each round trip.
 - *Moving the goalposts*: changing what counts as success after seeing the result.
+
+### 2026-11-13 — The memory-leak decision, tested before going live
+
+**What changed.** The AI used to be told "do not suggest a restart if it would only hide the problem". For the memory leak, that made it hand the case to a person, while the project's own requirements say a restart is the right fix there (it brings the service back while someone fixes the leak). Tanzeel decided to change that one rule, in general words that name no test scenario. The new prompt version is v3; v1 and v2 stay for the record.
+
+**How it was checked.** The real AI answered the saved tool outputs of all 8 scenarios again. Scenario 1 now suggests the restart; the other answers did not change, and the injection scenario still ignores the planted instruction. One scenario (the traffic spike) still gives up early in these saved runs, exactly as before, at a step the change does not reach.
+
+**Words.**
+- *Prompt version*: a frozen set of instructions for the AI; a change makes a new version instead of editing the old one, so every result says which instructions produced it.
+- *Recording*: the AI's real answers saved to a file, so tests can replay them later without paying for the AI again.
+

@@ -16,13 +16,13 @@ Done 2026-11-12: decisions sent to Usman (region, ADR-27, scenario 1, README; `d
 
 ## Usman — next (OpenRouter)
 **The detailed list, with steps, "done when" and Phase 4, is `docs/usman-work-plan.md`.** Every OpenRouter call is Usman's (`CLAUDE.md` §11.6). The pilot runs on `ocp-dev`, `ocp-bench` only for counted runs (ADR-28).
-State 2026-11-08 (night): **Gate G2 passed 7 of 8** (`docs/checks/gate-g2.md`); model pinned (B2.13); prompts v2 are the default; ADR-27 (no look-back past a reset, also for container health); TEST-003 suite in; 6 of 8 real-model recordings (`tests/agent_regression/scenarios/recorded_model/`). Latency: median 81 s, about 40 s of it database round trips to Sydney (`docs/checks/latency.md`).
-1. Decisions with Tanzeel (`handoff.md` 2026-11-08 night): ADR-27 review; `ocp-bench` in `ap-south-1`; scenario 1 (prompt v3 or a changed expectation). Top up the OpenRouter key ($1.85 of $5 used).
-2. U6 (B3.3): **done 2026-11-08**, 5 of 5 live scenario 8 runs safe (`docs/checks/injection.md`); TEST-003 suite in `tests/security/`.
-3. U7 (B3.4): about 40 database round trips per investigation cut on 2026-11-11 (`7ca25be`, `docs/checks/latency.md`); re-measure on 5 live runs (with U4 below), and again after the region decision.
-4. U4 and P4.3 (attempted 2026-11-09, not passed: `docs/checks/clean-machine.md`): on an idle laptop, a fresh clone, `ocp up`, `ocp doctor`, two `ocp smoke` back to back. U5: re-record all 8 after the last prompt or tool change (`OCP_RECORD_MODEL=1`, see `record_model.py`). P4.5 README draft done, for Tanzeel's review.
-5. Then U8 (procedure dry run, with Tanzeel).
-Live runs on this laptop: keep it idle; the scratch Gate G2 driver is not in the repo (its logic: reset, 240 s warm-up, inject, wait for the run's own incident, then a proposal or escalation; approve a matching proposal like `ocp smoke`). Docker: disk on `G:\DockerData`; on `E_ACCESSDENIED` for `ext4.vhdx`, quit Docker Desktop, `wsl --shutdown`, start again.
+State 2026-11-13: Gate G2 passed 7 of 8; model pinned (B2.13); **prompts v3 are the default** (scenario 1 decision); ADR-27 accepted; U5 done with v3 (7 of 8 recordings; scenario 5 does not record in v2 or v3, `docs/checks/gate-g2.md`); round-trip cut in the pool and evidence writes (`7ca25be`). Decisions D1–D4 in `handoff.md` 2026-11-12.
+1. **Together, in person:** the switch to the new `ocp-dev` in `ap-south-1` (Tanzeel types the `ocp_backend` password into `.env`; the first `ocp up` embeds the runbooks with Usman's key). Both stacks down during the switch.
+2. After the switch, idle laptop: `ocp up`, `ocp doctor`; time `select 1` through the pool into `latency.md`; then U4 + U7: two `ocp smoke` back to back, then 5 live runs for alert to proposal (target median ≤ 60 s; option D is allowed, option C needs Tanzeel). Then replace the README's latency limitation with the final numbers and region.
+3. P4.3: the clean-machine test on an idle laptop, again on the freeze candidate.
+4. Top up OpenRouter before step 2; tick the runbook-review box.
+5. Then U8 (procedure dry run, with Tanzeel) and Phase 4 (`docs/usman-work-plan.md` §4), the pilot on the Mumbai `ocp-dev`.
+Live runs on this laptop: keep it idle. Docker: disk on `G:\DockerData`; on `E_ACCESSDENIED` for `ext4.vhdx`, quit Docker Desktop, `wsl --shutdown`, start again; a Store update of WSL stops Docker mid-run (2026-11-11).
 
 ## Together (Tanzeel's laptop and phone)
 A3.3 live biometric approval, A3.7 all 8 scenarios from the phone, Gate G3, Phase 4.

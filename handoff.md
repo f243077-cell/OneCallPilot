@@ -2,6 +2,29 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-13 — Usman: prompts v3, ADR-27 and README edits, U5 recordings with v3
+
+### Done
+- **Prompts v3 (decision D3, option a):** `88c92b3`. v2 with the one `propose.md` rule changed; default in `settings.py`, `.env.example`, `copilot.yml`, `CLAUDE.md` §10.2 and the recorder; v1 and v2 kept. A test checks that v3 differs from v2 only in that rule.
+- **ADR-27:** status "reviewed by Tanzeel, 2026-11-12" and the warm-up sentence under Consequences (`71df471`).
+- **README** (`acc06df`, `1b725d0`): region close to the host, `ocp_backend` needs `LOGIN` and a password by hand after the migrations, `DATABASE_URL` is the session pooler, `ocp` out of the Data API, `ruff format --check`. The latency limitation waits for the U7 numbers.
+- **U5, real-model recordings with v3** (`b478c99`, `docs/checks/gate-g2.md`): 7 of 8. **Scenario 1 proposes `restart_service(worker)`**; 2, 3, 4, 6 unchanged (expected actions and parameters); 7 and 8 escalate, 8 flags the planted text and never stores the planted secret. Regression 29/29, security (TEST-003) 136/136. **Pass condition met; v3 stays.**
+- **Scenario 5 does not record (v2 and v3 alike):** in 3 tries the model never queried `request_rate` and escalated `low_confidence` at the hypothesis step, before the only prompt v3 changes. Live it passed in Gate G2. Not a v3 regression.
+- 2026-11-11 (after the last entry): `ocp up` passed on this laptop (17 services in 452 s, Alloy fix worked) and `ocp doctor` passed, but the Microsoft Store updated WSL to 3.0.5.0 during the first smoke's warm-up and Docker stopped; no injection, no spend. Docker works again after the update.
+- Spend this session: about $0.25 (recordings).
+
+### Next (Usman)
+1. After the `ocp-dev` switch (together, in person): `ocp up`, `ocp doctor`, `select 1` timing into `latency.md`; then U4 + U7 (two smokes back to back, then 5 runs); README limitation with the final numbers.
+2. P4.3 on an idle laptop; then U8 with Tanzeel.
+3. Optional: why scenario 5's tool recording never leads the model to `request_rate` (compare the live Gate G2 run's seed evidence with `scenarios/recorded/s5_traffic_spike.yaml`).
+
+### Waiting on Tanzeel
+- The two Supabase projects in `ap-south-1`, the new `ocp-dev`'s migrations and the `ocp_backend` password (in person), the APK rebuild.
+
+### Waiting on Usman
+- Answer Tanzeel: nothing on the Sydney `ocp-dev` is needed by Usman's work as far as the repo shows (the results are in `docs/checks/` and the recordings); whether he can open the Supabase org (otherwise Tanzeel invites him).
+- The OpenRouter top-up before the live runs; his runbook-review box (`docs/checks/runbook-review.md`).
+
 ## 2026-11-12 — Tanzeel: decisions on the Supabase region, ADR-27, scenario 1 and the README
 
 ### Done
