@@ -21,7 +21,7 @@ State 2026-11-13: Gate G2 passed 7 of 8; model pinned (B2.13); **prompts v3 are 
 2. After the switch, idle laptop: `ocp up`, `ocp doctor`; time `select 1` through the pool into `latency.md`; then U4 + U7: two `ocp smoke` back to back, then 5 live runs for alert to proposal (target median ≤ 60 s; option D is allowed, option C needs Tanzeel). Then replace the README's latency limitation with the final numbers and region.
 3. Scenario 5's tool recording, with the fixed recorder (`record.py 5`, `AGENT_ENABLED=false`), then its v3 model recording (`handoff.md` 2026-11-13 later).
 4. P4.3: the clean-machine test on an idle laptop, again on the freeze candidate.
-5. Top up OpenRouter before step 2; tick the runbook-review box.
+5. Runbook-review box ticked (2026-11-13). OpenRouter: no top-up for now (Usman, 2026-11-13); check the balance before the counted benchmark, since a 402 would escalate counted runs `llm_unavailable`.
 6. Then U8 (procedure dry run, with Tanzeel) and Phase 4 (`docs/usman-work-plan.md` §4), the pilot on the Mumbai `ocp-dev`.
 Live runs on this laptop: keep it idle. Docker: disk on `G:\DockerData`; on `E_ACCESSDENIED` for `ext4.vhdx`, quit Docker Desktop, `wsl --shutdown`, start again; a Store update of WSL stops Docker mid-run (2026-11-11).
 
