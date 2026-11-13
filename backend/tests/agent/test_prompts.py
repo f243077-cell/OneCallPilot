@@ -102,3 +102,19 @@ def test_v2_hypothesize_lists_the_citation_rules_the_code_applies() -> None:
     assert FilePrompts("v2").hypothesize().startswith(FilePrompts("v1").hypothesize())
     for name in ("system", "gather", "disproof", "reflect", "propose"):
         assert getattr(FilePrompts("v2"), name)() == getattr(FilePrompts("v1"), name)()
+
+
+def test_v3_changes_only_the_propose_rule_on_restarts() -> None:
+    # Scenario 1 decision (Tanzeel, 2026-11-12): v2 told the model to answer
+    # `none` for a cause "a restart would only hide", so a restart that restores
+    # a service while a human fixes the defect was never proposed. v3 changes
+    # that one rule, in general words; every other file is v2's.
+    v2, v3 = FilePrompts("v2"), FilePrompts("v3")
+    for name in ("system", "gather", "hypothesize", "disproof", "reflect"):
+        assert getattr(v3, name)() == getattr(v2, name)()
+    before, after = v2.propose().splitlines(), v3.propose().splitlines()
+    changed = [(b, a) for b, a in zip(before, after, strict=True) if b != a]
+    assert len(changed) == 1
+    assert "a restart would only hide" in changed[0][0]
+    assert "restores service while a human fixes the defect" in changed[0][1]
+    assert "outside the service" in changed[0][1]

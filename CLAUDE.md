@@ -400,7 +400,7 @@ When reporting back: what changed, which requirement IDs are satisfied, which te
 |---|---|---|
 | `AGENT_ENABLED` | `true` (`false` in manual-baseline runs) | api, worker |
 | `LLM_PROVIDER` / `LLM_MODEL` | `openrouter` / `google/gemini-3.8-flash`, pinned per ADR-13 in B2.13 on 2026-11-08 (`fake` in CI) | worker |
-| `PROMPT_VERSION` | `v2` (since 2026-11-08; v1 kept for history) | worker |
+| `PROMPT_VERSION` | `v3` (since 2026-11-13, scenario 1 decision; v1 and v2 kept for history) | worker |
 | `MAX_TOOL_CALLS` / `MAX_AGENT_SECONDS` | `8` / `90` | worker |
 | `CONFIDENCE_THRESHOLD` | `0.70` | worker |
 | `AGENT_CONCURRENCY` | `2` | worker |

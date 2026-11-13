@@ -18,7 +18,7 @@ Never collected by CI (the file name does not start with ``test_``); run on
 purpose, with the stack-independent test containers of ``tests/integration``:
 
     OCP_RECORD_MODEL=1 OPENROUTER_API_KEY=… LLM_MODEL=google/gemini-3.8-flash \\
-    PROMPT_VERSION=v2 uv run pytest -c pyproject.toml ../tests/agent_regression/record_model.py
+    PROMPT_VERSION=v3 uv run pytest -c pyproject.toml ../tests/agent_regression/record_model.py
 """
 
 from __future__ import annotations
@@ -127,7 +127,7 @@ async def test_record_model(
     if not key:
         pytest.skip("OPENROUTER_API_KEY is not set")
     model = os.environ.get("LLM_MODEL", "google/gemini-3.8-flash")
-    version = os.environ.get("PROMPT_VERSION", "v2")
+    version = os.environ.get("PROMPT_VERSION", "v3")
 
     source = load(path)
     data = dict(source.data)

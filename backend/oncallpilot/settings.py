@@ -53,7 +53,7 @@ class WorkerSettings(BaseSettings):
     openrouter_api_key: SecretStr | None = None  # LLM and embeddings (ADR-23)
     gemini_api_key: SecretStr | None = None  # LLM and embeddings (ADR-14)
     anthropic_api_key: SecretStr | None = None  # Claude adapter (ADR-13 fallback)
-    prompt_version: str = "v2"
+    prompt_version: str = "v3"
     confidence_threshold: float = 0.70
     max_agent_seconds: float = 90.0
     agent_concurrency: int = 2

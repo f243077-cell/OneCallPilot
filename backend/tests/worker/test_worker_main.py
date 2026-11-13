@@ -64,7 +64,7 @@ def test_run_meta_hash_changes_with_agent_settings() -> None:
     assert run_meta(settings(), fake, "1.0.0") == base
     for changed in (
         run_meta(settings(confidence_threshold=0.8), fake, "1.0.0"),
-        run_meta(settings(prompt_version="v1"), fake, "1.0.0"),  # the default is v2
+        run_meta(settings(prompt_version="v2"), fake, "1.0.0"),  # the default is v3
         run_meta(settings(), fake, "1.1.0"),
     ):
         assert changed["agent_config_hash"] != base["agent_config_hash"]
