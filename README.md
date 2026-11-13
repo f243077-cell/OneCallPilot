@@ -37,7 +37,14 @@ Storage: Supabase Postgres (schema `ocp`, pgvector) and a private Redis (`copilo
 
 **You need**
 - Docker with Compose ≥ 2.20, Python 3.12, `uv` (CI uses 0.12.7) and Git. On Windows: Docker Desktop with the WSL 2 backend (`wsl --install --no-distribution`, then restart), and run the commands below in Git Bash. Docker's disk image needs room: put it on a drive with 20 GB or more free (Docker Desktop → Settings → Resources → Advanced). A full C: drive makes Docker's disk read-only.
-- A Supabase project: an **asymmetric** JWT signing key (ECC or RSA; with the legacy shared secret the JWKS has no public key and the backend cannot verify logins), new-user sign-ups switched off, the schema from `supabase/migrations/`, and a test user created by hand.
+- A Supabase project in a **region close to the host**: every investigation makes many database round trips, and a far region costs tens of seconds per run ([`docs/checks/latency.md`](docs/checks/latency.md)). It needs:
+  - an **asymmetric** JWT signing key (ECC or RSA; with the legacy shared secret the JWKS has no public key and the backend cannot verify logins);
+  - new-user sign-ups switched off;
+  - the schema from `supabase/migrations/`, then a login password for the `ocp_backend` role, set by hand (`alter role ocp_backend with password '…'`); it goes only into `.env`;
+  - the `ocp` schema left out of the Data API's exposed schemas;
+  - a test user created by hand.
+
+  `DATABASE_URL` is the project's **session pooler** URL (Supavisor, port 5432) with the user `ocp_backend.<project ref>`.
 - An OpenRouter API key with a spend limit (the agent's model and the runbook embeddings, ADR-23). A live investigation costs about 2–3 US cents.
 
 **Configure.** `cp .env.example .env` and fill in the real values; each variable has a one-line comment. `ocp smoke` and `bench` also read a git-ignored `.env.local` with `SUPABASE_ANON_KEY`, `OCP_TEST_EMAIL` and `OCP_TEST_PASSWORD`. Never commit either file.
@@ -52,7 +59,7 @@ Live runs need an otherwise idle laptop: under heavy load the testbed's healthch
 
 **Phone app** (Android, Flutter; `mobile/README.md`). Build it on a machine with the Flutter SDK (CI uses 3.44.2), with the phone on the same Wi‑Fi as the host (Windows Firewall: inbound TCP 8000 on the private profile only). The live build takes its settings from `--dart-define`: `DATA_SOURCE=live`, `API_BASE_URL=http://<host LAN IP>:8000`, `WS_URL=ws://<host LAN IP>:8000/ws/incidents`, and the same `SUPABASE_URL` and public `SUPABASE_ANON_KEY` as the backend; rebuild it when the Supabase project changes. Push notifications need the git-ignored `mobile/android/app/google-services.json` from the Firebase console; without it the app runs without push. `DATA_SOURCE=mock` needs no backend. Checks: `flutter analyze` (zero warnings) and `flutter test`.
 
-Checks, per package (`backend/`, `runner/`, `contracts/python/`, `chaos-shop/`, `tools/ocp/`, `benchmark/`): `uv sync --locked`, `uv run ruff check .`, `uv run mypy`, `uv run pytest -q`. The backend's database, integration, regression and security suites need throwaway Postgres (`pgvector/pgvector`) and Redis containers (`OCP_TEST_DATABASE_URL`, `OCP_TEST_REDIS_URL`).
+Checks, per package (`backend/`, `runner/`, `contracts/python/`, `chaos-shop/`, `tools/ocp/`, `benchmark/`): `uv sync --locked`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`, `uv run pytest -q`. The backend's database, integration, regression and security suites need throwaway Postgres (`pgvector/pgvector`) and Redis containers (`OCP_TEST_DATABASE_URL`, `OCP_TEST_REDIS_URL`).
 
 ## Safety model
 
