@@ -10,8 +10,10 @@
 
 - Then (Tanzeel asked for it done by the session): anon key and admin URL into `.env.local` through the clipboard without being shown (database password reset with Supabase's generator); `migrate` (10 tables, recorded), `login` (`DATABASE_URL` in `.env`), `verify` (connected as `ocp_backend` through `aws-1-ap-south-1`, all tables empty), `check` all pass; the `OCP_TEST_*` user created through the admin API with the service key held only in a process variable, and its password sign-in works. Debug APK built for the new `ocp-dev` and 192.168.0.103. The backend was not started: `.env` has an OpenRouter key and `AGENT_ENABLED=true`, and no paid call was wanted.
 
+- Tanzeel created his own operator user. **Exception to `CLAUDE.md` §11.6, Tanzeel's decision:** Usman's values for the new `ocp-dev` (`SUPABASE_URL`, `DATABASE_URL` with the `ocp_backend` password, anon key, `OCP_TEST_*`) were put into a private file for Usman with the full status message, written by script from the env files (never shown in the session); the admin URL and service key were left out. Reset the `ocp_backend` password after Gate G4.
+
 ### Next
-1. Tanzeel: his own operator user (his own password, typed by him); install the APK when the phone is plugged in; the `DATABASE_URL` line into Usman's `.env` in person.
+1. Tanzeel: install the APK; send Usman the file one to one, then both delete it.
 2. Usman: accept the org invitation; then his list in `next.md`.
 
 ### Waiting on Tanzeel
