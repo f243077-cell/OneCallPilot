@@ -377,3 +377,13 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Gate*: a checkpoint with a fixed list of conditions that must all hold before the next phase counts as started.
 - *p95 latency*: the time within which 95 of every 100 requests finish; the slowest 5 are ignored.
 - *Secret rotation*: replacing a password or token with a new one, so an old copy that was seen somewhere is useless.
+
+### 2026-11-15 (evening) — Moving the database without anyone reading a password
+
+**What happened.** Both databases were deleted and made again in Mumbai, and the new everyday database got its tables, its backend login and a test user. Several secrets were involved: the database password, the backend's password and an admin key. Each one went from Supabase's own "generate" and "copy" buttons through the clipboard straight into a git-ignored file or a short-lived program, so it never appeared on screen, in the chat or in a log.
+
+**Why the backend was not started.** Starting it would have read the runbooks into the AI search index, which calls OpenRouter and costs money. That first start waits for Usman, whose key pays for it.
+
+**Words.**
+- *Session pooler*: a middleman that shares a few database connections among many programs; our backend connects through it.
+- *Service role key*: an admin key that bypasses all access rules; used once, in memory only, to create the test user.

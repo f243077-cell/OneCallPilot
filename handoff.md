@@ -8,8 +8,10 @@
 - Through Tanzeel's Chrome, with his approval for each delete: Usman invited to the org as **Developer** (pending); the old `ocp-bench` (in **Seoul**, `ap-northeast-2`, never migrated) and the Sydney `ocp-dev` (69 incidents, nothing needed per Usman) deleted; new **`ocp-bench` `lzwcejehxhjyfahihokp`** and **`ocp-dev` `vxhtzxhkrjtntpslnran`** created in `ap-south-1`. Both: ECC P-256 signing key (default for new projects), new-user sign-ups off (checked after reload), Data API for `public` only, automatic exposure of new tables off. The generated database passwords were never read; Tanzeel resets them where needed.
 - `.env`: `SUPABASE_URL` points at the new `ocp-dev`. Runbook review confirmed; seating and fingerprint decided (commit `84b481b`).
 
+- Then (Tanzeel asked for it done by the session): anon key and admin URL into `.env.local` through the clipboard without being shown (database password reset with Supabase's generator); `migrate` (10 tables, recorded), `login` (`DATABASE_URL` in `.env`), `verify` (connected as `ocp_backend` through `aws-1-ap-south-1`, all tables empty), `check` all pass; the `OCP_TEST_*` user created through the admin API with the service key held only in a process variable, and its password sign-in works. Debug APK built for the new `ocp-dev` and 192.168.0.103. The backend was not started: `.env` has an OpenRouter key and `AGENT_ENABLED=true`, and no paid call was wanted.
+
 ### Next
-1. Tanzeel: `SUPABASE_DB_ADMIN_URL` and `SUPABASE_ANON_KEY` for the new `ocp-dev` into `.env.local`, the test user and his operator user; then the helper (`check`, `migrate`, `login`, `verify`), the APK, and the `DATABASE_URL` line into Usman's `.env` in person.
+1. Tanzeel: his own operator user (his own password, typed by him); install the APK when the phone is plugged in; the `DATABASE_URL` line into Usman's `.env` in person.
 2. Usman: accept the org invitation; then his list in `next.md`.
 
 ### Waiting on Tanzeel
