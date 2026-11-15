@@ -2,6 +2,24 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-15 — Tanzeel: Usman's work reviewed, a helper for the `ocp-dev` switch
+
+### Done
+- Pulled to `f32480c`; CI green on all six workflows.
+- Reviewed Usman's commits since `94c04ce`: prompts v3 (`88c92b3`) differ from v2 only in the one `propose.md` rule and name no scenario (`CLAUDE.md` §5.8); the U5 pass condition is met (`docs/checks/gate-g2.md`), so v3 stays; ADR-27 edits (`71df471`); README Supabase additions (`acc06df`, `1b725d0`); the scenario 5 recording gap and the recorder fix (`c9c44b5`).
+- Usman's answer: nothing on the Sydney `ocp-dev` is still needed, so it can be deleted at the switch. His answer on the Supabase org and the date were left open in his message.
+- A one-off helper for the switch (`supa_switch.py`, session scratchpad, not committed): `check` (asymmetric JWKS, sign-ups off, anon REST on `ocp` refused), `migrate`, `login` (generated `ocp_backend` password, `DATABASE_URL` into `.env`), `verify`. It prints no secret and refuses a project whose ref differs from `SUPABASE_URL` or a host outside `ap-south-1`. Tried read-only against the Sydney `ocp-dev`: `check` all pass, `verify` connects as `ocp_backend`, `migrate` refused (region). Steps in `next.md` (Tanzeel 3).
+
+### Next
+1. Tanzeel: org membership for Usman and a date; `ocp-bench` in `ap-south-1` (not migrated); then the switch together (`next.md`, Tanzeel 1–4).
+2. Usman: after the switch, the list in `next.md` (U4 + U7, scenario 5 re-record, P4.3, U8).
+
+### Waiting on Tanzeel
+- The Supabase dashboard work (both projects), the `DATABASE_URL` line in Usman's `.env` in person, the APK rebuild, the runbook-review box, the DHCP reservation.
+
+### Waiting on Usman
+- A day and time for the switch; whether he can open the Supabase org.
+
 ## 2026-11-13 (later) — Usman: why scenario 5 never records
 
 ### Done

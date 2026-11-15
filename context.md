@@ -1,7 +1,7 @@
 # Context — current state
 
 > Rewritten at the end of every session (or chunk) so it matches reality (`CLAUDE.md` §11.4). Read it right after `CLAUDE.md`, then the newest `handoff.md` entry, then **`next.md`**.
-> **Last updated:** 2026-11-12, Tanzeel's session (decisions on the Supabase region, ADR-27, scenario 1 and the README; the rest as before).
+> **Last updated:** 2026-11-15, Tanzeel's session (Usman's work to `f32480c` reviewed; prompts v3 default; the Sydney `ocp-dev` may be deleted at the switch; a switch helper in the session scratchpad; the rest as before).
 
 ## Who and where
 - **Two developers since 2026-11-04:** Tanzeel (alone from 2026-10-21 to 2026-11-03) and Usman, who is back. Both may edit every folder; a session works for the developer who started it.

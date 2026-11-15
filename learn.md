@@ -356,3 +356,13 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 - *Prompt version*: a frozen set of instructions for the AI; a change makes a new version instead of editing the old one, so every result says which instructions produced it.
 - *Recording*: the AI's real answers saved to a file, so tests can replay them later without paying for the AI again.
 
+
+### 2026-11-15 — A checklist that refuses the wrong database
+
+**What happened.** Usman finished everything that does not need the new database: the new prompt (v3) passed the test Tanzeel set, and he confirmed nothing on the old Sydney database is still needed. The next step is moving the everyday database to Mumbai. That means typing several long connection addresses into files, and one of them points at the database used for the counted benchmark runs, which must stay empty until the freeze.
+
+**What was done.** A small helper does the database steps (set up the tables, give the backend its login, check the result) and stops by itself if the address belongs to a different project than the one the files name, or to a data centre other than Mumbai. It never shows a password on screen, so none can end up in a chat or a log.
+
+**Words.**
+- *Guard*: a check that stops a step before it does damage, instead of reporting the damage afterwards.
+- *Project ref*: the short ID in a Supabase address that says which project it belongs to.
