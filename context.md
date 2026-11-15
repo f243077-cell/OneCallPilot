@@ -49,6 +49,7 @@
 - `git push --delete` is refused by the session proxy (403). There is no `gh` CLI; use the GitHub MCP tools for CI status.
 
 ## Decisions (and where they are written)
+- **2026-11-15 (Tanzeel):** runbook review confirmed by both; the benchmark runs with both developers in the same room; Usman's fingerprint is enrolled on Tanzeel's phone (one phone, one APK) (`docs/usman-work-plan.md` §2 D3 items 1–2).
 - **2026-11-12 (Tanzeel):** both Supabase projects move to `ap-south-1` (Mumbai): `ocp-bench` recreated empty (migrated at the freeze, ADR-28 unchanged), `ocp-dev` recreated and migrated in a joint session with Usman; the pilot and U7 run on the Mumbai `ocp-dev`. ADR-27 reviewed and accepted. Scenario 1: prompt v3 (one `propose.md` line), not a changed expectation; back to v2 if 2–8 get worse. README approved with additions (`docs/usman-work-plan.md` §2 D3 items 6–8).
 - ADR-27 (2026-11-08): the log, metric and container-health tools never look back past the last `kind=reset` plus 150 s.
 - Model pinned (B2.13, 2026-11-08): `google/gemini-3.8-flash` through OpenRouter; prompts v2 are the default.

@@ -11,9 +11,9 @@ Done 2026-11-15 (later): **Gate G1 met** from `main` (`docs/checks/gate-g1.md`: 
 3. **`ocp-dev` switch, together with Usman in person:** both stacks `ocp down`; delete the Sydney `ocp-dev`; create `ocp-dev` in `ap-south-1` with the B0.1 settings; put the new `SUPABASE_URL` in `.env` and the new `SUPABASE_ANON_KEY`, `OCP_TEST_*` and `SUPABASE_DB_ADMIN_URL` (session pooler, user `postgres.<ref>`) in `.env.local`. Then the helper, from the repo root: `uv run --project backend python -I <helper> . check`, `… migrate`, `… login`, `… verify`. `migrate` applies `supabase/migrations/` and records it in `supabase_migrations.schema_migrations`, `login` sets a generated `ocp_backend` password and writes `DATABASE_URL` into `.env` (never printed), `verify` connects as `ocp_backend` and counts the tables. Each step refuses a project whose ref differs from `SUPABASE_URL` or a host outside `ap-south-1`. Type the `DATABASE_URL` line from your `.env` into Usman's `.env` yourself, in person. Usman's first `ocp up` embeds the runbooks (his key).
    The helper is `supa_switch.py` in the 2026-11-15 session's scratchpad (temporary). If it is gone, the next session rewrites it from this description.
 4. Rebuild the APK with the new `SUPABASE_URL` and anon key (README "Phone app"); both operators sign in; the phone re-registers its device.
-5. Tick your box in `docs/checks/runbook-review.md` (still open; Usman's is ticked).
+5. Runbook review: confirmed by both (2026-11-15).
 6. Then, with Usman: the manual half of the pilot (P4.1) on the Mumbai `ocp-dev`, after U8.
-7. Still open: the DHCP reservation (the laptop is on 192.168.0.103 today; reserve one address and build the APK for it); seating and whose fingerprint approves (D3 items 1 and 2).
+7. Still open: the DHCP reservation (the laptop is on 192.168.0.103 today; reserve one address and build the APK for it). Decided 2026-11-15: same room; Usman's fingerprint enrolled on Tanzeel's phone (D3 items 1–2).
 
 ## Usman — next (OpenRouter)
 **The detailed list, with steps, "done when" and Phase 4, is `docs/usman-work-plan.md`.** Every OpenRouter call is Usman's (`CLAUDE.md` §11.6). The pilot runs on `ocp-dev`, `ocp-bench` only for counted runs (ADR-28).

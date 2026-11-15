@@ -22,5 +22,5 @@ Each of the 8 scenarios is covered by generic guidance, without naming it: memor
 2. `slow-dependency.md` gives "a payment provider" as an example. That is a common real-world example, not a benchmark answer, and the TB-010 word check passes. Keep it.
 
 ## Decision
-- [ ] Tanzeel: confirmed / changes wanted
+- [x] Tanzeel: confirmed (2026-11-15)
 - [x] Usman: confirmed (2026-11-13)
