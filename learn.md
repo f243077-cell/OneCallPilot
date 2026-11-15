@@ -366,3 +366,14 @@ Git checked that his new work merges cleanly into `usman`; the merge itself is t
 **Words.**
 - *Guard*: a check that stops a step before it does damage, instead of reporting the damage afterwards.
 - *Project ref*: the short ID in a Supabase address that says which project it belongs to.
+
+### 2026-11-15 (later) — Closing the first gate, and a scenario with little room to spare
+
+**What happened.** The very first checkpoint of the project (Gate G1: every fault can be started with one command and is visible on the dashboards) had been met piece by piece on an old branch but never checked again on the main line. It was run again from `main`: all eight faults broke the shop as designed, seven recovered after their fix, and a picture of the dashboard was saved for each one. The traffic-spike fault recovered too slowly the first time: the browser taking the pictures was refreshing the dashboard every ten seconds, and with the laptop that busy the shop stayed just above the "slow" line. Run again with the browser closed, it recovered in 75 seconds.
+
+**Why it matters.** The copilot checks recovery with the same kind of line. So during the real benchmark runs the laptop must do nothing else, or a correct fix could look like a failed one. The line itself is not moved: moving it after seeing a result would be moving the goalposts.
+
+**Words.**
+- *Gate*: a checkpoint with a fixed list of conditions that must all hold before the next phase counts as started.
+- *p95 latency*: the time within which 95 of every 100 requests finish; the slowest 5 are ignored.
+- *Secret rotation*: replacing a password or token with a new one, so an old copy that was seen somewhere is useless.

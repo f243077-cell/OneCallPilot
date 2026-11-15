@@ -2,6 +2,23 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-15 (later) — Tanzeel: Gate G1 met from `main`; local secrets rotated
+
+### Done
+- **Gate G1 met** (`docs/checks/gate-g1.md`, from `7cc169a`): `ocp up --no-backend` 15 services healthy in 122 s; `ocp doctor` passes except the backend check (left out on purpose: no writes to the shared `ocp-dev`, no LLM calls); `chaos verify --all --hold 180` 7/8, scenario 5 failed its recovery check (p95 365 ms, limit 300 ms) while a browser refreshed Grafana, then **passed alone** (recovered 75 s after scaling to 3, p95 238 ms); one Grafana screenshot per scenario (`docs/checks/img/gate-g1-s1…8.png`); criterion 5 from the Gate G2 run (all 8 incidents opened). No OpenRouter call: the backend was not running.
+- Scenario 5's recovery margin is thin on this laptop: written as a pilot rule (idle laptop, Grafana closed on the host in copilot runs) and a P4.1 watch item; the threshold is not changed.
+- Local secrets rotated in `.env` without printing (`INGEST_TOKEN`, `CS_REDIS_PASSWORD`, `REDIS_URL` and `RUNNER_REDIS_URL` passwords): earlier sessions had them on screen through `docker compose config`. cs-redis, copilot-redis and the runner came up healthy with the new values.
+- The laptop's LAN address is now 192.168.0.103 (was .105): the DHCP reservation is needed before the APK rebuild.
+
+### Next
+- Tanzeel: the Supabase steps (`next.md` Tanzeel 1–4), runbook box, DHCP reservation, D3 items 1–2.
+
+### Waiting on Tanzeel
+- As in the entry below, plus the DHCP reservation for one fixed address.
+
+### Waiting on Usman
+- As in the entry below.
+
 ## 2026-11-15 — Tanzeel: Usman's work reviewed, a helper for the `ocp-dev` switch
 
 ### Done
