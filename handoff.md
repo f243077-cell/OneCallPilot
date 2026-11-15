@@ -2,6 +2,22 @@
 
 > One dated entry per session (or finished chunk), **newest first**, with **Done** (with commits), **Next** (in order), and **Waiting on Tanzeel** / **Waiting on Usman**; since 2026-11-04 the heading names the developer. Old entries are never edited (`CLAUDE.md` §11.4). Entries before 2026-10-21 were written for Usman's sessions; their branch rules are obsolete.
 
+## 2026-11-15 (evening) — Tanzeel: Supabase projects moved to Mumbai
+
+### Done
+- Through Tanzeel's Chrome, with his approval for each delete: Usman invited to the org as **Developer** (pending); the old `ocp-bench` (in **Seoul**, `ap-northeast-2`, never migrated) and the Sydney `ocp-dev` (69 incidents, nothing needed per Usman) deleted; new **`ocp-bench` `lzwcejehxhjyfahihokp`** and **`ocp-dev` `vxhtzxhkrjtntpslnran`** created in `ap-south-1`. Both: ECC P-256 signing key (default for new projects), new-user sign-ups off (checked after reload), Data API for `public` only, automatic exposure of new tables off. The generated database passwords were never read; Tanzeel resets them where needed.
+- `.env`: `SUPABASE_URL` points at the new `ocp-dev`. Runbook review confirmed; seating and fingerprint decided (commit `84b481b`).
+
+### Next
+1. Tanzeel: `SUPABASE_DB_ADMIN_URL` and `SUPABASE_ANON_KEY` for the new `ocp-dev` into `.env.local`, the test user and his operator user; then the helper (`check`, `migrate`, `login`, `verify`), the APK, and the `DATABASE_URL` line into Usman's `.env` in person.
+2. Usman: accept the org invitation; then his list in `next.md`.
+
+### Waiting on Tanzeel
+- The `.env.local` values and the users above; the DHCP reservation.
+
+### Waiting on Usman
+- Accept the Supabase invitation; a day for the in-person `.env` line and the first `ocp up` with his key.
+
 ## 2026-11-15 (later) — Tanzeel: Gate G1 met from `main`; local secrets rotated
 
 ### Done
